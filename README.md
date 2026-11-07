@@ -63,6 +63,13 @@ response time. Voice consultation uses `gpt-realtime-2.1` and the `marin` voice.
 Model changes require a credentialed provider check and evaluation on reviewed
 bench images; passing application tests does not establish visual accuracy.
 
+During Ask TARa, camera questions inspect one fresh frame with the vision model
+without creating an attempt or verifying a step. Public web references use
+`WEB_SEARCH_PROVIDER=openai` and `WEB_SEARCH_MODEL=gpt-6-luna`, reusing the worker's
+OpenAI key with a ten-second deadline and linked source citations. Set the provider
+to `disabled` to turn search off, or `brave` with `WEB_SEARCH_API_KEY` for the
+five-second direct-search adapter. Public search never replaces an approved SOP.
+
 ```sh
 cd apps/server
 uv run python -m tara_server.agent.worker dev

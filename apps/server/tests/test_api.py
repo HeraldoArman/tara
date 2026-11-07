@@ -1,3 +1,4 @@
+import copy
 from datetime import UTC, datetime, timedelta
 
 import httpx
@@ -26,6 +27,267 @@ async def api_client(workshop, monkeypatch):
     ) as client:
         yield client, session, users, work
     app.dependency_overrides.clear()
+
+
+async def draft_for_work(session, users, work):
+    from tara_server.db.models import SOPVersion, uid
+
+    published = await session.get(SOPVersion, work.sop_version_id)
+    draft = SOPVersion(
+        id=uid(),
+        org_id=published.org_id,
+        sop_id=published.sop_id,
+        document_id=published.document_id,
+        version_number=2,
+        version="1.4.1",
+        status="draft",
+        definition=copy.deepcopy(published.definition),
+        created_by=users["sop_manager"].id,
+    )
+    session.add(draft)
+    await session.flush()
+    return draft
+
+
+async def test_edit_publish_and_start_normalize_optional_defaults_and_aliases(api_client):
+    client, session, users, work = api_client
+    draft = await draft_for_work(session, users, work)
+    definition = copy.deepcopy(draft.definition)
+    definition["version"] = "2.0.0"
+    first = definition["steps"][0]
+    del first["rationale"]
+    first["on_pass"] = first.pop("onPass")
+    client.cookies.set(COOKIE_NAME, token_for(users["sop_manager"]))
+    origin = {"Origin": get_settings().app_origin}
+    edited = await client.patch(
+        f"/api/v1/sop-versions/{draft.id}", json={"definition": definition}, headers=origin
+    )
+    assert edited.status_code == 200
+    assert edited.json()["validationErrors"] == []
+    assert edited.json()["version"] == draft.version == "2.0.0"
+    normalized = edited.json()["definition"]["steps"][0]
+    assert normalized["rationale"] == ""
+    assert normalized["onPass"] == {"action": "next", "alert": None, "deviation": None}
+    assert "on_pass" not in normalized
+    published = await client.post(f"/api/v1/sop-versions/{draft.id}/publish", headers=origin)
+    assert published.status_code == 200
+    assert published.json()["version"] == "2.0.0"
+    assert draft.definition["steps"][0]["rationale"] == ""
+    work.sop_version_id = draft.id
+    await session.flush()
+    client.cookies.set(COOKIE_NAME, token_for(users["technician"]))
+    started = await client.post(f"/api/v1/work-orders/{work.id}/runs", headers=origin)
+    assert started.status_code == 200
+    assert started.json()["steps"][0]["rationale"] == ""
+    assert started.json()["sop"]["prerequisites"] == definition["prerequisites"]
+    assert started.json()["sop"]["scope"] == definition["scope"]
+    assert started.json()["sop"]["version"] == "2.0.0"
+
+
+async def test_sop_routes_use_unique_version_number_and_reject_ambiguous_labels(api_client):
+    from tara_server.db.models import SOPVersion
+
+    client, session, users, work = api_client
+    original = await session.get(SOPVersion, work.sop_version_id)
+    original_version = original.version
+    original_definition = copy.deepcopy(original.definition)
+    draft = await draft_for_work(session, users, work)
+    # Multiple imports can legitimately generate the same display label.
+    draft.version = original_version
+    await session.flush()
+    client.cookies.set(COOKIE_NAME, token_for(users["sop_manager"]))
+    ambiguous = await client.get(f"/api/v1/sops/{draft.sop_id}/versions/{original_version}")
+    assert ambiguous.status_code == 409
+    assert ambiguous.json()["error"]["code"] == "AMBIGUOUS_VERSION"
+    exact = await client.get(f"/api/v1/sops/{draft.sop_id}/versions/{draft.version_number}")
+    assert exact.status_code == 200
+    assert exact.json()["id"] == draft.id
+    original_route = await client.get(
+        f"/api/v1/sops/{original.sop_id}/versions/{original.version_number}"
+    )
+    assert original_route.json()["id"] == original.id
+    # An unpublished duplicate must not make the technician's published label ambiguous.
+    client.cookies.set(COOKIE_NAME, token_for(users["technician"]))
+    visible = await client.get(f"/api/v1/sops/{draft.sop_id}/versions/{original_version}")
+    assert visible.status_code == 200
+    assert visible.json()["id"] == original.id
+    hidden = await client.get(f"/api/v1/sops/{draft.sop_id}/versions/{draft.version_number}")
+    assert hidden.status_code == 404
+    assert original.version == original_version
+    assert original.definition == original_definition
+
+
+async def test_publish_syncs_legacy_draft_label_without_rewriting_published_version(api_client):
+    from tara_server.db.models import SOPVersion
+
+    client, session, users, work = api_client
+    original = await session.get(SOPVersion, work.sop_version_id)
+    previous_label = original.version
+    previous_definition = copy.deepcopy(original.definition)
+    draft = await draft_for_work(session, users, work)
+    definition = copy.deepcopy(draft.definition)
+    definition["version"] = "3.0.0"
+    draft.definition = definition
+    await session.flush()
+    client.cookies.set(COOKIE_NAME, token_for(users["sop_manager"]))
+    result = await client.post(
+        f"/api/v1/sop-versions/{draft.id}/publish", headers={"Origin": get_settings().app_origin}
+    )
+    assert result.status_code == 200
+    assert result.json()["version"] == draft.version == "3.0.0"
+    assert original.version == previous_label
+    assert original.definition == previous_definition
+
+
+async def test_numeric_display_label_cannot_shadow_a_different_version_number(api_client):
+    from tara_server.db.models import SOPVersion
+
+    client, session, users, work = api_client
+    original = await session.get(SOPVersion, work.sop_version_id)
+    original.version = "2"
+    definition = copy.deepcopy(original.definition)
+    definition["version"] = "2"
+    original.definition = definition
+    draft = await draft_for_work(session, users, work)
+    client.cookies.set(COOKIE_NAME, token_for(users["sop_manager"]))
+    selected = await client.get(f"/api/v1/sops/{draft.sop_id}/versions/2")
+    assert selected.status_code == 200
+    assert selected.json()["id"] == draft.id
+    assert selected.json()["versionNumber"] == 2
+
+
+async def test_historical_published_missing_defaults_renders_without_rewriting_version(api_client):
+    from tara_server.db.models import SOPVersion
+
+    client, session, users, work = api_client
+    version = await session.get(SOPVersion, work.sop_version_id)
+    historical = copy.deepcopy(version.definition)
+    del historical["steps"][0]["rationale"]
+    version.definition = historical
+    version.version = "legacy-storage-label"
+    await session.flush()
+    client.cookies.set(COOKIE_NAME, token_for(users["technician"]))
+    started = await client.post(
+        f"/api/v1/work-orders/{work.id}/runs", headers={"Origin": get_settings().app_origin}
+    )
+    assert started.status_code == 200
+    snapshot = await client.get(f"/api/v1/runs/{started.json()['id']}")
+    assert snapshot.status_code == 200
+    assert snapshot.json()["steps"][0]["rationale"] == ""
+    assert snapshot.json()["sop"]["version"] == historical["version"]
+    assert version.definition == historical
+    assert version.version == "legacy-storage-label"
+    assert "rationale" not in version.definition["steps"][0]
+
+
+@pytest.mark.parametrize("accepted_response", ["", " \t "])
+async def test_unfinishable_attestation_is_rejected_before_publication(
+    api_client, accepted_response
+):
+    client, session, users, work = api_client
+    draft = await draft_for_work(session, users, work)
+    definition = copy.deepcopy(draft.definition)
+    definition["steps"][0]["verification"]["acceptedResponse"] = accepted_response
+    client.cookies.set(COOKIE_NAME, token_for(users["sop_manager"]))
+    origin = {"Origin": get_settings().app_origin}
+    edited = await client.patch(
+        f"/api/v1/sop-versions/{draft.id}", json={"definition": definition}, headers=origin
+    )
+    assert edited.status_code == 200
+    assert edited.json()["validationErrors"]
+    published = await client.post(f"/api/v1/sop-versions/{draft.id}/publish", headers=origin)
+    assert published.status_code == 422
+    assert published.json()["error"]["code"] == "VALIDATION_FAILED"
+    assert draft.status == "draft"
+
+
+async def test_import_retry_errors_keep_original_document_id(api_client, monkeypatch):
+    from tara_server.api import main
+    from tara_server.domain import sops
+    from tara_server.errors import DomainError
+
+    client, _session, users, _work = api_client
+
+    async def unavailable(_sections):
+        raise DomainError("PROVIDER_UNAVAILABLE", "The import provider is unavailable.", 503)
+
+    monkeypatch.setattr(sops, "decompose", unavailable)
+    monkeypatch.setattr(main, "decompose", unavailable)
+    client.cookies.set(COOKIE_NAME, token_for(users["sop_manager"]))
+    origin = {"Origin": get_settings().app_origin}
+    imported = await client.post(
+        "/api/v1/sops/imports",
+        files={"file": ("reviewed-source.md", b"# Inspection\nInspect the disconnected device.")},
+        headers=origin,
+    )
+    assert imported.status_code == 503
+    document_id = imported.json()["error"]["details"]["documentId"]
+    for _ in range(2):
+        retried = await client.post(f"/api/v1/sops/imports/{document_id}/retry", headers=origin)
+        assert retried.status_code == 503
+        assert retried.json()["error"]["details"]["documentId"] == document_id
+
+
+async def test_activity_paginates_audit_and_tool_history_with_run_authorization(api_client):
+    from tara_server.db.models import AuditEvent, ToolCall, User, uid
+    from tara_server.domain.execution import create_run
+
+    client, session, users, work = api_client
+    run = await create_run(session, users["technician"], work.id)
+    for index in range(4):
+        session.add(
+            AuditEvent(
+                org_id=users["technician"].org_id,
+                run_id=run["id"],
+                event_type=f"test.activity.{index}",
+                actor_id=users["technician"].id,
+                actor_role="technician",
+                payload={},
+            )
+        )
+    for index in range(3):
+        session.add(
+            ToolCall(
+                run_id=run["id"],
+                name="search_sop",
+                duration_ms=index + 1,
+                status="completed",
+                sanitized_arguments={},
+                result={"status": "completed"},
+            )
+        )
+    await session.flush()
+    client.cookies.set(COOKIE_NAME, token_for(users["technician"]))
+    audit_ids, tool_ids = [], []
+    offset = 0
+    while True:
+        response = await client.get(f"/api/v1/runs/{run['id']}/activity?offset={offset}&limit=2")
+        assert response.status_code == 200
+        page = response.json()
+        assert len(page["items"]) <= 2 and len(page["toolCalls"]) <= 2
+        audit_ids.extend(item["id"] for item in page["items"])
+        tool_ids.extend(item["id"] for item in page["toolCalls"])
+        if not page["hasMore"]:
+            assert page["nextOffset"] is None
+            break
+        assert page["nextOffset"] == offset + 2
+        offset = page["nextOffset"]
+    assert len(audit_ids) == len(set(audit_ids)) == 5
+    assert len(tool_ids) == len(set(tool_ids)) == 3
+    other = User(
+        id=uid(),
+        org_id=users["technician"].org_id,
+        username="different-tech",
+        name="Different technician",
+        role="technician",
+        active=True,
+        password_hash="unused",
+    )
+    session.add(other)
+    await session.flush()
+    client.cookies.set(COOKIE_NAME, token_for(other))
+    forbidden = await client.get(f"/api/v1/runs/{run['id']}/activity")
+    assert forbidden.status_code == 403
 
 
 async def test_anonymous_auth_and_generic_login_failure(api_client):

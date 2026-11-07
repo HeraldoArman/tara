@@ -638,6 +638,10 @@ export interface components {
             latency: {
                 [key: string]: unknown;
             }[];
+            /** Technicianmetrics */
+            technicianMetrics?: {
+                [key: string]: unknown;
+            }[];
         } & {
             [key: string]: unknown;
         };
@@ -725,6 +729,12 @@ export interface components {
             auditEvents: {
                 [key: string]: unknown;
             }[];
+            /** Toolcalls */
+            toolCalls?: {
+                [key: string]: unknown;
+            }[];
+            /** Toolhistoryscope */
+            toolHistoryScope?: string | null;
             /** Reviews */
             reviews: {
                 [key: string]: unknown;
@@ -850,6 +860,13 @@ export interface components {
             title: string;
             /** Version */
             version: string;
+            /**
+             * Scope
+             * @default
+             */
+            scope: string;
+            /** Prerequisites */
+            prerequisites?: string[];
         } & {
             [key: string]: unknown;
         };

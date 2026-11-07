@@ -80,6 +80,8 @@ export default defineRailway((ctx) => {
       SERVICE_ROLE: "worker",
       VISION_MODEL: "gpt-6.1-terra",
       WEB_SEARCH_API_KEY: preserve(),
+      WEB_SEARCH_MODEL: "gpt-6-luna",
+      WEB_SEARCH_PROVIDER: "openai",
     },
     replicas: { [region]: 1 },
     source: source(),

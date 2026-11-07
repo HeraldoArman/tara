@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     realtime_voice: str = "marin"
     frame_max_age_seconds: int = 5
     web_search_url: str = "https://api.search.brave.com/res/v1/web/search"
+    web_search_provider: Literal["openai", "brave", "disabled"] = "openai"
+    web_search_model: str = "gpt-6-luna"
     vision_model: str = "gpt-6.1-terra"
     openai_api_key: str = ""
     web_search_api_key: str = ""

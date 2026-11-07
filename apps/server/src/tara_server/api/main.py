@@ -9,6 +9,7 @@ from fastapi import Depends, FastAPI, File, Form, Query, Request, Response, Uplo
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.exc import StaleDataError
@@ -30,6 +31,7 @@ from tara_server.db.models import (
     Run,
     SOPDocument,
     SOPVersion,
+    ToolCall,
     User,
     now,
     uid,
@@ -42,6 +44,7 @@ from tara_server.domain.execution import (
     authorize_work,
     create_run,
     get_run_snapshot,
+    tool_call_json,
     work_order_json,
 )
 from tara_server.domain.media import authorize_media, import_media
@@ -76,6 +79,7 @@ from tara_server.schemas import (
     UserResponse,
     WorkOrderListResponse,
     WorkOrderResponse,
+    normalize_sop_definition,
 )
 from tara_server.settings import get_settings
 from tara_server.storage import get_storage
@@ -364,12 +368,29 @@ async def activity(
         await session.scalars(
             select(AuditEvent)
             .where(AuditEvent.org_id == actor.org_id, AuditEvent.run_id == run_id)
-            .order_by(AuditEvent.created_at)
+            .order_by(AuditEvent.created_at, AuditEvent.id)
             .offset(offset)
-            .limit(limit)
+            .limit(limit + 1)
         )
     ).all()
-    return {"items": [audit_json(event) for event in events], "offset": offset, "limit": limit}
+    calls = (
+        await session.scalars(
+            select(ToolCall)
+            .where(ToolCall.run_id == run_id)
+            .order_by(ToolCall.created_at, ToolCall.id)
+            .offset(offset)
+            .limit(limit + 1)
+        )
+    ).all()
+    has_more = len(events) > limit or len(calls) > limit
+    return {
+        "items": [audit_json(event) for event in events[:limit]],
+        "toolCalls": [tool_call_json(call) for call in calls[:limit]],
+        "offset": offset,
+        "limit": limit,
+        "hasMore": has_more,
+        "nextOffset": offset + limit if has_more else None,
+    }
 
 
 @app.get("/api/v1/evidence/{evidence_id}/url")
@@ -459,16 +480,24 @@ async def sop_version(
     actor: User = Depends(current_user),
     session: AsyncSession = Depends(get_session, scope="function"),
 ):
-    row = await session.scalar(
-        select(SOPVersion).where(
-            SOPVersion.sop_id == sop_id,
-            SOPVersion.org_id == actor.org_id,
-            (SOPVersion.version == version)
-            | (SOPVersion.version_number == int(version) if version.isdigit() else False),
-        )
-    )
-    if not row:
+    query = select(SOPVersion).where(SOPVersion.sop_id == sop_id, SOPVersion.org_id == actor.org_id)
+    if actor.role not in {"owner", "sop_manager"}:
+        query = query.where(SOPVersion.status == "published")
+    if version.isascii() and version.isdecimal():
+        # Version numbers are the stable per-SOP route; display labels can repeat.
+        query = query.where(SOPVersion.version_number == int(version))
+    else:
+        query = query.where(SOPVersion.version == version)
+    matches = (await session.scalars(query.limit(2))).all()
+    if not matches:
         raise DomainError("NOT_FOUND", "SOP version not found.", 404)
+    if len(matches) > 1:
+        raise DomainError(
+            "AMBIGUOUS_VERSION",
+            "This version label is not unique. Open the SOP using its version number.",
+            409,
+        )
+    row = matches[0]
     await authorized_version(session, actor, row.id)
     return await version_json(session, row)
 
@@ -496,7 +525,11 @@ async def retry_import(
     )
     if not document:
         raise DomainError("NOT_FOUND", "Source document not found.", 404)
-    return await create_draft(session, actor, document, await decompose(document.sections))
+    try:
+        return await create_draft(session, actor, document, await decompose(document.sections))
+    except DomainError as error:
+        error.details["documentId"] = document.id
+        raise
 
 
 @app.patch("/api/v1/sop-versions/{version_id}", response_model=SOPVersionResponse)
@@ -510,7 +543,12 @@ async def edit_draft(
     version = await authorized_version(session, actor, version_id)
     if version.status != "draft":
         raise DomainError("TRANSITION_REJECTED", "Published SOP versions are immutable.", 409)
-    version.definition = body.definition
+    try:
+        version.definition = normalize_sop_definition(body.definition)
+        version.version = version.definition["version"]
+    except ValidationError:
+        # A manager may save an invalid draft while editing; publication rejects it.
+        version.definition = body.definition
     audit(session, actor, None, "sop.draft_edited", {"sopVersionId": version.id})
     await session.flush()
     return await version_json(session, version)

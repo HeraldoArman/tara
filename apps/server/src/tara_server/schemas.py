@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 
@@ -30,6 +30,17 @@ class Verification(Schema):
     pass_options: list[str] = Field(default_factory=list)
     accepted_response: str = "confirmed"
 
+    @model_validator(mode="after")
+    def validate_accepted_response(self):
+        if self.kind in {"attestation", "finalization"} and (
+            not self.accepted_response.strip() or len(self.accepted_response) > 1000
+        ):
+            raise ValueError(
+                "Attestation and finalization require a nonblank accepted response of at most "
+                "1000 characters"
+            )
+        return self
+
 
 class Transition(Schema):
     action: Literal["next", "retry", "hold", "escalate"]
@@ -58,6 +69,11 @@ class SOPDefinition(Schema):
     prerequisites: list[str] = Field(default_factory=list)
     steps: list[Step] = Field(min_length=1, max_length=100)
     allow_partial_close: bool = True
+
+
+def normalize_sop_definition(definition: dict) -> dict:
+    """Fill schema defaults and canonical aliases without mutating the saved input."""
+    return SOPDefinition.model_validate(definition).model_dump(mode="json", by_alias=True)
 
 
 class DraftEdit(Schema):
@@ -207,6 +223,8 @@ class SOPSummaryResponse(PublicModel):
     key: str
     title: str
     version: str
+    scope: str = ""
+    prerequisites: list[str] = Field(default_factory=list)
 
 
 class RunResponse(PublicModel):
@@ -261,6 +279,8 @@ class ReportResponse(PublicModel):
     deviations: list[dict]
     escalations: list[dict]
     auditEvents: list[dict]
+    toolCalls: list[dict] = Field(default_factory=list)
+    toolHistoryScope: str | None = None
     reviews: list[dict]
     createdAt: str
     digest: str
@@ -280,3 +300,4 @@ class EvaluationResponse(PublicModel):
     stepMetrics: list[dict]
     criterionFailures: list[dict]
     latency: list[dict]
+    technicianMetrics: list[dict] = Field(default_factory=list)
