@@ -991,7 +991,7 @@ def build_tools(runtime: WorkerRuntime):
 
     @model_tool
     async def submit_visual_check(context: RunContext, expected_step_id: str) -> dict:
-        """Capture one fresh camera frame and submit a criterion assessment through the server."""
+        """Check the current visual criteria using a fresh frame; return the recorded result."""
         context.disallow_interruptions()
         return await execute("run.retry", await runtime.model_command(expected_step_id, context))
 

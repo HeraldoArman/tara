@@ -198,6 +198,13 @@ work order or registered identifiers. Large procedures include a step outline
 and retrieve further details from that same saved SOP. Identity matching remains
 required only when the current published check calls for it.
 
+For demos with limited equipment, tara suggests practical functional substitutes
+for ordinary tools and keeps guidance brief. It does not demand a professional
+kit or unused tools in the camera view. Explicit published equipment and safety
+checks still apply; simulated actions remain demonstrations rather than verified
+work. Tool calls run without spoken processing narration, and replies explain
+the result or a useful next action.
+
 Choose **Review my progress**, or ask which step you are on and whether anything
 was skipped. The assistant compares one fresh camera frame with the selected
 SOP's steps, then checks the candidate against recorded progress. It separates
