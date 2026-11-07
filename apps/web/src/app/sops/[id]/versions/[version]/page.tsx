@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { SopEditor } from "@/components/tara/sops";
 import { AppShell, PageHeading, PageUnavailable } from "@/components/tara/ui";
@@ -27,7 +28,16 @@ export default async function VersionPage({
         description={`Controlled version ${data.sop.version}. Every execution remains pinned to its published definition.`}
         eyebrow={`PROCEDURES / ${data.sop.key ?? "VERSION"}`}
         title={data.sop.title}
-      />
+      >
+        {data.user.role === "owner" && data.sop.status === "published" ? (
+          <Link
+            className="button primary"
+            href={`/work-orders/new?sopVersionId=${encodeURIComponent(data.sop.id)}`}
+          >
+            Create job from this SOP
+          </Link>
+        ) : null}
+      </PageHeading>
       <SopEditor
         canEdit={["owner", "sop_manager"].includes(data.user.role)}
         initialVersion={data.sop}

@@ -13,6 +13,22 @@ class Login(Schema):
     password: str = Field(min_length=1, max_length=200)
 
 
+class AssetInput(Schema):
+    model: str = Field(min_length=1, max_length=200)
+    serial: str = Field(min_length=1, max_length=200)
+
+
+class WorkOrderInput(Schema):
+    reference: str = Field(min_length=1, max_length=100)
+    title: str = Field(min_length=1, max_length=300)
+    asset: AssetInput
+    issue: str = Field(min_length=1, max_length=4000)
+    priority: Literal["priority", "standard"] = "standard"
+    assigned_username: str
+    sop_version_id: str
+    estimated_minutes: int = Field(default=20, ge=1, le=10080)
+
+
 class Source(Schema):
     heading: str
     page: int | None = None
@@ -139,6 +155,10 @@ class UserResponse(PublicModel):
     username: str
     name: str
     role: Literal["technician", "supervisor", "sop_manager", "owner"]
+
+
+class AssigneeListResponse(PublicModel):
+    items: list[UserResponse]
 
 
 class AssetResponse(PublicModel):

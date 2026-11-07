@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { chromium, expect } from "@playwright/test";
 
 const execute = promisify(execFile);
-const startAction = /Start job|Open session/;
+const startAction = /Start video session|Resume session/;
 const runRoute = /\/runs\/[^/]+$/;
 const groundedTerms = /keycap|switch|inspect/i;
 const serverDirectory = fileURLToPath(

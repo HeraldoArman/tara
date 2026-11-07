@@ -130,10 +130,16 @@ proxy. Migrations run once in API pre-deploy. Runtime secrets are never web Dock
 build arguments. See the parent workspace's `docs/deployment.md` and the
 [Railway configuration](.railway/README.md).
 
+Owners create and assign work from **Create job** in the work queue or
+**Create job from this SOP** on a published procedure. Select a published version
+and an active technician (or yourself); the assigned account then sees
+**Start video session** in its queue. Connect the assistant and enable the bench
+camera to join LiveKit. Technician accounts cannot create or reassign jobs.
+
 Use the controlled administrative CLI, documented in the parent workspace's
-`docs/admin-operations.md`, to provision
-organization users and assign work orders after the initial owner bootstrap.
-There is deliberately no self-service user administration screen.
+`docs/admin-operations.md`, to provision organization users or bulk-import work
+orders after the initial owner bootstrap. There is deliberately no self-service
+user administration screen.
 
 Production requires isolated credentials/data, secure cookies, tested database
 and evidence recovery, actual provider evaluation and measured latency budgets.

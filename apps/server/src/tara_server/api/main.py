@@ -65,8 +65,10 @@ from tara_server.domain.sops import (
     validate_definition,
     version_json,
 )
+from tara_server.domain.work_orders import create_work_order, list_assignees
 from tara_server.errors import DomainError
 from tara_server.schemas import (
+    AssigneeListResponse,
     DraftEdit,
     EvaluationResponse,
     Login,
@@ -77,6 +79,7 @@ from tara_server.schemas import (
     SOPListResponse,
     SOPVersionResponse,
     UserResponse,
+    WorkOrderInput,
     WorkOrderListResponse,
     WorkOrderResponse,
     normalize_sop_definition,
@@ -253,6 +256,23 @@ async def work_orders(
         )
         result.append(work_order_json(row, run.id if run else None))
     return {"items": result}
+
+
+@app.get("/api/v1/work-orders/assignees", response_model=AssigneeListResponse)
+async def work_order_assignees(
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return {"items": [user_json(user) for user in await list_assignees(session, actor)]}
+
+
+@app.post("/api/v1/work-orders", response_model=WorkOrderResponse, status_code=201)
+async def add_work_order(
+    body: WorkOrderInput,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return work_order_json(await create_work_order(session, actor, body))
 
 
 @app.get("/api/v1/work-orders/{work_id}", response_model=WorkOrderResponse)

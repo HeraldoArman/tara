@@ -16,28 +16,33 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { api, dateTime, errorMessage, humanize } from "@/lib/api";
-import type { Report, Run, WorkOrder } from "@/lib/contracts";
+import type { Report, Role, Run, WorkOrder } from "@/lib/contracts";
 import { Status } from "./ui";
 
 export function WorkQueue({
   items,
   userId,
+  role,
 }: {
   items: WorkOrder[];
   userId: string;
+  role: Role;
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState("all");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [refreshing, refresh] = useTransition();
   const filtered = items.filter(
     (item) => filter === "all" || item.priority.toLowerCase() === filter
   );
   const resume = items.find(
     (item) =>
-      item.runId && !["complete", "partial", "cancelled"].includes(item.status)
+      item.assignedTo === userId &&
+      item.runId &&
+      !["complete", "partial", "cancelled"].includes(item.status)
   );
   const start = async (item: WorkOrder) => {
     setBusy(item.id);
@@ -78,7 +83,11 @@ export function WorkQueue({
             <h2>
               Work queue <span className="count">{items.length}</span>
             </h2>
-            <p>Your assigned jobs, in one place.</p>
+            <p>
+              {role === "technician"
+                ? "Choose an assigned job to start your video session."
+                : "Assignments across your organization, in one place."}
+            </p>
           </div>
           <fieldset aria-label="Filter work queue" className="segmented">
             {["all", "priority", "standard"].map((value) => (
@@ -93,6 +102,21 @@ export function WorkQueue({
             ))}
           </fieldset>
         </header>
+        <div className="panel-body queue-session-help">
+          <p className="subtle-note">
+            <Video size={15} />
+            Start a session, connect the assistant, then enable your camera.
+          </p>
+          <button
+            className="text-button"
+            disabled={refreshing || !!busy}
+            onClick={() => refresh(() => router.refresh())}
+            type="button"
+          >
+            <RefreshCw size={14} />
+            {refreshing ? "Refreshing…" : "Refresh jobs"}
+          </button>
+        </div>
         {error ? (
           <div className="notice danger" role="alert">
             <CircleAlert size={18} />
@@ -139,7 +163,7 @@ export function WorkQueue({
                     ) : (
                       <Play size={14} />
                     )}{" "}
-                    {item.runId ? "Open session" : "Start job"}
+                    {item.runId ? "Resume session" : "Start video session"}
                     <ArrowUpRight size={14} />
                   </button>
                 ) : null}
@@ -160,7 +184,41 @@ export function WorkQueue({
         </div>
         {filtered.length === 0 ? (
           <div className="inline-empty">
-            {`No ${filter === "all" ? "assigned" : filter} jobs in your queue.`}
+            {items.length === 0 ? (
+              <>
+                <h3>
+                  {role === "owner"
+                    ? "No jobs created yet"
+                    : "No jobs assigned yet"}
+                </h3>
+                <p>
+                  {role === "owner"
+                    ? "Create a job using a published procedure and assign it to a technician. You can also assign it to yourself."
+                    : "An owner must create a job using a published procedure and assign it to your account. Your job will then show a Start video session button here."}
+                </p>
+                {role === "owner" ? (
+                  <Link className="button primary" href="/work-orders/new">
+                    Create job
+                    <ArrowRight size={15} />
+                  </Link>
+                ) : (
+                  <p>
+                    After the owner assigns your job, select Refresh jobs above.
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p>{`No ${filter} jobs. Other jobs may be available under All.`}</p>
+                <button
+                  className="button"
+                  onClick={() => setFilter("all")}
+                  type="button"
+                >
+                  Show all jobs
+                </button>
+              </>
+            )}
           </div>
         ) : null}
       </section>

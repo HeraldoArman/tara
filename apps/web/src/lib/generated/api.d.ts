@@ -99,6 +99,24 @@ export interface paths {
         /** Work Orders */
         get: operations["work_orders_api_v1_work_orders_get"];
         put?: never;
+        /** Add Work Order */
+        post: operations["add_work_order_api_v1_work_orders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/work-orders/assignees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Work Order Assignees */
+        get: operations["work_order_assignees_api_v1_work_orders_assignees_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -554,12 +572,26 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** AssetInput */
+        AssetInput: {
+            /** Model */
+            model: string;
+            /** Serial */
+            serial: string;
+        };
         /** AssetResponse */
         AssetResponse: {
             /** Model */
             model: string;
             /** Serial */
             serial: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** AssigneeListResponse */
+        AssigneeListResponse: {
+            /** Items */
+            items: components["schemas"]["UserResponse"][];
         } & {
             [key: string]: unknown;
         };
@@ -958,6 +990,31 @@ export interface components {
              */
             acceptedResponse: string;
         };
+        /** WorkOrderInput */
+        WorkOrderInput: {
+            /** Reference */
+            reference: string;
+            /** Title */
+            title: string;
+            asset: components["schemas"]["AssetInput"];
+            /** Issue */
+            issue: string;
+            /**
+             * Priority
+             * @default standard
+             * @enum {string}
+             */
+            priority: "priority" | "standard";
+            /** Assignedusername */
+            assignedUsername: string;
+            /** Sopversionid */
+            sopVersionId: string;
+            /**
+             * Estimatedminutes
+             * @default 20
+             */
+            estimatedMinutes: number;
+        };
         /** WorkOrderListResponse */
         WorkOrderListResponse: {
             /** Items */
@@ -1144,6 +1201,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkOrderListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_work_order_api_v1_work_orders_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkOrderInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkOrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    work_order_assignees_api_v1_work_orders_assignees_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssigneeListResponse"];
                 };
             };
             /** @description Validation Error */

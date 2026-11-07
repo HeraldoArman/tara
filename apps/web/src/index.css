@@ -696,6 +696,28 @@ label,
   color: #8a98af;
   text-transform: capitalize;
 }
+.queue-session-help {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 16px;
+  border-bottom: 1px solid #eef1f6;
+}
+.work-queue .inline-empty {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  line-height: 1.7;
+  color: var(--tara-muted);
+}
+.work-queue .inline-empty h3 {
+  color: var(--tara-ink);
+}
+.work-queue .inline-empty p {
+  max-width: 480px;
+}
 .readiness-list {
   padding: 10px 24px 4px;
 }
