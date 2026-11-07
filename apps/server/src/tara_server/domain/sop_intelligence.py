@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tara_server.db.models import SOP, SOPDocument, User
 from tara_server.domain.sops import authorized_version
+from tara_server.domain.source_quotes import clear_overlapping_quotes, step_source_quote
 from tara_server.errors import DomainError
 from tara_server.schemas import normalize_sop_definition
 
@@ -78,6 +79,7 @@ async def intelligence(session: AsyncSession, actor: User, version_id: str) -> d
         if not isinstance(step, dict):
             continue
         title = str(step.get("title") or f"Step {index + 1}")
+        instruction = step.get("instruction")
         citations = step.get("sources", [])
         matches = [
             section
@@ -111,6 +113,8 @@ async def intelligence(session: AsyncSession, actor: User, version_id: str) -> d
                     "id": f"{version.id}-step-{index + 1}-{section['id']}",
                     "sectionId": section["id"],
                     "title": title,
+                    "instruction": instruction if isinstance(instruction, str) else None,
+                    "sourceQuote": step_source_quote(step, section),
                     **capability,
                 }
             )
@@ -124,8 +128,11 @@ async def intelligence(session: AsyncSession, actor: User, version_id: str) -> d
                     "category": "human-performed",
                     "capabilities": ["Human review"],
                     "reason": "No saved procedure step cites this passage. Review its context before defining any AI check.",
+                    "instruction": None,
+                    "sourceQuote": None,
                 }
             )
+    clear_overlapping_quotes(opportunities, sections)
     pages = [section["page"] for section in sections if isinstance(section["page"], int)]
     return {
         "analysisMode": "server-definition",

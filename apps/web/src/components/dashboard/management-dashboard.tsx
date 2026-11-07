@@ -1,316 +1,216 @@
 "use client";
 
-import "@tara/ui/assistant.css";
-import "./dashboard.css";
-
 import { Button } from "@tara/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@tara/ui/components/card";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@tara/ui/components/empty";
-import {
-  CalendarDays,
-  ChartNoAxesCombined,
-  Download,
-  Info,
-  RotateCcw,
-} from "lucide-react";
-import { type ChangeEvent, useCallback, useMemo, useState } from "react";
-
-import {
-  type DashboardPeriod,
-  type DashboardSopSummary,
-  getDashboardSummary,
-} from "./dashboard-analytics";
-import { DashboardAttention } from "./dashboard-attention";
-import { SopComparisonChart, StateTrendChart } from "./dashboard-charts";
-import type { DashboardDataset } from "./dashboard-data";
-import {
-  createSummaryCsv,
-  downloadSummary,
-  formatCount,
-  formatDate,
-} from "./dashboard-format";
+import { ArrowUpRight, CircleAlert, Info, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { type ChangeEvent, type FormEvent, useCallback, useState } from "react";
+import { api, errorMessage } from "@/lib/api";
+import type { Evaluation, Sop } from "@/lib/contracts";
 import { DashboardMetrics } from "./dashboard-metrics";
-import { DashboardShell } from "./dashboard-shell";
+import {
+  RunOutcomeChart,
+  StepActivity,
+  TechnicianActivity,
+  VerificationSnapshot,
+} from "./operational-charts";
+import {
+  type DashboardFilters,
+  evaluationQuery,
+  initialDashboardFilters,
+} from "./owner-dashboard-data";
 
-type SopSort = "warning" | "total" | "title";
-
-function sortSops(
-  sops: readonly DashboardSopSummary[],
-  sort: SopSort
-): DashboardSopSummary[] {
-  return sops.toSorted((a, b) => {
-    if (sort === "title") {
-      return a.sop.title.localeCompare(b.sop.title);
-    }
-    return b[sort] - a[sort] || a.sop.title.localeCompare(b.sop.title);
-  });
+interface ManagementDashboardProps {
+  initialError?: string;
+  initialSummary: Evaluation | null;
+  sops: Pick<Sop, "id" | "title">[];
 }
 
-function MetricDefinitions() {
-  return (
-    <details className="dash-metric-help">
-      <summary>
-        <Info aria-hidden="true" />
-        How to read these numbers
-      </summary>
-      <div>
-        <p>
-          <strong>One trigger is one entry into a state.</strong> Returning to
-          Active after Warning counts as another Active event. A procedure can
-          trigger the same state more than once.
-        </p>
-        <p>
-          <strong>Warning is a request for attention.</strong> It is not
-          automatically a violation. Success is positive feedback, not a count
-          of completed workflows.
-        </p>
-        <p>
-          The charts share the selected SOP and date range. Changes compare
-          equal-length consecutive periods. A higher event count is not
-          inherently better or worse.
-        </p>
-      </div>
-    </details>
-  );
-}
+export function ManagementDashboard({
+  initialSummary,
+  initialError = "",
+  sops,
+}: ManagementDashboardProps) {
+  const [summary, setSummary] = useState(initialSummary);
+  const [draft, setDraft] = useState(initialDashboardFilters);
+  const [applied, setApplied] = useState(initialDashboardFilters);
+  const [error, setError] = useState(initialError);
+  const [busy, setBusy] = useState(false);
+  const selectedSop = sops.find((sop) => sop.id === applied.sopId);
 
-function NoDashboardEvents({ onReset }: { onReset: () => void }) {
-  return (
-    <Card className="dash-panel dash-no-data">
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <ChartNoAxesCombined />
-          </EmptyMedia>
-          <EmptyTitle>No state activity in this view.</EmptyTitle>
-          <EmptyDescription>
-            This sample procedure has no recorded triggers in the selected
-            period. Choose another SOP to explore its activity.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button onClick={onReset} variant="outline">
-            View all SOPs
-            <RotateCcw data-icon="inline-end" />
-          </Button>
-        </EmptyContent>
-      </Empty>
-    </Card>
-  );
-}
-
-export function ManagementDashboard({ data }: { data: DashboardDataset }) {
-  const [sopId, setSopId] = useState("all");
-  const [days, setDays] = useState<DashboardPeriod>(7);
-  const [sort, setSort] = useState<SopSort>("warning");
-  const [exported, setExported] = useState(false);
-  const summary = useMemo(
-    () => getDashboardSummary(data, { days, sopId }),
-    [data, days, sopId]
-  );
-  const sortedSops = useMemo(
-    () => sortSops(summary.sops, sort),
-    [sort, summary.sops]
-  );
-  const selectedSop = data.sops.find((sop) => sop.id === sopId);
-  const chartSops = sortedSops.map((row) => ({
-    active: row.active,
-    code: row.sop.code,
-    id: row.sop.id,
-    label: row.sop.title,
-    success: row.success,
-    warning: row.warning,
-  }));
-
-  const selectSop = useCallback((id: string) => {
-    setSopId(id);
-    setExported(false);
-  }, []);
-  const resetSop = useCallback(() => selectSop("all"), [selectSop]);
-  const changeSop = useCallback(
-    (event: ChangeEvent<HTMLSelectElement>) =>
-      selectSop(event.currentTarget.value),
-    [selectSop]
-  );
-  const changePeriod = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
-    const next = Number(event.currentTarget.value);
-    if (next === 7 || next === 14 || next === 30) {
-      setDays(next);
-      setExported(false);
+  const load = useCallback(async (filters: DashboardFilters) => {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await api<Evaluation>(evaluationQuery(filters));
+      setSummary(result);
+      setApplied(filters);
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
     }
   }, []);
-  const changeSort = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
-    const { value } = event.currentTarget;
-    if (value === "warning" || value === "total" || value === "title") {
-      setSort(value);
-    }
+
+  const submit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (draft.from && draft.to && draft.from > draft.to) {
+        setError("Choose an end date on or after the start date.");
+        return;
+      }
+      await load(draft);
+    },
+    [draft, load]
+  );
+
+  const reset = useCallback(async () => {
+    setDraft(initialDashboardFilters);
+    await load(initialDashboardFilters);
+  }, [load]);
+
+  const changeSop = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
+    const sopId = event.target.value;
+    setDraft((value) => ({ ...value, sopId }));
   }, []);
-  const exportSummary = useCallback(() => {
-    downloadSummary(
-      createSummaryCsv(sortedSops, summary.range, data.timeZone),
-      `tara-demo-sop-activity-${summary.range.end}.csv`
-    );
-    setExported(true);
-  }, [data.timeZone, sortedSops, summary.range]);
+  const changeFrom = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const from = event.target.value;
+    setDraft((value) => ({ ...value, from }));
+  }, []);
+  const changeTo = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const to = event.target.value;
+    setDraft((value) => ({ ...value, to }));
+  }, []);
 
   return (
-    <DashboardShell>
-      <section aria-labelledby="overview-heading" className="dash-hero">
-        <div>
-          <p className="dash-eyebrow">THE BIG PICTURE</p>
-          <h1 id="overview-heading">Your operations, in focus.</h1>
-          <p className="dash-intro">
-            See how your SOPs unfold, and where your team needs a little
-            guidance.
-          </p>
-        </div>
-        <Button
-          className="dash-export"
-          onClick={exportSummary}
-          variant="outline"
-        >
-          <Download data-icon="inline-start" />
-          Export summary
-        </Button>
-      </section>
-
-      <div className="dash-filter-bar">
-        <div className="dash-filters">
-          <label className="dash-select-field" htmlFor="dashboard-sop">
+    <section aria-label="Operations analytics" className="ops-analytics">
+      <form className="dash-filter-bar ops-filter-bar" onSubmit={submit}>
+        <fieldset className="dash-filters" disabled={busy}>
+          <legend className="sr-only">Filter recorded runs</legend>
+          <label className="dash-select-field">
             <span>Procedure</span>
-            <select id="dashboard-sop" onChange={changeSop} value={sopId}>
-              <option value="all">All SOPs</option>
-              {data.sops.map((sop) => (
+            <select onChange={changeSop} value={draft.sopId}>
+              <option value="">All procedures</option>
+              {sops.map((sop) => (
                 <option key={sop.id} value={sop.id}>
                   {sop.title}
                 </option>
               ))}
             </select>
           </label>
-          <label className="dash-select-field" htmlFor="dashboard-period">
-            <span>Period</span>
-            <select id="dashboard-period" onChange={changePeriod} value={days}>
-              <option value={7}>Last 7 days</option>
-              <option value={14}>Last 14 days</option>
-              <option value={30}>Last 30 days</option>
-            </select>
+          <label className="dash-select-field">
+            <span>Created from · UTC</span>
+            <input
+              max={draft.to || undefined}
+              onChange={changeFrom}
+              type="date"
+              value={draft.from}
+            />
           </label>
-        </div>
-        <p className="dash-period-caption">
-          <CalendarDays aria-hidden="true" />
-          <span>
-            {formatDate(summary.range.start)} – {formatDate(summary.range.end)}
-            <small>{data.timeZone} · sample snapshot</small>
-          </span>
-        </p>
-      </div>
-
-      <div className="dash-scope-line">
-        <p aria-atomic="true" aria-live="polite">
-          {selectedSop
-            ? `${selectedSop.code} · v${selectedSop.version}`
-            : `${data.sops.length} procedures in view`}
-          <span> / </span>
-          {formatCount(summary.totalEvents)} state triggers
-        </p>
-        {selectedSop ? (
+          <label className="dash-select-field">
+            <span>Created through · UTC</span>
+            <input
+              min={draft.from || undefined}
+              onChange={changeTo}
+              type="date"
+              value={draft.to}
+            />
+          </label>
           <Button
-            className="dash-text-action"
-            onClick={resetSop}
-            size="sm"
-            variant="ghost"
+            className="ops-apply"
+            disabled={busy}
+            type="submit"
+            variant="outline"
           >
-            <RotateCcw data-icon="inline-start" />
-            All SOPs
+            <RefreshCw
+              aria-hidden="true"
+              className={busy ? "spin" : undefined}
+            />
+            {busy ? "Updating…" : "Apply filters"}
           </Button>
-        ) : null}
+          <button className="dash-text-action" onClick={reset} type="button">
+            Reset
+          </button>
+        </fieldset>
+      </form>
+      <div aria-atomic="true" className="dash-scope-line" role="status">
+        <p>
+          <strong>{selectedSop?.title ?? "All procedures"}</strong>
+          {" · "}
+          {applied.from || "All history"}
+          {applied.to ? ` through ${applied.to}` : " through now"}
+          {" · UTC"}
+        </p>
+        <span className="ops-scope-note">
+          {busy
+            ? "Updating recorded activity…"
+            : "Recorded activity · refresh with Apply filters"}
+        </span>
       </div>
-
-      <DashboardMetrics
-        days={days}
-        previous={summary.previousTotals}
-        totals={summary.totals}
-      />
-
-      {summary.totalEvents > 0 ? (
-        <div className="dash-chart-grid">
-          <Card className="dash-panel dash-trend">
-            <CardHeader className="dash-panel-header">
-              <CardTitle>
-                <h2>Every state tells a story.</h2>
-              </CardTitle>
-              <CardDescription>
-                Daily trigger counts across{" "}
-                {selectedSop?.title ?? "all procedures"}.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="dash-chart-content">
-              <StateTrendChart data={summary.daily} />
-            </CardContent>
-          </Card>
-          <DashboardAttention
-            onSelect={selectSop}
-            sops={summary.sops}
-            steps={summary.steps}
-          />
-        </div>
-      ) : (
-        <NoDashboardEvents onReset={resetSop} />
-      )}
-
-      <Card className="dash-panel dash-comparison" id="sop-breakdown">
-        <CardHeader className="dash-panel-header">
+      {error ? (
+        <div className="ops-error" role="alert">
+          <CircleAlert aria-hidden="true" size={18} />
           <div>
-            <CardTitle>
-              <h2>Activity by procedure.</h2>
-            </CardTitle>
-            <CardDescription>
-              Compare state triggers on the same scale. Select a procedure for a
-              closer look.
-            </CardDescription>
+            <strong>Unable to update analytics</strong>
+            <p>{error}</p>
+            {summary ? (
+              <p>The last loaded results and their scope remain visible.</p>
+            ) : null}
           </div>
-          <label className="dash-sort" htmlFor="dashboard-sort">
-            <span>Sort by</span>
-            <select id="dashboard-sort" onChange={changeSort} value={sort}>
-              <option value="warning">Most warnings</option>
-              <option value="total">Most activity</option>
-              <option value="title">Procedure name</option>
-            </select>
-          </label>
-        </CardHeader>
-        <CardContent>
-          <SopComparisonChart data={chartSops} onSelect={selectSop} />
-        </CardContent>
-        <CardFooter className="dash-comparison-footer">
-          <p>
-            Counts of state entries, including repeat visits. Not unique tasks
-            or employees.
-          </p>
-          <span>
-            {summary.sops.length}{" "}
-            {summary.sops.length === 1 ? "procedure" : "procedures"}
-          </span>
-        </CardFooter>
-      </Card>
-
-      <MetricDefinitions />
-      <p aria-live="polite" className="sr-only">
-        {exported ? "Demo summary exported for the current filters." : ""}
-      </p>
-    </DashboardShell>
+        </div>
+      ) : null}
+      {summary ? (
+        <div aria-busy={busy}>
+          <DashboardMetrics summary={summary} />
+          {summary.runs === 0 ? (
+            <div className="ops-get-started">
+              <div>
+                <strong>A clear view starts with a recorded run.</strong>
+                <p>
+                  Start a session from a published SOP, or create a job for your
+                  team.
+                </p>
+              </div>
+              <Link className="dash-text-action" href="/sops">
+                Explore your SOPs <ArrowUpRight aria-hidden="true" />
+              </Link>
+            </div>
+          ) : null}
+          <div className="dash-chart-grid">
+            <RunOutcomeChart summary={summary} />
+            <VerificationSnapshot summary={summary} />
+          </div>
+          <TechnicianActivity summary={summary} />
+          <StepActivity sopTitle={selectedSop?.title} summary={summary} />
+          <details className="dash-metric-help ops-metric-help">
+            <summary>
+              <Info aria-hidden="true" size={14} /> How to read these numbers
+            </summary>
+            <div>
+              <p>
+                <strong>Runs and alerts.</strong> In progress means active or
+                paused execution runs. Assistant alerts count recorded alert
+                outputs, including ones whose speech may have been muted. These
+                are not counts of visual Active, Warning, or Success state
+                changes.
+              </p>
+              <p>
+                <strong>Verification.</strong> First-pass success counts first
+                attempts that passed or were human-attested, including
+                unfinished runs. Human attestation is shown separately from AI
+                verification. A complete run is not itself a compliance
+                judgment.
+              </p>
+              <p>
+                <strong>Scope.</strong> Filters apply to runs created during the
+                selected UTC dates, with the end date included. Results cover
+                your organization. The work queue and recent reports below
+                retain their own full scope. An em dash means a metric is
+                unavailable.
+              </p>
+            </div>
+          </details>
+        </div>
+      ) : null}
+    </section>
   );
 }

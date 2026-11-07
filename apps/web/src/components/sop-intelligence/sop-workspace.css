@@ -76,42 +76,8 @@
   color: var(--tara-muted);
   letter-spacing: 1.7px;
 }
-.sop-navigation {
-  display: flex;
-  gap: 4px;
-  padding: 5px;
-  margin-left: auto;
-  background: color-mix(in srgb, var(--tara-surface) 72%, transparent);
-  border: 1px solid var(--tara-border);
-  border-radius: 12px;
-}
-.sop-navigation a {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  padding: 10px 14px;
-  font-size: 11px;
-  font-weight: 550;
-  color: var(--tara-muted);
-  text-decoration: none;
-  border-radius: 8px;
-  transition:
-    background 160ms,
-    color 160ms;
-}
-.sop-navigation a:hover {
-  color: var(--tara-accent);
-  background: var(--tara-accent-soft);
-}
-.sop-navigation a[aria-current="page"] {
-  color: var(--tara-accent);
-  background: var(--tara-accent-soft);
-}
-.sop-navigation svg {
-  width: 14px;
-  height: 14px;
-}
 .sop-header .sop-help-button {
+  margin-left: auto;
   border-radius: 50%;
 }
 .sop-intro {
@@ -496,25 +462,15 @@
     border-color 180ms;
 }
 .sop-source-section[data-selected="true"] {
-  background: var(--sop-soft);
-  border-color: color-mix(in srgb, var(--sop-tone) 20%, transparent);
-}
-.sop-source-section[data-selected="true"]::before {
-  position: absolute;
-  top: 15px;
-  bottom: 15px;
-  left: -1px;
-  width: 3px;
-  content: "";
-  background: var(--sop-tone);
-  border-radius: 0 3px 3px 0;
+  border-color: var(--tara-border);
 }
 .sop-source-section mark {
   padding-block: 2px;
   color: inherit;
-  background: color-mix(in srgb, var(--sop-tone) 14%, transparent);
+  background: color-mix(in srgb, var(--sop-tone) 22%, transparent);
   border-radius: 2px;
   box-decoration-break: clone;
+  scroll-margin-block: 70px;
 }
 .sop-source-number {
   position: absolute;
@@ -742,6 +698,24 @@
   color: var(--tara-muted);
   overflow-wrap: anywhere;
 }
+.sop-opportunity-instruction {
+  padding: 10px 12px;
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  background: var(--tara-surface);
+  border: 1px solid var(--tara-border);
+  border-radius: 6px;
+}
+.sop-opportunity-instruction > span {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--tara-muted);
+}
 .sop-capabilities {
   display: flex;
   flex-wrap: wrap;
@@ -773,6 +747,9 @@
   height: 4px;
   background: currentColor;
   border-radius: 50%;
+}
+.sop-source-linked[data-linked="false"] {
+  color: var(--tara-muted);
 }
 .sop-map-footer {
   display: flex;
@@ -1132,19 +1109,6 @@
   .sop-brand-word {
     font-size: 30px;
   }
-  .sop-navigation {
-    justify-content: center;
-    order: 3;
-    width: 100%;
-  }
-  .sop-navigation a {
-    flex: 1;
-    justify-content: center;
-    padding-inline: 8px;
-  }
-  .sop-help-button {
-    margin-left: auto;
-  }
   .sop-intro {
     margin-top: 28px;
   }
@@ -1275,52 +1239,6 @@
     animation: none;
     transition: none;
   }
-}
-
-.sop-saved-procedure {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  padding: 18px 20px;
-  margin-bottom: 24px;
-  background: var(--sop-surface, #fff);
-  border: 1px solid var(--sop-border, #e3e8f0);
-  border-radius: 16px;
-}
-
-.sop-saved-procedure label {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.sop-saved-procedure select {
-  flex: 1 1 300px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 10px 12px;
-  font-size: 12px;
-  color: var(--tara-ink);
-  background: #fff;
-  border: 1px solid var(--sop-border, #e3e8f0);
-  border-radius: 8px;
-}
-
-.sop-saved-procedure select:focus-visible {
-  outline: 2px solid var(--tara-active);
-  outline-offset: 3px;
-}
-
-.sop-saved-procedure > a {
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
-  font-size: 11px;
-}
-
-.sop-saved-procedure > a svg {
-  width: 13px;
-  height: 13px;
 }
 
 .sop-connected-notice,

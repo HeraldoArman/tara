@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { unstable_rethrow } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 
 import { LandingPage } from "@/components/landing/landing-page";
 import { PageUnavailable } from "@/components/tara/ui";
@@ -16,6 +16,9 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   try {
     const user = await optionalCurrentUser();
+    if (user?.role === "owner") {
+      redirect("/dashboard");
+    }
     return user ? <WorkQueuePage user={user} /> : <LandingPage />;
   } catch (cause) {
     unstable_rethrow(cause);

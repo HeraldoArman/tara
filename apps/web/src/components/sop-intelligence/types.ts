@@ -29,8 +29,10 @@ export interface Opportunity {
   capabilities: string[];
   category: OpportunityCategory;
   id: string;
+  instruction?: string | null;
   reason: string;
   sectionId: string;
+  sourceQuote?: string | null;
   title: string;
 }
 

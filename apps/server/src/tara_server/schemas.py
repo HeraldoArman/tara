@@ -41,6 +41,11 @@ class CameraPairingClaim(Schema):
 class Source(Schema):
     heading: str
     page: int | None = None
+    quote: str | None = Field(
+        default=None,
+        min_length=1,
+        description="A verbatim excerpt specific to this step, unique within the cited section.",
+    )
 
 
 class Criterion(Schema):
@@ -356,6 +361,11 @@ class SopIntelligenceOpportunity(PublicModel):
     category: Literal["ai-assisted", "ai-verified", "human-performed", "human-approval"]
     capabilities: list[str]
     reason: str
+    instruction: str | None = None
+    sourceQuote: str | None = Field(
+        default=None,
+        description="Unique verbatim text in sectionId for this flag; null if no precise location resolves.",
+    )
 
 
 class SopIntelligenceVersion(PublicModel):

@@ -48,6 +48,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ProcedureRequirements } from "@/components/tara/procedure-requirements";
 import { humanize } from "@/lib/api";
+import type { ConsultationTurn } from "@/lib/consultation-turn";
 import type { Run, RunStep } from "@/lib/contracts";
 import {
   getRunAssistantView,
@@ -352,12 +353,64 @@ function RunCriteria({
   );
 }
 
+function RunConversationMessages({
+  conversation,
+}: {
+  conversation: ConsultationTurn;
+}) {
+  const { answer, question, status } = conversation;
+  const statusMessages = {
+    answered: "",
+    idle: "",
+    sending: "Sending your question…",
+    unconfirmed:
+      "Your question could not be confirmed. Check the connection and try again.",
+    waiting: "Waiting for tara’s reply…",
+  };
+  return (
+    <div className="tara-chat-messages">
+      {question ? (
+        <div className="tara-chat-message" data-speaker="user">
+          <span>You</span>
+          <p>{question}</p>
+        </div>
+      ) : null}
+      {answer ? (
+        <div
+          className="tara-chat-message"
+          data-speaker="assistant"
+          role="status"
+        >
+          <span>tara</span>
+          <p>{answer}</p>
+        </div>
+      ) : null}
+      {statusMessages[status] ? (
+        <p className="tara-chat-empty" role="status">
+          {statusMessages[status]}
+        </p>
+      ) : null}
+      {question || answer ? null : (
+        <p className="tara-chat-empty">
+          Your questions and tara’s replies appear here.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function RunConsultation({
   canOperate,
+  onViewSop,
   session,
+  source,
+  status,
 }: {
   canOperate: boolean;
+  onViewSop: () => void;
   session: RunSession;
+  source: string;
+  status: AssistantState;
 }) {
   const connected = session.connection === "connected";
   const active = session.run.status === "active";
@@ -383,121 +436,90 @@ function RunConsultation({
     speakerStatus = "Speaker muted";
   }
   return (
-    <>
-      <div className="tara-consultation-control">
-        <Button
-          disabled={!canAct}
-          onClick={session.consultation}
-          variant="ghost"
-        >
-          <MessageCircle aria-hidden="true" />
-          {consulting ? "Pause listening" : "Resume listening"}
-        </Button>
-        <span>{consulting ? "Listening" : "Listening paused"}</span>
-      </div>
-      <div className="tara-consultation-control">
-        <Button
-          aria-describedby="run-progress-review-help"
-          disabled={!(canAct && consulting)}
-          onClick={async () => {
-            await session.action("assistant.text", {
-              text: "Review my progress against the selected SOP. Look at the current camera view, identify the likely step, and tell me which earlier required steps lack recorded verification or were explicitly skipped.",
-            });
-          }}
-          variant="outline"
-        >
-          <ScanLine aria-hidden="true" />
-          Review my progress
-        </Button>
-        <span id="run-progress-review-help">
-          Checks the current camera view against saved progress.
-        </span>
-      </div>
-      <ReplyComposer
-        disabled={!(canAct && consulting)}
-        onSubmit={async (text) => {
-          await session.action("assistant.text", { text });
-        }}
-        pending={session.busy === "assistant.text"}
-        placeholder="Ask about this step…"
-        statusMessage={composerStatus}
-      />
-      {session.transcript ? (
-        <div className="tara-live-answer" role="status">
-          <span>tara</span>
-          <p>{session.transcript}</p>
-        </div>
-      ) : null}
-      <p className="tara-live-microphone">
-        {session.microphone ? (
-          <Mic aria-hidden="true" />
-        ) : (
-          <MicOff aria-hidden="true" />
-        )}
-        {session.microphone ? "Microphone on" : "Microphone off"}
-      </p>
-      {connected ? (
-        <p className="tara-live-microphone" role="status">
-          <Volume2 aria-hidden="true" />
-          {speakerStatus}
-        </p>
-      ) : null}
-    </>
+    <AssistantGuidance
+      composer={
+        <>
+          <div className="tara-consultation-control">
+            <Button
+              disabled={!canAct}
+              onClick={session.consultation}
+              size="sm"
+              variant="ghost"
+            >
+              <MessageCircle aria-hidden="true" />
+              {consulting ? "Pause listening" : "Resume listening"}
+            </Button>
+            <span>{consulting ? "Listening" : "Listening paused"}</span>
+          </div>
+          <ReplyComposer
+            disabled={!(canAct && consulting)}
+            onSubmit={async (text) => {
+              await session.action("assistant.text", { text });
+            }}
+            pending={session.busy === "assistant.text"}
+            placeholder="Ask about this step…"
+            statusMessage={composerStatus}
+          />
+          <div className="tara-chat-media-status">
+            <p className="tara-live-microphone">
+              {session.microphone ? (
+                <Mic aria-hidden="true" />
+              ) : (
+                <MicOff aria-hidden="true" />
+              )}
+              {session.microphone ? "Microphone on" : "Microphone off"}
+            </p>
+            {connected ? (
+              <p className="tara-live-microphone" role="status">
+                <Volume2 aria-hidden="true" />
+                {speakerStatus}
+              </p>
+            ) : null}
+          </div>
+        </>
+      }
+      onViewSop={onViewSop}
+      source={source}
+      status={status}
+    >
+      <RunConversationMessages conversation={session.conversation} />
+    </AssistantGuidance>
   );
 }
 
-function RunGuidance({
+function RunStepControls({
   canOperate,
   onFinish,
-  onViewSop,
   session,
-  status,
   view,
 }: {
   canOperate: boolean;
   onFinish: () => Promise<void>;
-  onViewSop: () => void;
   session: RunSession;
-  status: AssistantState;
   view: RunAssistantView;
 }) {
   const paused = session.run.status === "paused";
   return (
-    <AssistantGuidance
-      completedSteps={view.completedSteps}
-      description={view.description}
-      eyebrow={view.correction ? "Before you continue" : "Your current step"}
-      hint={
-        paused
-          ? "Your procedure is paused. Resume when you are ready."
-          : "Correct work stays quiet. Speak whenever you need help."
-      }
-      onViewSop={onViewSop}
-      source={view.source}
-      status={status}
-      step={view.stepNumber}
-      title={view.title}
-      totalSteps={view.totalSteps}
-    >
-      <details className="tara-live-prerequisites" open={view.stepNumber === 1}>
-        <summary>Scope and prerequisites</summary>
+    <div className="tara-live-step-controls">
+      <details className="tara-live-prerequisites">
+        <summary>Step checks &amp; prerequisites</summary>
         <ProcedureRequirements
           compact
           prerequisites={session.run.sop.prerequisites}
           scope={session.run.sop.scope}
         />
+        {view.correction && view.step ? (
+          <p className="tara-live-approved-step">
+            <BookOpen aria-hidden="true" />
+            Approved step: {view.step.title}
+          </p>
+        ) : null}
+        <RunCriteria
+          checking={session.checking}
+          currentAttemptId={session.run.currentAttemptId}
+          step={view.step}
+        />
       </details>
-      {view.correction && view.step ? (
-        <p className="tara-live-approved-step">
-          <BookOpen aria-hidden="true" />
-          Approved step: {view.step.title}
-        </p>
-      ) : null}
-      <RunCriteria
-        checking={session.checking}
-        currentAttemptId={session.run.currentAttemptId}
-        step={view.step}
-      />
       {view.active ? (
         <div className="tara-live-step-actions">
           <StepActions
@@ -507,6 +529,26 @@ function RunGuidance({
             session={session}
             step={view.step}
           />
+          <Button
+            disabled={
+              !canOperate ||
+              session.connection !== "connected" ||
+              session.run.status !== "active" ||
+              session.run.interactionMode !== "consultation" ||
+              Boolean(session.busy)
+            }
+            onClick={async () => {
+              await session.action("assistant.text", {
+                text: "Review my progress against the selected SOP. Look at the current camera view, identify the likely step, and tell me which earlier required steps lack recorded verification or were explicitly skipped.",
+              });
+            }}
+            size="sm"
+            title="Check the current camera view against saved progress"
+            variant="outline"
+          >
+            <ScanLine aria-hidden="true" />
+            Review my progress
+          </Button>
         </div>
       ) : (
         <Link
@@ -535,10 +577,7 @@ function RunGuidance({
           Resume assistant
         </Button>
       ) : null}
-      {view.active ? (
-        <RunConsultation canOperate={canOperate} session={session} />
-      ) : null}
-    </AssistantGuidance>
+    </div>
   );
 }
 
@@ -650,6 +689,7 @@ export function RunAssistantWorkspace({
           aria-label="Work area and current instruction"
           className="tara-camera-card"
         >
+          <h2 className="sr-only">Work area and current instruction</h2>
           <LiveCamera
             busy={session.cameraBusy || connection === "connecting"}
             camera={session.camera}
@@ -697,36 +737,44 @@ export function RunAssistantWorkspace({
                 <ArrowUpRight aria-hidden="true" />
               </button>
             </TaskStep>
+            <RunStepControls
+              canOperate={canOperate}
+              onFinish={finish}
+              session={session}
+              view={view}
+            />
+            {canOperate && view.active ? (
+              <details className="tara-live-session-tools">
+                <summary>Camera &amp; model tools</summary>
+                <div>
+                  <RunAssetLabel
+                    canOperate={canOperate}
+                    run={run}
+                    session={session}
+                  />
+                  <PairPhoneCamera
+                    disabled={Boolean(busy) || session.cameraBusy}
+                    onConnect={session.startPhoneSession}
+                    onPairingChange={session.refreshPhonePairing}
+                    onUseLaptop={session.useLaptopCamera}
+                    pairing={session.phonePairing}
+                    phoneConnected={session.phoneConnected}
+                    runId={run.id}
+                  />
+                </div>
+              </details>
+            ) : null}
           </div>
         </section>
         <aside aria-label="tara assistant" className="tara-workspace-assistant">
           <AssistantStatus status={status} />
-          <RunGuidance
+          <RunConsultation
             canOperate={canOperate}
-            onFinish={finish}
             onViewSop={openSop}
             session={session}
+            source={view.source}
             status={status}
-            view={view}
           />
-          {canOperate && view.active ? (
-            <>
-              <RunAssetLabel
-                canOperate={canOperate}
-                run={run}
-                session={session}
-              />
-              <PairPhoneCamera
-                disabled={Boolean(busy) || session.cameraBusy}
-                onConnect={session.startPhoneSession}
-                onPairingChange={session.refreshPhonePairing}
-                onUseLaptop={session.useLaptopCamera}
-                pairing={session.phonePairing}
-                phoneConnected={session.phoneConnected}
-                runId={run.id}
-              />
-            </>
-          ) : null}
         </aside>
       </div>
       {canOperate ? null : (

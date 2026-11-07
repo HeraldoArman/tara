@@ -24,8 +24,10 @@ import type {
 } from "@tara/ui/lib/assistant";
 import {
   Activity,
+  ArrowLeft,
   ArrowUpRight,
   CircleHelp,
+  RotateCcw,
   ShieldCheck,
   Wrench,
 } from "lucide-react";
@@ -239,6 +241,7 @@ export function AssistantWorkspace() {
 
       <div className="tara-workspace-grid">
         <section aria-label="Preview work area" className="tara-camera-card">
+          <h2 className="sr-only">Current task</h2>
           <CameraPreview
             observation={instruction.observation}
             paused={resting}
@@ -287,6 +290,28 @@ export function AssistantWorkspace() {
                 <ArrowUpRight aria-hidden="true" />
               </button>
             </TaskStep>
+            {instruction.correction ? (
+              <Button
+                className="tara-return-to-step"
+                onClick={resumeAssistant}
+                size="sm"
+                variant="outline"
+              >
+                <ArrowLeft aria-hidden="true" />
+                Return to current step
+              </Button>
+            ) : null}
+            {complete ? (
+              <Button
+                className="tara-restart-preview"
+                onClick={restartPreview}
+                size="sm"
+                variant="outline"
+              >
+                <RotateCcw aria-hidden="true" />
+                Restart preview
+              </Button>
+            ) : null}
           </div>
         </section>
 
@@ -301,11 +326,7 @@ export function AssistantWorkspace() {
             </div>
           ) : (
             <PreviewGuidance
-              cameraSource={camera.source}
-              correction={instruction.correction}
               key={currentStep.id}
-              onRestart={restartPreview}
-              onResumeStep={resumeAssistant}
               onViewSop={openSop}
               progress={progress}
               source={source}

@@ -19,6 +19,7 @@ import {
 
 interface OpportunityPanelProps {
   filter: OpportunityFilter;
+  highlightedId: string | null;
   onFilterChange: (filter: OpportunityFilter) => void;
   onSelect: (opportunity: Opportunity) => void;
   opportunities: Opportunity[];
@@ -29,6 +30,7 @@ export function OpportunityPanel({
   opportunities,
   selectedId,
   filter,
+  highlightedId,
   onFilterChange,
   onSelect,
 }: OpportunityPanelProps) {
@@ -99,8 +101,8 @@ export function OpportunityPanel({
       </div>
 
       <p className="sop-map-hint">
-        <ScanEye aria-hidden="true" /> Select a card to highlight the original
-        passage.
+        <ScanEye aria-hidden="true" /> Select a card to highlight its exact
+        instruction.
       </p>
 
       <div className="sop-opportunity-scroll">
@@ -159,14 +161,26 @@ export function OpportunityPanel({
                     <span className="sop-opportunity-reason">
                       {opportunity.reason}
                     </span>
+                    {selected && opportunity.instruction ? (
+                      <span className="sop-opportunity-instruction">
+                        <span>Saved instruction</span>
+                        {opportunity.instruction}
+                      </span>
+                    ) : null}
                     <span className="sop-capabilities">
                       {opportunity.capabilities.map((capability) => (
                         <span key={capability}>{capability}</span>
                       ))}
                     </span>
                     {selected ? (
-                      <span className="sop-source-linked">
-                        <span /> Source passage highlighted
+                      <span
+                        className="sop-source-linked"
+                        data-linked={highlightedId === opportunity.id}
+                      >
+                        <span />
+                        {highlightedId === opportunity.id
+                          ? "Exact instruction highlighted"
+                          : "Exact source text unavailable · review saved instruction"}
                       </span>
                     ) : null}
                   </button>

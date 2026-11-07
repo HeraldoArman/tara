@@ -31,9 +31,6 @@ export default async function SopsPage() {
         eyebrow="PROCEDURES / LIBRARY"
         title="The right way, on record."
       >
-        <Link className="button" href="/sop-intelligence">
-          Select an SOP
-        </Link>
         {canEdit ? (
           <Link className="button primary" href="/sops/import">
             <FilePlus2 size={16} />
@@ -63,13 +60,15 @@ export default async function SopsPage() {
                     </Link>
                   ))}
                 </div>
-                <Link
-                  className="button"
-                  href={`/sop-intelligence?sopVersionId=${encodeURIComponent(sop.versions[0].id)}`}
-                >
-                  Explore this SOP
-                  <ArrowUpRight size={17} />
-                </Link>
+                {sop.versions[0] ? (
+                  <Link
+                    className="button"
+                    href={`/sop-intelligence?sopVersionId=${encodeURIComponent(sop.versions[0].id)}`}
+                  >
+                    Explore this SOP
+                    <ArrowUpRight size={17} />
+                  </Link>
+                ) : null}
               </div>
             </section>
           ))}

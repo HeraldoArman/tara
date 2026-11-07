@@ -130,10 +130,15 @@
 .tara-workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 25.5%);
-  gap: 26px;
+  row-gap: 0;
+  column-gap: 26px;
   align-items: start;
 }
 .tara-camera-card {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: 1 / span 2;
+  grid-column: 1;
   min-width: 0;
   padding: 8px;
   background: #ffffffc9;
@@ -174,15 +179,24 @@
 .tara-workspace-assistant {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  grid-row: 1;
+  grid-column: 2;
+  gap: 14px;
+  align-self: stretch;
   min-width: 0;
+  min-height: 0;
+  padding-top: 9px;
+  contain: size;
+}
+.tara-workspace-assistant > .tara-status-card {
+  flex-shrink: 0;
 }
 .tara-consultation-control {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: space-between;
-  margin: 8px -8px 0;
+  margin: 0 -8px;
 }
 .tara-consultation-control > span {
   padding-right: 8px;
@@ -201,7 +215,7 @@
 }
 .tara-restart-preview[data-slot="button"],
 .tara-return-to-step[data-slot="button"] {
-  margin-top: 18px;
+  margin: 0 0 10px 17px;
   border-radius: 10px;
 }
 .tara-return-to-step[data-slot="button"] {
@@ -332,6 +346,7 @@
 .tara-workspace[data-mode="product"] .tara-camera-card {
   position: absolute;
   inset: 4px;
+  display: block;
   padding: 0;
   background: transparent;
   border: 0;
@@ -371,7 +386,9 @@
   bottom: 53px;
   left: 28px;
   max-width: 560px;
+  max-height: 45svh;
   padding: 0 14px;
+  overflow-y: auto;
   background: #f8faffed;
   border: 1px solid #ffffffb3;
   border-radius: 17px;
@@ -386,12 +403,19 @@
   display: inline-flex;
 }
 .tara-workspace[data-mode="product"] .tara-workspace-assistant {
-  position: relative;
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  bottom: 28px;
   z-index: 1;
-  gap: 34px;
-  align-self: flex-end;
+  gap: 18px;
+  align-self: auto;
   width: 355px;
-  margin-top: -130px;
+  height: calc(100% - 56px);
+  max-height: calc(100svh - 56px);
+  padding-top: 0;
+  margin-top: 0;
+  contain: none;
 }
 .tara-workspace[data-mode="product"] .tara-status-card,
 .tara-workspace[data-mode="product"] .tara-guidance-card {
@@ -594,6 +618,12 @@
   }
   .tara-workspace-grid {
     grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .tara-camera-card {
+    display: block;
+    grid-row: auto;
+    grid-column: auto;
   }
   .tara-camera-card .tara-camera {
     min-height: 350px;
@@ -602,7 +632,16 @@
   .tara-workspace-assistant {
     display: grid;
     grid-template-columns: minmax(200px, 0.8fr) minmax(0, 1.4fr);
+    grid-row: auto;
+    grid-column: auto;
     align-items: start;
+    padding-top: 0;
+    contain: none;
+  }
+  .tara-workspace-assistant > .tara-guidance-card {
+    flex: none;
+    height: 340px;
+    max-height: 55svh;
   }
   .tara-workspace-footer .tara-preview-label {
     justify-content: center;
@@ -629,9 +668,13 @@
     gap: 24px;
   }
   .tara-workspace[data-mode="product"] .tara-workspace-assistant {
+    position: relative;
+    inset: auto;
     gap: 18px;
     order: -1;
     width: 100%;
+    height: auto;
+    max-height: none;
     margin-top: 0;
   }
   .tara-workspace[data-mode="product"] .tara-camera-card {
@@ -663,6 +706,7 @@
     position: relative;
     inset: auto;
     max-width: none;
+    max-height: none;
     margin-top: 12px;
   }
   .tara-workspace[data-mode="product"]

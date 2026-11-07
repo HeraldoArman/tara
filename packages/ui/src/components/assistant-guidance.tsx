@@ -4,7 +4,6 @@ import { Button } from "@tara/ui/components/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -22,9 +21,7 @@ import {
   ArrowUpRightIcon,
   AudioLinesIcon,
   LoaderCircleIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-  TriangleAlertIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 import {
   type ChangeEvent,
@@ -38,39 +35,21 @@ import {
 interface AssistantGuidanceProps {
   readonly children?: ReactNode;
   readonly className?: string;
-  readonly completedSteps?: number;
-  readonly description: string;
-  readonly eyebrow?: string;
-  readonly hint?: string;
+  readonly composer?: ReactNode;
   readonly onViewSop?: () => void;
   readonly source: string;
   readonly status: AssistantState;
-  readonly step: number;
-  readonly title: string;
-  readonly totalSteps: number;
 }
 
 function AssistantGuidance({
   children,
   className,
-  completedSteps,
-  description,
-  eyebrow,
-  hint,
+  composer,
   onViewSop,
   source,
   status,
-  step,
-  title,
-  totalSteps,
 }: AssistantGuidanceProps) {
   const titleId = useId();
-  const isWarning = status === "warning";
-  const GuidanceIcon = isWarning ? TriangleAlertIcon : SparklesIcon;
-  const progress = Math.min(
-    Math.max(completedSteps ?? step - 1, 0),
-    Math.max(totalSteps, 1)
-  );
 
   return (
     <Card
@@ -80,52 +59,30 @@ function AssistantGuidance({
       role="region"
     >
       <CardHeader>
-        <div className="tara-guidance-meta">
-          <p className="tara-eyebrow">
-            <span className="tara-state-dot" /> In the moment
-          </p>
-          <span>
-            Step {step} of {totalSteps}
-          </span>
-        </div>
-        <p className="tara-guidance-eyebrow">
-          <GuidanceIcon aria-hidden="true" />
-          {eyebrow ??
-            (isWarning ? "Before you continue" : "Right here with you")}
-        </p>
         <CardTitle>
-          <h2 id={titleId}>{title}</h2>
+          <h2 id={titleId}>
+            <MessageCircleIcon aria-hidden="true" /> Ask TARA
+          </h2>
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        {hint ? <p className="tara-guidance-hint">{hint}</p> : null}
-        <p className="tara-guidance-source">
-          <ShieldCheckIcon aria-hidden="true" />
-          {source}
-        </p>
+      <CardContent
+        aria-label="Conversation messages"
+        className="tara-chat-scroll"
+        role="region"
+        tabIndex={0}
+      >
         {children}
       </CardContent>
       <CardFooter>
-        <progress
-          aria-label={
-            completedSteps === undefined
-              ? "Steps before the current step"
-              : "Completed steps"
-          }
-          className="tara-step-progress"
-          max={Math.max(totalSteps, 1)}
-          value={progress}
-        />
+        {composer}
         <div className="tara-guidance-footer">
-          <span>One step at a time.</span>
+          <span title={source}>{source}</span>
           {onViewSop ? (
             <Button onClick={onViewSop} size="sm" variant="ghost">
-              View SOP{" "}
-              <ArrowUpRightIcon aria-hidden="true" data-icon="inline-end" />
+              SOP <ArrowUpRightIcon aria-hidden="true" data-icon="inline-end" />
             </Button>
           ) : (
-            <span>SOP-grounded guidance</span>
+            <span>SOP-grounded</span>
           )}
         </div>
       </CardFooter>

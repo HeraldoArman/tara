@@ -1,82 +1,55 @@
 import { Card, CardContent } from "@tara/ui/components/card";
-import { Activity, CircleCheck, Layers, TriangleAlert } from "lucide-react";
-import type { StateCounts } from "./dashboard-data";
-import { formatChange, formatCount } from "./dashboard-format";
+import { Activity, CheckCheck, Layers, TriangleAlert } from "lucide-react";
+import type { Evaluation } from "@/lib/contracts";
+import { formatCount } from "./dashboard-format";
+import { formatRate, recordedCount } from "./owner-dashboard-data";
 
-interface DashboardMetricsProps {
-  days: number;
-  previous: StateCounts;
-  totals: StateCounts;
-}
-
-export function DashboardMetrics({
-  days,
-  previous,
-  totals,
-}: DashboardMetricsProps) {
+export function DashboardMetrics({ summary }: { summary: Evaluation }) {
+  const alerts = recordedCount(summary.alerts);
   const metrics = [
     {
-      description: "Entries into the three states",
+      description: "Execution sessions in the selected scope",
       icon: Layers,
-      label: "All state triggers",
-      previous: previous.active + previous.warning + previous.success,
+      label: "Recorded runs",
       state: "total",
-      value: totals.active + totals.warning + totals.success,
+      value: formatCount(summary.runs),
     },
     {
-      description: "Observation started or resumed",
+      description: "Runs currently active or paused",
       icon: Activity,
-      label: "Active",
-      previous: previous.active,
+      label: "In progress",
       state: "active",
-      value: totals.active,
+      value: formatCount(summary.active),
     },
     {
-      description: "Moments needing attention",
+      description: "Recorded assistant alert outputs",
       icon: TriangleAlert,
-      label: "Warning",
-      previous: previous.warning,
+      label: "Assistant alerts",
       state: "warning",
-      value: totals.warning,
+      value: alerts === null ? "—" : formatCount(alerts),
     },
     {
-      description: "Positive feedback events",
-      icon: CircleCheck,
-      label: "Success",
-      previous: previous.success,
+      description: "First attempts passed or human-attested",
+      icon: CheckCheck,
+      label: "First-pass success",
       state: "success",
-      value: totals.success,
+      value: formatRate(summary.firstPassRate),
     },
   ];
   return (
-    <section aria-label="State trigger totals" className="dash-metrics">
-      {metrics.map(
-        ({
-          state,
-          label,
-          icon: Icon,
-          value,
-          previous: previousValue,
-          description,
-        }) => (
-          <Card className="dash-metric" data-metric={state} key={state}>
-            <CardContent>
-              <div className="dash-metric-heading">
-                <span>{label}</span>
-                <Icon aria-hidden="true" />
-              </div>
-              <strong className="dash-metric-value">
-                {formatCount(value)}
-              </strong>
-              <p className="dash-metric-description">{description}</p>
-              <p className="dash-metric-change">
-                <span>{formatChange(value, previousValue)}</span>vs previous{" "}
-                {days} days
-              </p>
-            </CardContent>
-          </Card>
-        )
-      )}
+    <section aria-label="Recorded operations" className="dash-metrics">
+      {metrics.map(({ state, label, icon: Icon, value, description }) => (
+        <Card className="dash-metric" data-metric={state} key={state}>
+          <CardContent>
+            <div className="dash-metric-heading">
+              <span>{label}</span>
+              <Icon aria-hidden="true" />
+            </div>
+            <strong className="dash-metric-value">{value}</strong>
+            <p className="dash-metric-description">{description}</p>
+          </CardContent>
+        </Card>
+      ))}
     </section>
   );
 }

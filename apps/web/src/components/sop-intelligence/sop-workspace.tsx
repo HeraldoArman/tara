@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from "@tara/ui/components/dialog";
 import {
-  ArrowDownToLine,
   ArrowUpRight,
   CircleHelp,
   FileText,
@@ -23,105 +22,25 @@ import {
   Play,
   ShieldCheck,
   Sparkles,
-  Upload,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  type ChangeEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage, humanize } from "@/lib/api";
-import type { Run, SopVersion, User } from "@/lib/contracts";
-import { sopVersionPath } from "@/lib/sop-version-route";
+import type { Run, User } from "@/lib/contracts";
 import { DocumentPanel } from "./document-panel";
 import { OpportunityPanel } from "./opportunity-panel";
+import { findSourceHighlight } from "./source-highlight";
 import {
   canAssist,
   categoryLabels,
   type Opportunity,
   type OpportunityFilter,
   type SavedSopAnalysis,
-  type SavedSopVersion,
 } from "./types";
-import { UploadDialog } from "./upload-dialog";
-
-function SavedProcedureSelector({
-  canRun,
-  loading,
-  onRefresh,
-  onSelect,
-  onStart,
-  ready,
-  selectedVersion,
-  starting,
-  versionId,
-  versions,
-}: {
-  canRun: boolean;
-  loading: boolean;
-  onRefresh: () => Promise<void>;
-  onSelect: (event: ChangeEvent<HTMLSelectElement>) => void;
-  onStart: () => Promise<void>;
-  ready: boolean;
-  selectedVersion?: SavedSopVersion;
-  starting: boolean;
-  versionId: string;
-  versions: SavedSopVersion[];
-}) {
-  return (
-    <div className="sop-saved-procedure">
-      <label htmlFor="saved-sop-version">Saved SOP</label>
-      <select
-        disabled={starting || !versions.length}
-        id="saved-sop-version"
-        onChange={onSelect}
-        value={versionId}
-      >
-        {versions.length ? null : <option value="">No saved procedures</option>}
-        {versions.map((version) => (
-          <option key={version.id} value={version.id}>
-            {version.key} · {version.title} · v{version.version} ·{" "}
-            {humanize(version.status)} · revision {version.versionNumber}
-          </option>
-        ))}
-      </select>
-      <Button
-        disabled={starting || loading}
-        onClick={onRefresh}
-        variant="outline"
-      >
-        Refresh saved SOPs
-      </Button>
-      {selectedVersion ? (
-        <Link href={sopVersionPath(selectedVersion)}>
-          {selectedVersion.status === "draft"
-            ? "Review draft"
-            : "View controlled version"}
-          <ArrowUpRight aria-hidden="true" />
-        </Link>
-      ) : null}
-      {canRun ? (
-        <Button
-          disabled={
-            !ready || selectedVersion?.status !== "published" || starting
-          }
-          onClick={onStart}
-        >
-          {starting ? <LoaderCircle className="sop-spinner" /> : <Play />}{" "}
-          {starting ? "Starting session…" : "Start session"}
-        </Button>
-      ) : null}
-    </div>
-  );
-}
 
 function SavedProcedureReview({
   analysis,
-  canUpload,
   error,
   filter,
   loading,
@@ -130,7 +49,6 @@ function SavedProcedureReview({
   selectedId,
 }: {
   analysis: SavedSopAnalysis | null;
-  canUpload: boolean;
   error: string;
   filter: OpportunityFilter;
   loading: boolean;
@@ -145,17 +63,19 @@ function SavedProcedureReview({
     return (
       <section className="sop-connected-empty" id="sop-review">
         <FileText aria-hidden="true" />
-        <h2>Your saved procedures appear here.</h2>
+        <h2>No procedure to review yet.</h2>
         <p>
-          {canUpload
-            ? "Upload an approved source to create a reviewable draft, then select a saved version."
-            : "Ask an SOP manager to publish a procedure for your organization."}
+          Open a procedure from the SOP library to explore its source and
+          configured checkpoints.
         </p>
       </section>
     );
   }
   const { opportunities } = analysis;
   const selected = opportunities.find((item) => item.id === selectedId);
+  const highlightedId = findSourceHighlight(analysis.document, selected)
+    ? selectedId
+    : null;
   const assistCount = opportunities.filter((item) =>
     canAssist(item.category)
   ).length;
@@ -241,6 +161,7 @@ function SavedProcedureReview({
         />
         <OpportunityPanel
           filter={filter}
+          highlightedId={highlightedId}
           onFilterChange={onFilterChange}
           onSelect={onSelect}
           opportunities={opportunities}
@@ -253,29 +174,23 @@ function SavedProcedureReview({
 
 export function SopWorkspace({
   initialVersionId,
-  initialVersions,
   role,
 }: {
   initialVersionId: string;
-  initialVersions: SavedSopVersion[];
   role: User["role"];
 }) {
   const router = useRouter();
-  const [versions, setVersions] = useState(initialVersions);
-  const [versionId, setVersionId] = useState(initialVersionId);
+  const versionId = initialVersionId;
   const [analysis, setAnalysis] = useState<SavedSopAnalysis | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<OpportunityFilter>("all");
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(initialVersionId));
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [announcement, setAnnouncement] = useState("");
   const request = useRef<AbortController | null>(null);
-  const canUpload = role === "owner" || role === "sop_manager";
   const canRun = role === "owner" || role === "technician";
-  const selectedVersion = versions.find((version) => version.id === versionId);
   const ready = Boolean(
     analysis && analysis.version.id === versionId && !loading
   );
@@ -296,11 +211,6 @@ export function SopWorkspace({
         return;
       }
       setAnalysis(next);
-      setVersions((previous) =>
-        previous.map((version) =>
-          version.id === next.version.id ? next.version : version
-        )
-      );
       setSelectedId(next.opportunities[0]?.id ?? null);
       setFilter("all");
       setAnnouncement(
@@ -318,73 +228,12 @@ export function SopWorkspace({
   }, []);
 
   useEffect(() => {
-    setVersions(initialVersions);
-    setVersionId((previous) =>
-      initialVersions.some((version) => version.id === previous)
-        ? previous
-        : (initialVersions.find((version) => version.status === "published")
-            ?.id ??
-          initialVersions[0]?.id ??
-          "")
-    );
-  }, [initialVersions]);
-
-  useEffect(() => {
     if (versionId) {
       loadAnalysis(versionId);
     }
     return () => request.current?.abort();
   }, [loadAnalysis, versionId]);
 
-  const selectVersion = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
-    request.current?.abort();
-    setVersionId(event.currentTarget.value);
-    setAnalysis(null);
-    setSelectedId(null);
-    setError("");
-  }, []);
-  const imported = useCallback((version: SopVersion) => {
-    request.current?.abort();
-    const option: SavedSopVersion = {
-      id: version.id,
-      key: version.key ?? version.definition.sopKey ?? "Saved SOP",
-      sopId: version.sopId,
-      status: version.status,
-      title: version.title,
-      version: version.version,
-      versionNumber: version.versionNumber,
-    };
-    setVersions((previous) => [
-      option,
-      ...previous.filter((item) => item.id !== option.id),
-    ]);
-    setVersionId(version.id);
-    setUploadOpen(false);
-  }, []);
-  const exportMap = useCallback(() => {
-    if (!analysis) {
-      return;
-    }
-    const blob = new Blob(
-      [
-        JSON.stringify(
-          { requiresHumanReview: true, schemaVersion: 1, ...analysis },
-          null,
-          2
-        ),
-      ],
-      { type: "application/json" }
-    );
-    const url = URL.createObjectURL(blob);
-    const link = window.document.createElement("a");
-    link.href = url;
-    link.download = `${analysis.document.name}-opportunity-map.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    setAnnouncement(
-      "Saved procedure map exported with source links and configuration labels."
-    );
-  }, [analysis]);
   const startSession = useCallback(async () => {
     if (
       !(canRun && analysis) ||
@@ -410,25 +259,44 @@ export function SopWorkspace({
     }
   }, [analysis, canRun, loading, router, starting, versionId]);
   const openHelp = useCallback(() => setHelpOpen(true), []);
-  const openUpload = useCallback(() => setUploadOpen(true), []);
-  const closeUpload = useCallback(() => setUploadOpen(false), []);
   const reload = useCallback(async () => {
     if (versionId) {
       await loadAnalysis(versionId);
     }
   }, [loadAnalysis, versionId]);
-  const refreshSaved = useCallback(async () => {
-    router.refresh();
-    if (versionId) {
-      await loadAnalysis(versionId);
-    }
-  }, [loadAnalysis, router, versionId]);
-  const selectOpportunity = useCallback((opportunity: Opportunity) => {
-    setSelectedId(opportunity.id);
-    setAnnouncement(
-      `${opportunity.title}. ${categoryLabels[opportunity.category]}. Linked passage highlighted.`
-    );
-  }, []);
+  const selectOpportunity = useCallback(
+    (opportunity: Opportunity) => {
+      setSelectedId(opportunity.id);
+      const linked =
+        analysis && findSourceHighlight(analysis.document, opportunity);
+      const sourceMessage = linked
+        ? "Exact instruction highlighted."
+        : "Exact source text unavailable. Review the saved instruction.";
+      setAnnouncement(
+        `${opportunity.title}. ${categoryLabels[opportunity.category]}. ${sourceMessage}`
+      );
+    },
+    [analysis]
+  );
+  const changeFilter = useCallback(
+    (nextFilter: OpportunityFilter) => {
+      setFilter(nextFilter);
+      const visible = analysis?.opportunities.filter(
+        (item) =>
+          nextFilter === "all" ||
+          canAssist(item.category) === (nextFilter === "assist")
+      );
+      if (visible?.some((item) => item.id === selectedId)) {
+        return;
+      }
+      if (visible?.[0]) {
+        selectOpportunity(visible[0]);
+      } else {
+        setSelectedId(null);
+      }
+    },
+    [analysis, selectedId, selectOpportunity]
+  );
 
   return (
     <div className="tara-assistant sop-workspace sop-workspace-embedded">
@@ -443,8 +311,7 @@ export function SopWorkspace({
             </p>
             <h1 id="sop-title">A little intelligence in every SOP.</h1>
             <p className="sop-intro-description">
-              Select a saved procedure to explore its source and configured
-              checkpoints.
+              Explore this procedure’s source and configured checkpoints.
             </p>
           </div>
           <div className="sop-intro-actions">
@@ -456,35 +323,18 @@ export function SopWorkspace({
             >
               <CircleHelp />
             </Button>
-            <Button
-              disabled={!ready || starting}
-              onClick={exportMap}
-              variant="outline"
-            >
-              <ArrowDownToLine data-icon="inline-start" />
-              Export map
-            </Button>
-            {canUpload ? (
-              <Button disabled={starting} onClick={openUpload}>
-                <Upload data-icon="inline-start" />
-                Upload SOP
+            {canRun && ready ? (
+              <Button
+                disabled={analysis?.version.status !== "published" || starting}
+                onClick={startSession}
+              >
+                {starting ? <LoaderCircle className="sop-spinner" /> : <Play />}
+                {starting ? "Starting session…" : "Start session"}
               </Button>
             ) : null}
           </div>
         </section>
-        <SavedProcedureSelector
-          canRun={canRun}
-          loading={loading}
-          onRefresh={refreshSaved}
-          onSelect={selectVersion}
-          onStart={startSession}
-          ready={ready}
-          selectedVersion={selectedVersion}
-          starting={starting}
-          versionId={versionId}
-          versions={versions}
-        />
-        {selectedVersion?.status === "draft" ? (
+        {ready && analysis?.version.status === "draft" ? (
           <p className="sop-connected-notice">
             This is a saved draft. Review, validate and publish it before
             starting a session.
@@ -512,11 +362,10 @@ export function SopWorkspace({
         ) : null}
         <SavedProcedureReview
           analysis={ready ? analysis : null}
-          canUpload={canUpload}
           error={error}
           filter={filter}
           loading={loading}
-          onFilterChange={setFilter}
+          onFilterChange={changeFilter}
           onSelect={selectOpportunity}
           selectedId={selectedId}
         />
@@ -538,9 +387,6 @@ export function SopWorkspace({
           {announcement}
         </p>
       </div>
-      {uploadOpen && canUpload ? (
-        <UploadDialog onClose={closeUpload} onImported={imported} />
-      ) : null}
       <Dialog onOpenChange={setHelpOpen} open={helpOpen}>
         <DialogContent className="tara-assistant sop-dialog">
           <DialogHeader>
@@ -552,25 +398,27 @@ export function SopWorkspace({
           </DialogHeader>
           <ol className="sop-help-list">
             <li>
-              <strong>Choose a saved procedure.</strong>
+              <strong>Review the procedure.</strong>
               <p>
-                Select the version you want to review. Published procedures are
-                immutable; drafts require review and publication.
+                This view follows the procedure opened from the SOP library.
+                Published versions are immutable; drafts require review and
+                publication.
               </p>
             </li>
             <li>
               <strong>Follow a step to its source.</strong>
               <p>
-                Select a card to highlight its saved passage. Colors describe
-                how that step is configured, not a completed verification.
+                Select a card to highlight only its linked instruction. If an
+                exact excerpt is unavailable, review the saved instruction and
+                its source. Colors describe how that step is configured, not a
+                completed verification.
               </p>
             </li>
             <li>
               <strong>Start approved work.</strong>
               <p>
                 Technicians and owners can start a session from a published
-                procedure. Uploading creates a saved source and draft through
-                the application server.
+                procedure once it has been reviewed and approved.
               </p>
             </li>
           </ol>

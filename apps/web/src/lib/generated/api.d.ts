@@ -1493,6 +1493,13 @@ export interface components {
             capabilities: string[];
             /** Reason */
             reason: string;
+            /** Instruction */
+            instruction?: string | null;
+            /**
+             * Sourcequote
+             * @description Unique verbatim text in sectionId for this flag; null if no precise location resolves.
+             */
+            sourceQuote?: string | null;
         } & {
             [key: string]: unknown;
         };
@@ -1549,6 +1556,11 @@ export interface components {
             heading: string;
             /** Page */
             page?: number | null;
+            /**
+             * Quote
+             * @description A verbatim excerpt specific to this step, unique within the cited section.
+             */
+            quote?: string | null;
         };
         /** UserResponse */
         UserResponse: {

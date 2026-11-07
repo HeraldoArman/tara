@@ -1,0 +1,358 @@
+# TARA — Project Context & Product Brief
+
+## 1. Project Overview
+
+**Product Name:** TARA  
+**Positioning:** AI-Powered Operational Intelligence & Workforce Assistant  
+**Tagline:** Intelligence in Every Operation.  
+**Context:** Sea × OpenAI Regional Codex Hackathon Indonesia 2026.
+
+TARA is an AI-powered platform that transforms static Standard Operating Procedures (SOPs) into intelligent, executable workflows.
+
+It connects two sides of business operations:
+
+1. **Management Layer (Head):** Enables company heads to upload and manage SOPs, understand AI opportunities within their operational processes, and monitor whether employees are following established procedures.
+2. **Execution Layer (Employee):** Provides frontline workers with a real-time AI assistant that guides them through operational tasks, observes their actions, verifies critical checkpoints, and helps them correct mistakes.
+
+The central idea is to close the gap between what an SOP says and what actually happens during operational execution.
+
+TARA is not simply an SOP summarizer, checklist application, generic chatbot, or object detection system. Its differentiation lies in connecting SOP understanding, AI opportunity mapping, real-time visual assistance, deterministic verification, and operational monitoring.
+
+---
+
+## 2. The Problem
+
+Companies often rely on static SOP documents, PDFs, manuals, and checklists to standardize operational processes.
+
+However:
+- Employees must interpret lengthy documents themselves.
+- Critical steps and dependencies can be overlooked.
+- Procedures may be executed incorrectly or out of sequence.
+- Operational deviations may go unnoticed until after execution.
+- Supervisors lack real-time visibility into SOP adherence.
+- Operational evidence and corrective actions are often inconsistently recorded.
+- Organizations may not understand which parts of their existing workflows could benefit from AI.
+
+TARA addresses these issues by converting documented procedures into executable workflows and supporting employees during actual execution, while giving management visibility into operational performance.
+
+---
+
+## 3. Core Product Capabilities
+
+### A. SOP Intelligence
+
+Company heads can upload existing SOP documents, such as PDF or DOCX files.
+
+TARA analyzes the documents and extracts:
+- Workflow steps and task descriptions.
+- Step dependencies and prerequisites.
+- Expected outcomes.
+- Critical checkpoints.
+- Risks and safety requirements.
+- Verification criteria.
+- Exception-handling procedures.
+
+The result is a structured workflow that can be reviewed and used for operational execution.
+
+The uploaded SOP remains the source of truth. TARA should not invent requirements or verification criteria that are not grounded in the document.
+
+### B. AI Opportunity Mapping
+
+After understanding the SOP, TARA identifies opportunities to improve operational workflows through AI.
+
+Each task can be categorized into:
+1. Human-performed.
+2. AI-assisted.
+3. AI-verified.
+4. Automated.
+5. Human approval required.
+
+TARA explains why a task could benefit from AI, which AI capability may be useful (e.g., computer vision, OCR, barcode recognition, LLM), and where human oversight is still necessary.
+
+This feature helps companies understand how AI can improve their existing operations rather than simply adding AI for the sake of it.
+
+### C. Real-Time AI Workforce Assistant
+
+Employees use TARA while performing actual operational tasks.
+
+The assistant:
+- Displays the current SOP step.
+- Provides contextual instructions.
+- Observes the working environment through a webcam or camera.
+- Detects relevant visual evidence using computer vision.
+- Checks whether required conditions have been satisfied.
+- Alerts employees when something is missing, incorrect, or out of sequence.
+- Guides them through corrective actions.
+- Re-verifies the task after correction.
+
+The experience should be proactive and context-aware rather than a conventional chatbot conversation.
+
+The assistant should focus on the current operational context and relevant instruction, not a traditional chat history.
+
+### D. Operational Monitoring & Compliance
+
+Company heads can monitor operational execution at a high level.
+
+They should be able to understand:
+- How many employees are executing assigned SOPs.
+- Which workflows have been completed.
+- Whether critical checkpoints have been verified.
+- Which procedures have deviations.
+- Which alerts require attention.
+- Historical execution records and audit trails.
+- Overall SOP adherence across operational activities.
+
+The goal is to give management visibility into whether procedures are actually being followed, not merely whether employees have opened or started an SOP.
+
+Compliance metrics must be grounded in actual verification records. Missing visual evidence should not automatically be classified as a violation.
+
+---
+
+## 4. Main User Roles
+
+TARA has two primary user roles.
+
+### Head / Company Management
+
+Responsible for establishing and monitoring operational standards.
+
+Main capabilities:
+- Upload company SOPs.
+- Review and manage extracted workflows.
+- View AI Opportunity Mapping.
+- Make workflows available to employees.
+- Monitor workforce execution.
+- Review compliance, deviations, and alerts.
+- Access operational reports and audit records.
+
+### Employee / Frontline Worker
+
+Responsible for executing operational tasks.
+
+Main capabilities:
+- Access assigned SOPs and workflows.
+- Start a task with TARA.
+- Receive real-time contextual instructions.
+- Use camera-assisted task verification.
+- Respond to alerts and correct deviations.
+- Complete tasks and access execution history.
+
+Both roles use the same underlying SOP and operational data. Their access permissions and primary experiences differ.
+
+---
+
+## 5. Main User Flow
+
+### A. Public Entry
+
+1. User visits the TARA landing page.
+2. Landing page explains the product and its value proposition.
+3. User clicks the primary CTA, such as "Start TARA".
+4. User is redirected to the login or sign-up page.
+5. After authentication, TARA identifies the user's role.
+
+### B. First-Time Access — Head
+
+For a head accessing TARA for the first time:
+
+1. Login / Sign Up.
+2. Role identification as Head.
+3. Initial SOP setup.
+4. Upload an existing company SOP (PDF/DOCX).
+5. TARA analyzes the document and generates a structured workflow.
+6. TARA identifies critical checkpoints, risks, prerequisites, and verification criteria.
+7. TARA generates an AI Opportunity Map.
+8. Head reviews and confirms the generated workflow.
+9. The workflow becomes available for operational execution.
+10. Head enters the Admin Dashboard.
+
+The initial setup only occurs when the company or head has not yet configured an SOP. Returning users should go directly to their dashboard.
+
+### C. Returning Access — Head
+
+1. Login.
+2. Redirect to the Admin Dashboard.
+3. View operational overview.
+4. Monitor employee execution and SOP adherence.
+5. Review deviations, alerts, and historical activity.
+6. Upload new SOPs or update existing ones when needed.
+
+### D. Employee Access
+
+1. Login.
+2. Redirect to Employee Home / My Tasks.
+3. View available or assigned workflows.
+4. Select an operational task.
+5. Start TARA's Real-Time Assistant.
+6. Execute the SOP with live assistance.
+7. Receive verification results and corrective instructions.
+8. Complete the workflow.
+9. Execution records are saved and made available for management monitoring.
+
+---
+
+## 6. Real-Time Assistant — Operational State Concept
+
+The real-time assistant has four main visual and operational states:
+
+1. **Sleep:** TARA is idle or waiting for a task to begin.
+2. **Active:** TARA is observing the environment and verifying the current SOP step.
+3. **Warning:** TARA detects a mismatch, missing requirement, deviation, or condition that needs attention.
+4. **Success:** A checkpoint has been successfully verified.
+
+These states represent the current operational condition and should be reflected in the assistant's behavior.
+
+A successful checkpoint should generally transition back to Active when the workflow continues. A fully completed workflow should have its own completion state.
+
+### Two Assistant Modes
+
+**Demo Mode**
+- Designed for presentations and hackathon demonstrations.
+- Camera feed is the primary focus.
+- Contextual assistant instructions are displayed alongside the video.
+- Makes it easy for observers to understand the relationship between visual observations and AI responses.
+
+**Product Mode**
+- Designed for actual employee use.
+- Instructions and contextual guidance are the primary focus.
+- Camera feed is secondary.
+- Helps workers concentrate on the task and the next required action.
+
+Both modes use the same underlying execution engine and verification logic.
+
+---
+
+## 7. Technical Architecture & AI Principles
+
+TARA combines several technologies with clearly separated responsibilities.
+
+### SOP Processing
+- PDF/DOCX extraction.
+- LLM-based semantic understanding.
+- Structured workflow generation.
+- JSON representation of tasks, dependencies, risks, and criteria.
+
+### AI Opportunity Mapping
+- LLM-based task analysis.
+- Recommendation of appropriate AI capabilities.
+- Identification of tasks requiring human oversight.
+
+### Computer Vision
+- Webcam-based visual observation.
+- Object detection and classification.
+- OCR and barcode recognition.
+- Visual state detection.
+- Temporal tracking where necessary.
+
+### Deterministic SOP Execution Engine
+
+This is a critical part of TARA.
+
+The LLM must not independently decide whether a safety-critical procedure is compliant.
+
+A deterministic state machine or rule engine evaluates:
+- Prerequisites.
+- Workflow order.
+- Verification criteria.
+- Evidence sufficiency.
+- Exceptions.
+- Conditions for advancing or blocking a step.
+
+Possible states include:
+- `pending`
+- `in_progress`
+- `verified`
+- `not_evidenced`
+- `contradicted`
+- `needs_verification`
+- `blocked`
+- `requires_approval`
+
+The system must distinguish between missing evidence and evidence that contradicts a requirement. If visual evidence is insufficient, TARA should request human verification instead of making unsupported claims.
+
+### LLM Guidance
+
+The LLM translates system states and SOP requirements into natural-language instructions.
+
+It guides employees but does not own deterministic compliance decisions.
+
+### Audit Trail
+
+Record:
+- Task initiation.
+- Step transitions.
+- Verification results.
+- Alerts.
+- Corrective actions.
+- Approval events.
+- Task completion.
+
+Prefer storing relevant evidence snapshots and event records instead of continuously storing raw video by default.
+
+---
+
+## 8. Hackathon MVP Scope
+
+The goal is to build one complete, reliable end-to-end operational scenario.
+
+Essential capabilities:
+1. Head login and initial SOP upload.
+2. SOP extraction and workflow generation.
+3. AI Opportunity Mapping.
+4. Head dashboard with basic operational monitoring.
+5. Employee login and workflow selection.
+6. Real-time assistant with webcam access.
+7. Detection of two or three relevant visual conditions.
+8. Deterministic verification and workflow state transitions.
+9. Contextual warnings and corrective instructions.
+10. Completion summary and audit record.
+11. Management visibility into employee execution results.
+
+Prioritize reliability and a compelling demonstration over feature quantity.
+
+Avoid unnecessary complexity such as:
+- Complex enterprise RBAC.
+- Multiple organizational hierarchies.
+- Advanced analytics.
+- Agent marketplaces.
+- Fully autonomous agent execution.
+- Multiple partially implemented operational scenarios.
+
+---
+
+## 9. Product Differentiation
+
+TARA connects five capabilities:
+
+1. **Understand:** Convert static SOP documents into structured operational workflows.
+2. **Optimize:** Identify opportunities for AI assistance and automation.
+3. **Observe:** Monitor relevant physical-world evidence during execution.
+4. **Verify:** Evaluate task completion against deterministic SOP requirements.
+5. **Monitor:** Give management visibility into execution quality, deviations, and compliance.
+
+The central product thesis:
+
+**TARA closes the gap between what an SOP says and what actually happens on the operational floor.**
+
+It connects management's operational standards with employees' real-world execution.
+
+---
+
+## 10. Instructions for the AI Assistant Working on This Project
+
+Act as a critical product strategist, senior software architect, AI engineer, and product development partner.
+
+When helping with TARA:
+- Understand the product vision before proposing solutions.
+- Challenge assumptions instead of agreeing automatically.
+- Prioritize hackathon feasibility and demo reliability.
+- Keep the architecture technically credible.
+- Distinguish MVP requirements from future roadmap features.
+- Avoid unnecessary enterprise complexity.
+- Consider both management and employee experiences.
+- Ensure all features connect to the central product thesis.
+- Do not change TARA into a generic AI workflow automation tool.
+- Give practical, concrete recommendations.
+- Identify risks, dependencies, and implementation trade-offs.
+
+The ultimate goal is to build a polished, credible AI operational intelligence platform that connects company SOP management, real-time workforce assistance, and high-level operational monitoring.
