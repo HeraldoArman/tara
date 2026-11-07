@@ -49,6 +49,15 @@ Import shared components like this:
 import { Button } from "@tara/ui/components/button";
 ```
 
+### Real-time assistant components
+
+Open [the assistant preview](http://localhost:3001/assistant) after starting the web app.
+It composes the shared TARA status, guidance, controls, verification badge, and task-step
+components with a simulated keyboard or a local webcam preview. Demo and Product layouts
+use the same presentation state. This page does not connect to AI or submit execution records.
+
+See [the component guide](docs/12-assistant-components.md) for imports, ownership, and integration boundaries.
+
 ### Add app-specific blocks
 
 If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.

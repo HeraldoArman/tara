@@ -1,0 +1,615 @@
+.tara-assistant {
+  --tara-ink: #243049;
+  --tara-muted: #65738b;
+  --tara-border: #e7ebf4;
+  --tara-surface: #ffffff;
+  --tara-canvas: #fafbfe;
+  --tara-active: #4758db;
+  --tara-sleep: #495b83;
+  --tara-warning: #c1374b;
+  --tara-success: #1d7c5c;
+  --tara-accent: var(--tara-active);
+  --tara-accent-soft: #eef1ff;
+  --background: var(--tara-surface);
+  --foreground: var(--tara-ink);
+  --card: var(--tara-surface);
+  --card-foreground: var(--tara-ink);
+  --primary: var(--tara-accent);
+  --primary-foreground: #ffffff;
+  --muted: #f1f4fa;
+  --muted-foreground: var(--tara-muted);
+  --border: var(--tara-border);
+  --input: var(--tara-border);
+  --ring: var(--tara-accent);
+  color: var(--tara-ink);
+  color-scheme: light;
+}
+
+.tara-assistant[data-state="sleep"],
+.tara-assistant [data-state="sleep"] {
+  --tara-accent: var(--tara-sleep);
+  --tara-accent-soft: #eef0f6;
+}
+
+.tara-assistant[data-state="active"],
+.tara-assistant [data-state="active"] {
+  --tara-accent: var(--tara-active);
+  --tara-accent-soft: #eef1ff;
+}
+
+.tara-assistant[data-state="warning"],
+.tara-assistant [data-state="warning"] {
+  --tara-accent: var(--tara-warning);
+  --tara-accent-soft: #fff0f2;
+}
+
+.tara-assistant[data-state="success"],
+.tara-assistant [data-state="success"] {
+  --tara-accent: var(--tara-success);
+  --tara-accent-soft: #eaf7f1;
+}
+
+.tara-assistant-mark {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: var(--tara-accent);
+  transform: rotate(16deg);
+}
+
+.tara-assistant-mark > span {
+  display: block;
+  width: 4px;
+  height: 17px;
+  background: currentColor;
+  border-radius: 3px;
+}
+
+.tara-assistant-mark > span:nth-child(2) {
+  height: 29px;
+}
+
+.tara-assistant-mark > span:nth-child(3) {
+  height: 24px;
+}
+
+.tara-eyebrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--tara-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.tara-state-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  background: var(--tara-accent);
+  border-radius: 50%;
+}
+
+.tara-status-card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  gap: 22px;
+  align-items: center;
+  min-height: 158px;
+  padding: 27px;
+  overflow: hidden;
+  background: linear-gradient(
+    112deg,
+    var(--tara-surface) 10%,
+    var(--tara-accent-soft)
+  );
+  border: 1px solid var(--tara-border);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px #344b6b04;
+}
+
+.tara-status-card > [data-slot="card-header"] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 0;
+}
+
+.tara-status-card [data-slot="card-description"] {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--tara-muted);
+}
+
+.tara-status-title {
+  margin: 0;
+  font-size: 29px;
+  font-weight: 450;
+  line-height: 1.2;
+  color: var(--tara-accent);
+  letter-spacing: -0.055em;
+}
+
+.tara-status-orb {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  background: radial-gradient(
+    circle at 30% 20%,
+    #ffffff 10%,
+    var(--tara-accent-soft) 62%,
+    color-mix(in srgb, var(--tara-accent) 27%, #ffffff)
+  );
+  border: 1px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--tara-accent) 12%, transparent);
+}
+
+.tara-status-orb::before {
+  position: absolute;
+  inset: -8px;
+  content: "";
+  border: 1px solid color-mix(in srgb, var(--tara-accent) 10%, transparent);
+  border-radius: inherit;
+}
+
+.tara-status-spark {
+  position: absolute;
+  top: 20px;
+  right: 21px;
+  width: 16px;
+  height: 16px;
+  color: var(--tara-accent);
+  opacity: 0.3;
+}
+
+.tara-segmented-control {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  min-width: 0;
+  padding: 4px;
+  margin: 0;
+  background: color-mix(in srgb, var(--tara-surface) 91%, transparent);
+  border: 1px solid var(--tara-border);
+  border-radius: 15px;
+  box-shadow: 0 4px 24px #33466a04;
+}
+
+.tara-segmented-control > label {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.tara-segmented-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.tara-segmented-control :where(label) > span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--tara-muted);
+  border-radius: 11px;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.tara-segmented-control :where(label > span) > svg {
+  width: 15px;
+  height: 15px;
+}
+
+.tara-segmented-control :where(input:checked) + span {
+  color: var(--tara-accent);
+  background: var(--tara-accent-soft);
+}
+
+.tara-segmented-control :where(input:focus-visible) + span {
+  outline: 2px solid var(--tara-accent);
+  outline-offset: 2px;
+}
+
+.tara-segmented-control :where(label:hover) > span {
+  background: var(--tara-accent-soft);
+}
+
+.tara-mode-control {
+  --tara-accent: var(--tara-active);
+  --tara-accent-soft: #eef1ff;
+}
+
+.tara-mode-control :where(label) > span {
+  min-height: 39px;
+  padding-inline: 15px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tara-state-control :where(label) > span {
+  padding-inline: 9px;
+  font-size: 10px;
+}
+
+.tara-guidance-card {
+  display: flex;
+  gap: 22px;
+  padding: 25px 23px 19px;
+  background: var(--tara-surface);
+  border: 1px solid var(--tara-border);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px #344b6b04;
+}
+
+.tara-guidance-card > [data-slot="card-header"],
+.tara-guidance-card > [data-slot="card-content"],
+.tara-guidance-card > [data-slot="card-footer"] {
+  padding: 0;
+}
+
+.tara-guidance-card > [data-slot="card-header"] {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tara-guidance-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.tara-guidance-meta > span {
+  font-size: 10px;
+  color: var(--tara-muted);
+  white-space: nowrap;
+}
+
+.tara-guidance-eyebrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tara-accent);
+}
+
+.tara-guidance-eyebrow svg,
+.tara-guidance-source svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.tara-guidance-card [data-slot="card-title"] h2 {
+  margin: 0;
+  font-size: clamp(25px, 2.15vw, 35px);
+  font-weight: 450;
+  line-height: 1.2;
+  color: var(--tara-ink);
+  letter-spacing: -0.055em;
+}
+
+.tara-guidance-card [data-slot="card-description"] {
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--tara-muted);
+}
+
+.tara-guidance-hint {
+  padding: 13px 15px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.75;
+  color: var(--tara-accent);
+  background: color-mix(in srgb, var(--tara-accent-soft) 65%, #ffffff);
+  border-left: 2px solid color-mix(in srgb, var(--tara-accent) 50%, #ffffff);
+  border-radius: 0 9px 9px 0;
+}
+
+.tara-guidance-source {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin: 17px 0 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  line-height: 1.7;
+  color: var(--tara-muted);
+}
+
+.tara-guidance-card > [data-slot="card-footer"] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  border: 0;
+}
+
+.tara-step-progress {
+  display: block;
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+  color: var(--tara-accent);
+  appearance: none;
+  background: var(--tara-border);
+  border: 0;
+}
+
+.tara-step-progress::-webkit-progress-bar {
+  background: var(--tara-border);
+}
+
+.tara-step-progress::-webkit-progress-value {
+  background: var(--tara-accent);
+}
+
+.tara-step-progress::-moz-progress-bar {
+  background: var(--tara-accent);
+}
+
+.tara-guidance-footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+
+.tara-guidance-footer [data-slot="button"] {
+  min-height: 30px;
+  padding-inline: 0;
+  font-size: 10px;
+  color: var(--tara-muted);
+  border-radius: 6px;
+}
+
+.tara-reply-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  margin-top: 27px;
+}
+
+.tara-composer-status {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--tara-muted);
+  text-align: center;
+}
+
+.tara-composer-status svg {
+  flex-shrink: 0;
+  width: 21px;
+  height: 21px;
+  color: var(--tara-accent);
+}
+
+.tara-reply-composer [data-slot="input-group"] {
+  min-height: 49px;
+  background: var(--tara-surface);
+  border-color: var(--tara-border);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.tara-reply-composer [data-slot="input-group-control"] {
+  min-height: 45px;
+  padding-inline: 13px;
+  font-size: 12px;
+  color: var(--tara-ink);
+}
+
+.tara-reply-composer [data-slot="input-group-control"]::placeholder {
+  color: var(--tara-muted);
+}
+
+.tara-reply-composer [data-slot="input-group-addon"] {
+  padding: 5px;
+}
+
+.tara-reply-composer [data-slot="button"] {
+  width: 33px;
+  height: 33px;
+  margin: 0;
+  color: #ffffff;
+  background: var(--tara-accent);
+  border-radius: 10px;
+}
+
+.tara-media-controls {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  width: fit-content;
+  min-width: 0;
+  padding: 6px;
+  margin: 0;
+  background: #f1f4f9e8;
+  border: 1px solid #ffffff80;
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+}
+
+.tara-media-controls [data-slot="button"] {
+  min-height: 32px;
+  font-size: 11px;
+  color: #354560;
+  border-radius: 9px;
+}
+
+.tara-media-controls [data-slot="button"]:hover {
+  background: #ffffffa8;
+}
+
+.tara-control-divider {
+  width: 1px;
+  height: 16px;
+  margin-inline: 3px;
+  background: #c7d0df;
+}
+
+.tara-task-step {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 23px 17px;
+  color: var(--tara-ink);
+}
+
+.tara-task-step-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--tara-accent);
+  background: var(--tara-accent-soft);
+  border-radius: 12px;
+}
+
+.tara-task-step-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.tara-task-step-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.tara-task-step-copy h3 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.tara-task-step-copy p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--tara-muted);
+}
+
+.tara-verification-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 5px;
+  align-items: center;
+  max-width: 100%;
+  padding: 5px 8px;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--tara-muted);
+  background: #f8f9fc;
+  border: 1px solid var(--tara-border);
+  border-radius: 7px;
+}
+
+.tara-verification-badge svg {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.tara-verification-badge[data-verification="verified"] {
+  color: #207355;
+  background: #eaf7f1;
+  border-color: #d0eade;
+}
+
+.tara-verification-badge[data-verification="contradicted"],
+.tara-verification-badge[data-verification="blocked"] {
+  color: #bb3449;
+  background: #fff0f2;
+  border-color: #f5dce0;
+}
+
+.tara-verification-badge[data-verification="in_progress"] {
+  color: #4d5cd0;
+  background: #eef1ff;
+  border-color: #dce2fb;
+}
+
+@media (max-width: 600px) {
+  .tara-status-card {
+    min-height: 130px;
+    padding: 22px;
+  }
+
+  .tara-guidance-card {
+    padding: 23px 20px 16px;
+  }
+
+  .tara-task-step {
+    flex-wrap: wrap;
+    padding: 17px 9px;
+  }
+
+  .tara-task-step > .tara-verification-badge {
+    margin-left: 51px;
+  }
+
+  .tara-mode-control {
+    width: 100%;
+  }
+
+  .tara-mode-control > label {
+    flex: 1;
+  }
+
+  .tara-segmented-control :where(label) > span {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tara-assistant *,
+  .tara-assistant *::before,
+  .tara-assistant *::after {
+    transition: none;
+    animation: none;
+  }
+}
