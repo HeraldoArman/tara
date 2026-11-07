@@ -78,13 +78,7 @@ interface AssistantStateControlProps {
   value: AssistantStateSelection;
 }
 
-const stateSelections = [
-  "auto",
-  "sleep",
-  "active",
-  "warning",
-  "success",
-] as const;
+const stateSelections = ["auto", "sleep", "active", "warning"] as const;
 
 function AssistantStateControl({
   className,
@@ -92,6 +86,10 @@ function AssistantStateControl({
   value,
 }: AssistantStateControlProps) {
   const name = useId();
+  const previewSuccess = useCallback(
+    () => onValueChange("success"),
+    [onValueChange]
+  );
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const nextState = event.currentTarget.value;
@@ -100,7 +98,6 @@ function AssistantStateControl({
         case "sleep":
         case "active":
         case "warning":
-        case "success":
           onValueChange(nextState);
           break;
         default:
@@ -132,6 +129,18 @@ function AssistantStateControl({
           </span>
         </label>
       ))}
+      <Button
+        className="tara-success-trigger"
+        data-active={value === "success"}
+        data-state="success"
+        onClick={previewSuccess}
+        title="Preview Success, then return to Active"
+        type="button"
+        variant="ghost"
+      >
+        <span aria-hidden="true" className="tara-state-dot" />
+        Success
+      </Button>
     </fieldset>
   );
 }

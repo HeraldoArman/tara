@@ -6,13 +6,13 @@
   background:
     radial-gradient(
       ellipse at 100% 0%,
-      var(--tara-accent-soft),
-      transparent 38%
+      color-mix(in srgb, var(--tara-accent) 32%, transparent),
+      transparent 56%
     ),
     radial-gradient(
       ellipse at 0% 100%,
-      var(--tara-accent-soft),
-      transparent 35%
+      color-mix(in srgb, var(--tara-accent) 25%, transparent),
+      transparent 52%
     ),
     var(--tara-canvas);
   isolation: isolate;
@@ -337,7 +337,7 @@
   z-index: 0;
 }
 .tara-workspace[data-mode="product"] .tara-camera__keyboard {
-  width: calc(100% - 290px);
+  width: 100%;
 }
 .tara-workspace[data-mode="product"] .tara-camera__heading {
   top: 170px;

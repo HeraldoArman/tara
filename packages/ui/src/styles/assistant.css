@@ -257,6 +257,24 @@
   font-size: 10px;
 }
 
+.tara-success-trigger[data-slot="button"] {
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--tara-success);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--tara-success) 20%, transparent);
+  border-radius: 11px;
+}
+
+.tara-success-trigger[data-slot="button"]:hover,
+.tara-success-trigger[data-slot="button"][data-active="true"] {
+  background: var(--tara-accent-soft);
+  border-color: color-mix(in srgb, var(--tara-success) 45%, transparent);
+}
+
 .tara-guidance-card {
   display: flex;
   gap: 22px;

@@ -72,10 +72,16 @@ Missing evidence is visually distinct from a contradicted requirement.
 ## Preview behavior
 
 - **Demo:** camera and contextual guidance sit side by side, stacking on smaller screens.
-- **Product:** guidance floats over the full work area on desktop; on narrow screens,
-  guidance appears before the camera so it remains readable.
-- **Appearance selector:** previews four visual states. Auto restores Active. No state
-  selection changes the verification result or generates audit events.
+- **Product:** translucent liquid-glass overlays keep the camera visible beneath guidance
+  and controls on desktop. On narrow screens, guidance appears before the camera so it
+  remains readable. State-colored light strengthens the workspace edges without covering
+  the center of the camera.
+- **Appearance selector:** selects Sleep, Active, or Warning. Auto restores Active.
+  Success is a momentary button: it shows green for three seconds, then returns to Active.
+  Pressing it again restarts the interval. Selecting another state or pausing cancels the
+  return timer; switching layouts preserves it. No appearance control changes the
+  verification result or generates audit events. The shared control emits `"success"`
+  through its existing `onValueChange` callback; the owning application controls timing.
 - **Sleep/Pause:** hides the consultation panel but retains the current instruction,
   verification label, and source access. The local video and elapsed-view timer continue.
 - **Ask TARA:** explicitly enables the text composer. The local response is labeled sample

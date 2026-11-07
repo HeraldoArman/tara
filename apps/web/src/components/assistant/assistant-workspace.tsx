@@ -2,6 +2,7 @@
 
 import "@tara/ui/assistant.css";
 import "./assistant-workspace.css";
+import "./product-glass.css";
 
 import {
   AssistantModeControl,
@@ -33,12 +34,14 @@ import {
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CameraPreview } from "./camera-preview";
 import { previewGuidance, previewTask } from "./preview-data";
 import { type PreviewDetail, PreviewDetails } from "./preview-details";
 import { useCamera } from "./use-camera";
+
+const SUCCESS_PREVIEW_DURATION_MS = 3000;
 
 function resolvePreviewState(
   selection: AssistantStateSelection,
@@ -57,6 +60,7 @@ export function AssistantWorkspace() {
   const [consultation, setConsultation] = useState(false);
   const [replied, setReplied] = useState(false);
   const [detail, setDetail] = useState<PreviewDetail>(null);
+  const successTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const camera = useCamera();
   const status = resolvePreviewState(selection, paused);
   const resting = status === "sleep";
@@ -65,22 +69,45 @@ export function AssistantWorkspace() {
       ? "Your camera stays local to this browser. No AI visual check has been performed, and this step is still waiting for evidence."
       : previewGuidance.hint;
 
-  const changeState = useCallback((value: AssistantStateSelection) => {
-    setSelection(value);
-    setPaused(false);
-    if (value === "sleep") {
-      setConsultation(false);
+  const clearSuccessTimeout = useCallback(() => {
+    if (successTimeout.current !== null) {
+      clearTimeout(successTimeout.current);
+      successTimeout.current = null;
     }
   }, []);
 
-  const changePause = useCallback((value: boolean) => {
-    setPaused(value);
-    if (value) {
-      setConsultation(false);
-    } else {
-      setSelection("auto");
-    }
-  }, []);
+  useEffect(() => clearSuccessTimeout, [clearSuccessTimeout]);
+
+  const changeState = useCallback(
+    (value: AssistantStateSelection) => {
+      clearSuccessTimeout();
+      setSelection(value);
+      setPaused(false);
+      if (value === "sleep") {
+        setConsultation(false);
+      }
+      if (value === "success") {
+        successTimeout.current = setTimeout(() => {
+          setSelection("active");
+          successTimeout.current = null;
+        }, SUCCESS_PREVIEW_DURATION_MS);
+      }
+    },
+    [clearSuccessTimeout]
+  );
+
+  const changePause = useCallback(
+    (value: boolean) => {
+      clearSuccessTimeout();
+      setPaused(value);
+      if (value) {
+        setConsultation(false);
+      } else {
+        setSelection("auto");
+      }
+    },
+    [clearSuccessTimeout]
+  );
 
   const { startCamera, stopCamera } = camera;
   const changeSource = useCallback(

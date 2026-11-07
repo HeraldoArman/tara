@@ -101,8 +101,9 @@ export function PreviewDetails({
             guidance over the camera view.
           </p>
           <p>
-            The state selector previews Sleep, Active, Warning, and Success.
-            Auto returns to the default active preview. It never changes the
+            The state selector previews Sleep, Active, and Warning. The Success
+            button shows green for three seconds, then returns to Active. Auto
+            restores the default active preview. These controls never change the
             step’s verification status.
           </p>
           <p>
