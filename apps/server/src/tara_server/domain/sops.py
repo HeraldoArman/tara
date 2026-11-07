@@ -1,5 +1,6 @@
 import asyncio
 import io
+import logging
 import re
 from datetime import UTC, datetime
 
@@ -21,6 +22,8 @@ from tara_server.telemetry import instrument
 
 WORDS = re.compile(r"[\w-]+", re.UNICODE)
 HEADINGS = re.compile(r"^#{1,6}\s+(.+)$", re.MULTILINE)
+SOP_DECOMPOSITION_TIMEOUT_SECONDS = 60.0
+logger = logging.getLogger(__name__)
 
 
 def validate_definition(definition: dict, sections: list[dict]) -> list[str]:
@@ -165,6 +168,59 @@ def extract_sections(filename: str, content: bytes) -> list[dict]:
     return sections
 
 
+def drafting_error(reason: str, message: str, upstream_status: int | None = None) -> DomainError:
+    # Provider bodies and exception strings can contain source text or credentials.
+    logger.warning(
+        "SOP draft generation failed: reason=%s upstream_status=%s", reason, upstream_status
+    )
+    details: dict = {"reason": reason}
+    if upstream_status is not None:
+        details["upstreamStatus"] = upstream_status
+    return DomainError(
+        "TIMEOUT" if reason == "timeout" else "PROVIDER_UNAVAILABLE",
+        message,
+        504 if reason == "timeout" else 503,
+        details,
+    )
+
+
+def parse_draft_response(data: object) -> SOPDefinition:
+    if not isinstance(data, dict):
+        raise ValueError("Invalid response envelope")
+    if data.get("status") != "completed":
+        raise drafting_error(
+            "incomplete",
+            "AI drafting stopped before completing the procedure. "
+            "Your source is saved; retry draft generation or split it into smaller procedures.",
+        )
+    output = data.get("output")
+    if not isinstance(output, list):
+        raise ValueError("Invalid output envelope")
+    text = []
+    for item in output:
+        if not isinstance(item, dict):
+            raise ValueError("Invalid output item")
+        if "content" not in item:
+            continue
+        content = item["content"]
+        if not isinstance(content, list):
+            raise ValueError("Invalid content envelope")
+        for part in content:
+            if not isinstance(part, dict):
+                raise ValueError("Invalid content item")
+            if part.get("type") == "refusal":
+                raise drafting_error(
+                    "refusal",
+                    "The AI provider could not draft this source. "
+                    "Your source is saved; review the document before retrying.",
+                )
+            if part.get("type") == "output_text":
+                if not isinstance(part.get("text"), str):
+                    raise ValueError("Invalid draft text")
+                text.append(part["text"])
+    return SOPDefinition.model_validate_json("".join(text))
+
+
 @instrument("decompose")
 async def decompose(sections: list[dict]) -> SOPDefinition:
     settings = get_settings()
@@ -185,41 +241,71 @@ async def decompose(sections: list[dict]) -> SOPDefinition:
         "from supplied sections. Do not invent steps or procedures not supported by source."
     )
     try:
-        async with httpx.AsyncClient(timeout=45) as client:
-            response = await client.post(
-                "https://api.openai.com/v1/responses",
-                headers={"Authorization": f"Bearer {settings.sop_openai_api_key}"},
-                json={
-                    "model": settings.sop_model,
-                    # Source-grounded extraction uses the lowest supported Sol effort.
-                    "reasoning": {"effort": "low"},
-                    "store": False,
-                    "instructions": instructions,
-                    "input": json.dumps(
-                        {
-                            "task": "Return a JSON SOPDefinition draft from these source sections.",
-                            "sections": sections,
-                        }
-                    ),
-                    "text": {"format": {"type": "json_object"}},
-                },
-            )
+        # Leave 15 seconds for storage/DB under the 95-second proxy deadline,
+        # even when extraction consumes its full 20-second allowance.
+        async with asyncio.timeout(SOP_DECOMPOSITION_TIMEOUT_SECONDS):
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(SOP_DECOMPOSITION_TIMEOUT_SECONDS, connect=5.0)
+            ) as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/responses",
+                    headers={"Authorization": f"Bearer {settings.sop_openai_api_key}"},
+                    json={
+                        "model": settings.sop_model,
+                        # Source-grounded extraction uses the lowest supported Sol effort.
+                        "reasoning": {"effort": "low"},
+                        "store": False,
+                        "instructions": instructions,
+                        "input": json.dumps(
+                            {
+                                "task": "Return a JSON SOPDefinition draft from these source sections.",
+                                "sections": sections,
+                            }
+                        ),
+                        "text": {"format": {"type": "json_object"}, "verbosity": "low"},
+                    },
+                )
             response.raise_for_status()
-            data = response.json()
-            if data.get("status") != "completed":
-                raise ValueError("SOP decomposition did not complete")
-            output = "".join(
-                part.get("text", "")
-                for item in data.get("output", [])
-                for part in item.get("content", [])
-                if part.get("type") == "output_text"
-            )
-            return SOPDefinition.model_validate_json(output)
-    except (httpx.HTTPError, ValueError, ValidationError):
-        raise DomainError(
-            "PROVIDER_UNAVAILABLE",
-            "SOP decomposition did not produce a valid draft. Retry the stored source.",
-            503,
+            return parse_draft_response(response.json())
+    except (TimeoutError, httpx.TimeoutException):
+        raise drafting_error(
+            "timeout",
+            "Draft generation timed out before it could finish. "
+            "Your source is saved; retry draft generation.",
+        ) from None
+    except httpx.HTTPStatusError as error:
+        status = error.response.status_code
+        if status in {401, 403}:
+            raise drafting_error(
+                "credentials",
+                "AI drafting credentials were rejected. "
+                "Contact an administrator; your source is saved.",
+                status,
+            ) from None
+        if status == 429:
+            raise drafting_error(
+                "rate_limited",
+                "AI drafting is temporarily rate-limited. "
+                "Your source is saved; retry shortly or contact an administrator.",
+                status,
+            ) from None
+        raise drafting_error(
+            "provider_error",
+            "The AI drafting provider is unavailable or rejected the request. "
+            "Your source is saved; retry or contact an administrator.",
+            status,
+        ) from None
+    except httpx.RequestError:
+        raise drafting_error(
+            "provider_error",
+            "The AI drafting provider could not be reached. "
+            "Your source is saved; retry draft generation.",
+        ) from None
+    except (ValueError, ValidationError):
+        raise drafting_error(
+            "invalid_draft",
+            "The AI response did not match the required procedure format. "
+            "Your source is saved; retry draft generation.",
         ) from None
 
 

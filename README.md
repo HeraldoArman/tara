@@ -57,6 +57,9 @@ The default extraction limits are 250 PDF pages and 300,000 text characters,
 configurable with `MAX_PDF_PAGES` and `MAX_SOURCE_CHARACTERS`. Extraction has a
 20-second deadline. Scanned/image-only PDFs require OCR and are not supported.
 Oversized manuals should be split into individual procedures before import.
+AI drafting has a separate 60-second total deadline and requests concise output.
+Timeout, rate-limit, credential and invalid-response failures have distinct
+diagnostics. The saved source can be retried without uploading it again.
 
 Set scoped `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and the same
 `LIVEKIT_AGENT_NAME` on API/worker. The worker needs `OPENAI_API_KEY`;
