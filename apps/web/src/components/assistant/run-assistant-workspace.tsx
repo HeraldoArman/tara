@@ -743,6 +743,20 @@ export function RunAssistantWorkspace({
         <span className="tara-live-connection" role="status">
           {humanize(connection)}
         </span>
+        {canOperate ? (
+          <Button
+            aria-label="Assume the current step passed for this demo"
+            className="tara-demo-pass"
+            disabled={!(canAct && view.step) || session.checking}
+            onClick={() => session.action("run.assume_demo_step")}
+            size="sm"
+            title="Demo only: advance this step without verification"
+            variant="outline"
+          >
+            <Check aria-hidden="true" />
+            Passed <span className="tara-demo-pass-label">Demo</span>
+          </Button>
+        ) : null}
         <Button
           aria-label="Session help"
           className="tara-workspace-help"
@@ -802,8 +816,8 @@ export function RunAssistantWorkspace({
             startLabel={usingPhone ? "Reconnect phone session" : undefined}
             status={status}
             stepLabel={
-              view.allStepsComplete
-                ? `${view.totalSteps}/${view.totalSteps} steps recorded`
+              view.allStepsComplete || !view.step
+                ? `${view.totalSteps}/${view.totalSteps} steps reviewed`
                 : `Step ${view.stepNumber}/${view.totalSteps}`
             }
             stream={session.cameraStream}

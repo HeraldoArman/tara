@@ -214,6 +214,15 @@ export function getRunAssistantView(
       "Open the report to review the work, evidence and unresolved issues.";
     view.verificationStatus = undefined;
     view.verificationLabel = undefined;
+  } else if (
+    !step &&
+    run.steps.some((item) => item.status === "demo_assumed")
+  ) {
+    view.title = "Demo steps finished";
+    view.description =
+      "Assumed steps are not verified. Use Problem / close to review closure options.";
+    view.verificationStatus = "not_evidenced";
+    view.verificationLabel = "Demo assumptions recorded";
   } else if (allStepsComplete) {
     view.title = "All required steps recorded";
     view.description =

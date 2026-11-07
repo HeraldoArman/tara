@@ -848,6 +848,7 @@ class WorkerRuntime:
             "run.get_context",
             "run.retry",
             "run.respond",
+            "run.assume_demo_step",
             "run.control",
             "run.finish",
             "run.issue",
