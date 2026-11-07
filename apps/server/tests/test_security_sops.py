@@ -105,10 +105,12 @@ async def test_sop_json_mode_request_includes_json_task_and_disables_provider_st
         assert "json" in body["input"].lower()
         assert json.loads(body["input"])["sections"][0]["heading"] == "Source heading"
         assert body["store"] is False
+        assert body["reasoning"] == {"effort": "low"}
         return httpx.Response(
             200,
             json={
-                "output": [{"content": [{"type": "output_text", "text": json.dumps(definition)}]}]
+                "status": "completed",
+                "output": [{"content": [{"type": "output_text", "text": json.dumps(definition)}]}],
             },
         )
 
@@ -123,3 +125,36 @@ async def test_sop_json_mode_request_includes_json_task_and_disables_provider_st
     )
     assert draft.sop_key == definition["sopKey"]
     assert len(requests) == 1
+
+
+async def test_incomplete_sop_response_cannot_be_accepted_as_a_draft(monkeypatch):
+    import json
+
+    import httpx
+
+    from tara_server.domain.sops import decompose
+    from tara_server.settings import get_settings
+
+    monkeypatch.setattr(get_settings(), "sop_openai_api_key", "unit-test-only")
+    definition = definitions()[0]
+
+    def respond(_request):
+        return httpx.Response(
+            200,
+            json={
+                "status": "incomplete",
+                "incomplete_details": {"reason": "max_output_tokens"},
+                "output": [{"content": [{"type": "output_text", "text": json.dumps(definition)}]}],
+            },
+        )
+
+    original = httpx.AsyncClient
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda **kwargs: original(transport=httpx.MockTransport(respond), **kwargs),
+    )
+    with pytest.raises(DomainError, match="did not produce a valid draft"):
+        await decompose(
+            [{"heading": "Source heading", "page": None, "text": "Untrusted source text."}]
+        )

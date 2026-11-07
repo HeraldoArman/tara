@@ -82,6 +82,8 @@ class StillImageVerifier:
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json={
                     "model": self.model,
+                    # Preserve the bounded camera deadline and output budget on Terra.
+                    "reasoning": {"effort": "none"},
                     "store": False,
                     "instructions": (
                         "Assess only observable published criteria in the supplied still image. "
@@ -126,6 +128,8 @@ class StillImageVerifier:
             )
             response.raise_for_status()
             data = response.json()
+            if data.get("status") != "completed":
+                raise ValueError("Visual verification did not complete")
             output = "".join(
                 content.get("text", "")
                 for item in data.get("output", [])

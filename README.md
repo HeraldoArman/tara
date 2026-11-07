@@ -57,6 +57,12 @@ Set scoped `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and the same
 API offline SOP decomposition separately uses `SOP_OPENAI_API_KEY`. Set these in
 ignored environment files or the deployment platform, never in browser code.
 
+SOP drafting defaults to `gpt-6.1-sol` with low reasoning effort. Still-image
+verification uses `gpt-6.1-terra` with reasoning disabled to preserve its bounded
+response time. Voice consultation uses `gpt-realtime-2.1` and the `marin` voice.
+Model changes require a credentialed provider check and evaluation on reviewed
+bench images; passing application tests does not establish visual accuracy.
+
 ```sh
 cd apps/server
 uv run python -m tara_server.agent.worker dev

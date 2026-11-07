@@ -151,6 +151,8 @@ async def decompose(sections: list[dict]) -> SOPDefinition:
                 headers={"Authorization": f"Bearer {settings.sop_openai_api_key}"},
                 json={
                     "model": settings.sop_model,
+                    # Source-grounded extraction uses the lowest supported Sol effort.
+                    "reasoning": {"effort": "low"},
                     "store": False,
                     "instructions": instructions,
                     "input": json.dumps(
@@ -164,6 +166,8 @@ async def decompose(sections: list[dict]) -> SOPDefinition:
             )
             response.raise_for_status()
             data = response.json()
+            if data.get("status") != "completed":
+                raise ValueError("SOP decomposition did not complete")
             output = "".join(
                 part.get("text", "")
                 for item in data.get("output", [])
