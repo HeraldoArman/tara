@@ -148,6 +148,7 @@ function LiveMediaControls({
   const pending = Boolean(session.busy) || session.cameraBusy;
   const paused = session.run.status === "paused";
   const CameraIcon = session.camera ? CameraOff : Camera;
+  const audioUnavailable = session.muted || session.audioBlocked;
   const changeCamera = async () => {
     if (session.camera) {
       await session.toggleCamera();
@@ -189,19 +190,23 @@ function LiveMediaControls({
       </Button>
       <Button
         aria-label={
-          session.muted ? "Enable assistant audio" : "Mute assistant audio"
+          audioUnavailable ? "Enable assistant audio" : "Mute assistant audio"
         }
-        aria-pressed={!session.muted}
+        aria-pressed={!audioUnavailable}
         disabled={!(canOperate && connected && open) || pending}
         onClick={session.toggleMute}
-        size="icon"
+        size={session.audioBlocked ? "sm" : "icon"}
+        title={
+          audioUnavailable ? "Enable assistant audio" : "Mute assistant audio"
+        }
         variant="ghost"
       >
-        {session.muted ? (
+        {audioUnavailable ? (
           <VolumeX aria-hidden="true" />
         ) : (
           <Volume2 aria-hidden="true" />
         )}
+        {session.audioBlocked ? "Enable audio" : null}
       </Button>
     </fieldset>
   );
@@ -311,7 +316,7 @@ function RunConsultation({
         placeholder="Ask about this step…"
         statusMessage={composerStatus}
       />
-      {consulting && session.transcript ? (
+      {session.transcript ? (
         <div className="tara-live-answer" role="status">
           <span>TARA</span>
           <p>{session.transcript}</p>

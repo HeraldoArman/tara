@@ -23,6 +23,7 @@ export function useRunSession(initialRun: Run) {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [microphone, setMicrophone] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [checking, setChecking] = useState(false);
   const [presentation, setPresentation] = useState<Record<
@@ -35,6 +36,7 @@ export function useRunSession(initialRun: Run) {
   const video = useRef<HTMLVideoElement | null>(null);
   const audioElements = useRef<HTMLMediaElement[]>([]);
   const muteRef = useRef(false);
+  const audioBlockedRef = useRef<boolean>(false);
   const mounted = useRef<boolean>(true);
   const connectionRef = useRef("disconnected");
   const connectionGeneration = useRef(0);
@@ -42,6 +44,39 @@ export function useRunSession(initialRun: Run) {
   const connecting = useRef<Promise<Room | null> | null>(null);
   const startingCamera = useRef<Promise<boolean> | null>(null);
   const activeAction = useRef<symbol | null>(null);
+  const updateAudioBlocked = useCallback((blocked: boolean) => {
+    audioBlockedRef.current = blocked;
+    if (mounted.current) {
+      setAudioBlocked(blocked);
+    }
+  }, []);
+  const unlockAudio = useCallback(async (): Promise<void> => {
+    const active = room.current;
+    if (!active || muteRef.current) {
+      return;
+    }
+    try {
+      // Start synchronously within the click/submit gesture, before any RPC awaits.
+      await active.startAudio();
+      if (room.current === active) {
+        updateAudioBlocked(false);
+      }
+    } catch {
+      if (mounted.current && room.current === active) {
+        updateAudioBlocked(true);
+        setError(
+          "Audio playback is blocked. Select Enable assistant audio to hear replies."
+        );
+      }
+    } finally {
+      // LiveKit startAudio unmutes attached elements; preserve a newer mute choice.
+      if (room.current === active) {
+        for (const element of audioElements.current) {
+          element.muted = muteRef.current;
+        }
+      }
+    }
+  }, [updateAudioBlocked]);
   const updateConnection = useCallback((value: string) => {
     connectionRef.current = value;
     if (mounted.current) {
@@ -77,6 +112,7 @@ export function useRunSession(initialRun: Run) {
           element.remove();
         }
         audioElements.current = [];
+        updateAudioBlocked(false);
         updateConnection("disconnected");
         if (mounted.current) {
           setMicrophone(false);
@@ -92,7 +128,7 @@ export function useRunSession(initialRun: Run) {
         await target.disconnect().catch(() => undefined);
       }
     },
-    [stopCamera, updateConnection]
+    [stopCamera, updateAudioBlocked, updateConnection]
   );
   const apply = useCallback(
     (snapshot: Run) => {
@@ -134,6 +170,9 @@ export function useRunSession(initialRun: Run) {
       if (!active || connectionRef.current !== "connected") {
         throw new Error("Reconnect to the assistant before changing the run.");
       }
+      if (method === "assistant.text") {
+        await unlockAudio();
+      }
       const latest = current.current;
       const response = await active.localParticipant.performRpc({
         destinationIdentity: worker.current,
@@ -164,7 +203,7 @@ export function useRunSession(initialRun: Run) {
       }
       return value;
     },
-    [apply, refresh]
+    [apply, refresh, unlockAudio]
   );
   const connect = useCallback((): Promise<Room | null> => {
     if (!mounted.current) {
@@ -213,6 +252,11 @@ export function useRunSession(initialRun: Run) {
             setError(errorMessage(cause));
           }
         };
+        active.on(RoomEvent.AudioPlaybackStatusChanged, (playing) => {
+          if (ownsRoom()) {
+            updateAudioBlocked(!playing);
+          }
+        });
         active.on(
           RoomEvent.TrackSubscribed,
           (track, _publication, participant) => {
@@ -227,8 +271,9 @@ export function useRunSession(initialRun: Run) {
               document.body.append(element);
               element.play().catch(() => {
                 if (ownsRoom()) {
+                  updateAudioBlocked(true);
                   setError(
-                    "Audio playback needs a browser gesture. Use the sound control to enable replies."
+                    "Audio playback is blocked. Select Enable assistant audio to hear replies."
                   );
                 }
               });
@@ -260,22 +305,12 @@ export function useRunSession(initialRun: Run) {
             receiveWorkerEvent(bytes, current.current.id, {
               checking: setChecking,
               error: setError,
+              fatal: () => {
+                releaseRoom(active).catch(showRoomError);
+              },
               present: setPresentation,
               reload: () => {
                 reload().catch(showRoomError);
-              },
-              silent: () => {
-                setMicrophone(false);
-                active.localParticipant
-                  .setMicrophoneEnabled(false)
-                  .catch(() => {
-                    if (ownsRoom()) {
-                      setError(
-                        "Turn off microphone access in your browser while reconnecting."
-                      );
-                    }
-                  });
-                apply({ ...current.current, interactionMode: "silent" });
               },
               snapshot: (payload) => {
                 const snapshot = (payload.snapshot ??
@@ -367,7 +402,7 @@ export function useRunSession(initialRun: Run) {
     });
     connecting.current = pending;
     return pending;
-  }, [apply, releaseRoom, stopCamera, updateConnection]);
+  }, [apply, releaseRoom, stopCamera, updateAudioBlocked, updateConnection]);
   const startCamera = useCallback((): Promise<boolean> => {
     if (startingCamera.current) {
       return startingCamera.current.then(() => cameraTrack.current !== null);
@@ -524,6 +559,7 @@ export function useRunSession(initialRun: Run) {
       await deactivateConsultation(active);
       return;
     }
+    await unlockAudio();
     const result = await action("assistant.activate");
     const canListen = () =>
       mounted.current &&
@@ -545,21 +581,20 @@ export function useRunSession(initialRun: Run) {
         }
       }
     }
-  }, [action, deactivateConsultation]);
+  }, [action, deactivateConsultation, unlockAudio]);
   const toggleMute = useCallback(async () => {
-    const next = !muteRef.current;
+    const next = audioBlockedRef.current ? false : !muteRef.current;
     muteRef.current = next;
     setMuted(next);
     for (const element of audioElements.current) {
       element.muted = next;
-      if (!next) {
-        element
-          .play()
-          .catch(() => setError("Enable audio playback in your browser."));
-      }
     }
+    const playback = next ? null : unlockAudio();
     await action("assistant.mute", { muted: next });
-  }, [action]);
+    if (playback) {
+      await playback;
+    }
+  }, [action, unlockAudio]);
   useEffect(() => {
     apply(initialRun);
   }, [apply, initialRun]);
@@ -576,6 +611,7 @@ export function useRunSession(initialRun: Run) {
   }, [releaseRoom]);
   return {
     action,
+    audioBlocked,
     busy,
     camera,
     cameraBusy,
@@ -659,9 +695,9 @@ async function restoreSilentConnection(
 interface WorkerEventHandlers {
   checking: (active: boolean) => void;
   error: (message: string) => void;
+  fatal: () => void;
   present: (payload: Record<string, unknown>) => void;
   reload: () => void;
-  silent: () => void;
   snapshot: (payload: Record<string, unknown>) => void;
   transcript: (text: string) => void;
 }
@@ -690,7 +726,18 @@ function receiveWorkerEvent(
         return;
       case "agent.state":
         if (payload.mode === "silent") {
-          handlers.silent();
+          // State events have no run version. Reload instead of overwriting a newer activation.
+          handlers.reload();
+        }
+        return;
+      case "agent.error":
+        handlers.error(
+          typeof payload.message === "string"
+            ? payload.message
+            : "The assistant could not respond. Try again or reconnect."
+        );
+        if (payload.recoverable === false || payload.ready === false) {
+          handlers.fatal();
         }
         return;
       case "agent.transcript":
