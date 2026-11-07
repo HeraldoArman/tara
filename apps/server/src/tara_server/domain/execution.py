@@ -799,6 +799,9 @@ async def finish(session: AsyncSession, actor: User, run_id: str, command: Finis
     work = await required(session, WorkOrder, run.work_order_id)
     work.status = command.outcome
     audit(session, actor, run, "run.closed", {"outcome": command.outcome, "reason": command.reason})
+    from tara_server.domain.camera_pairings import revoke_pairing
+
+    await revoke_pairing(session, actor, run.id)
     await session.flush()
     snapshot = await get_run_snapshot(session, actor, run.id)
     events = (

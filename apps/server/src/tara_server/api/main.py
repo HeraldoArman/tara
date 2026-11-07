@@ -37,6 +37,13 @@ from tara_server.db.models import (
     uid,
 )
 from tara_server.db.session import get_session
+from tara_server.domain.camera_pairings import (
+    create_pairing,
+    pairing_state,
+    phone_connection,
+    phone_status,
+    revoke_pairing,
+)
 from tara_server.domain.execution import (
     audit,
     audit_json,
@@ -71,6 +78,12 @@ from tara_server.domain.work_orders import create_work_order, list_assignees
 from tara_server.errors import DomainError
 from tara_server.schemas import (
     AssigneeListResponse,
+    CameraPairingClaim,
+    CameraPairingConnectionResponse,
+    CameraPairingCreatedResponse,
+    CameraPairingRevokedResponse,
+    CameraPairingStateResponse,
+    CameraPairingStatusResponse,
     DraftEdit,
     EvaluationResponse,
     Login,
@@ -97,7 +110,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Content-Type"],
 )
 login_attempts: dict[str, deque] = defaultdict(deque)
@@ -305,6 +318,54 @@ async def run_snapshot(
     return await get_run_snapshot(session, actor, run_id)
 
 
+@app.post("/api/v1/runs/{run_id}/camera-pairing", response_model=CameraPairingCreatedResponse)
+async def create_run_camera_pairing(
+    run_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await create_pairing(session, actor, run_id)
+
+
+@app.get("/api/v1/runs/{run_id}/camera-pairing", response_model=CameraPairingStateResponse)
+async def run_camera_pairing(
+    run_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await pairing_state(session, actor, run_id)
+
+
+@app.delete("/api/v1/runs/{run_id}/camera-pairing", response_model=CameraPairingRevokedResponse)
+async def delete_run_camera_pairing(
+    run_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await revoke_pairing(session, actor, run_id)
+
+
+@app.post(
+    "/api/v1/camera-pairings/{pairing_id}/connection",
+    response_model=CameraPairingConnectionResponse,
+)
+async def paired_phone_connection(
+    pairing_id: str,
+    body: CameraPairingClaim,
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await phone_connection(session, pairing_id, body.token)
+
+
+@app.post("/api/v1/camera-pairings/{pairing_id}/status", response_model=CameraPairingStatusResponse)
+async def paired_phone_status(
+    pairing_id: str,
+    body: CameraPairingClaim,
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await phone_status(session, pairing_id, body.token)
+
+
 @app.post("/api/v1/runs/{run_id}/connection")
 async def connection(
     run_id: str,
@@ -329,7 +390,7 @@ async def connection(
         ) as lk:
             await asyncio.wait_for(
                 lk.room.create_room(
-                    api.CreateRoomRequest(name=room_name, empty_timeout=300, max_participants=2)
+                    api.CreateRoomRequest(name=room_name, empty_timeout=300, max_participants=3)
                 ),
                 8,
             )

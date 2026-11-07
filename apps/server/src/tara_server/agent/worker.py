@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import json
 import logging
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import wraps
 from uuid import uuid4
@@ -43,6 +44,11 @@ from tara_server.schemas import (
 from tara_server.settings import get_settings
 
 logger = logging.getLogger("tara.worker")
+
+
+@dataclass(frozen=True)
+class SelectedCameraFrame(CapturedFrame):
+    camera_identity: str
 
 
 def model_tool(function):
@@ -259,11 +265,15 @@ class WorkerRuntime:
                 or step["id"] in self.automatically_checked
             ):
                 return
-            participant = self.ctx.room.remote_participants.get(self.participant_identity)
-            if not participant or not any(
-                p.track and p.kind == rtc.TrackKind.KIND_VIDEO
+            camera_identity = await self.bridge.camera_identity()
+            participant = self.ctx.room.remote_participants.get(camera_identity)
+            has_camera = participant and any(
+                p.track
+                and p.kind == rtc.TrackKind.KIND_VIDEO
+                and p.source == rtc.TrackSource.SOURCE_CAMERA
                 for p in participant.track_publications.values()
-            ):
+            )
+            if not has_camera and camera_identity == self.participant_identity:
                 return
             self.automatically_checked.add(step["id"])
             await self.visual(
@@ -274,6 +284,13 @@ class WorkerRuntime:
                     "idempotencyKey": f"auto-{uuid4()}",
                 }
             )
+
+    async def camera_subscribed(self, participant_identity: str) -> None:
+        try:
+            if await self.bridge.camera_identity() == participant_identity:
+                await self.automatic_check()
+        except DomainError as error:
+            logger.info("Camera check trigger ignored: code=%s", error.code)
 
     async def cancel_alert(self, reason: str) -> None:
         async with self.alert_lock:
@@ -405,22 +422,34 @@ class WorkerRuntime:
                 await self.state()
 
     async def capture(self) -> CapturedFrame:
-        participant = self.ctx.room.remote_participants.get(self.participant_identity)
+        camera_identity = await self.bridge.camera_identity()
+        participant = self.ctx.room.remote_participants.get(camera_identity)
+        phone_selected = camera_identity != self.participant_identity
         if not participant:
             raise DomainError(
-                "EVIDENCE_MISSING", "Reconnect your camera before checking this step.", 409
+                "EVIDENCE_MISSING",
+                "Reconnect the paired phone camera or disconnect it before using your local camera."
+                if phone_selected
+                else "Reconnect your camera before checking this step.",
+                409,
             )
         track = next(
             (
                 publication.track
                 for publication in participant.track_publications.values()
-                if publication.kind == rtc.TrackKind.KIND_VIDEO and publication.track
+                if publication.kind == rtc.TrackKind.KIND_VIDEO
+                and publication.source == rtc.TrackSource.SOURCE_CAMERA
+                and publication.track
             ),
             None,
         )
         if not track:
             raise DomainError(
-                "EVIDENCE_MISSING", "Enable and publish your camera before checking.", 409
+                "EVIDENCE_MISSING",
+                "The paired phone is not sharing video. Resume its camera or disconnect the pairing."
+                if phone_selected
+                else "Enable and publish your camera before checking.",
+                409,
             )
         # A new capacity-one stream has no queued historic frames.
         stream = rtc.VideoStream(track, format=rtc.VideoBufferType.RGB24, capacity=1)
@@ -431,13 +460,22 @@ class WorkerRuntime:
             jpeg = await asyncio.to_thread(
                 encode_frame, bytes(frame.data), frame.width, frame.height
             )
-            return CapturedFrame(jpeg, captured_at)
+            await self.require_camera_identity(camera_identity)
+            return SelectedCameraFrame(jpeg, captured_at, camera_identity)
         except TimeoutError as error:
             raise DomainError(
                 "TIMEOUT", "No fresh camera frame arrived. Check the camera and retry.", 504
             ) from error
         finally:
             await stream.aclose()
+
+    async def require_camera_identity(self, camera_identity: str) -> None:
+        if await self.bridge.camera_identity() != camera_identity:
+            raise DomainError(
+                "CAMERA_CHANGED",
+                "The selected camera changed during the check. Capture a fresh frame and retry.",
+                409,
+            )
 
     async def visual(self, payload: dict, *, from_model_tool: bool = False) -> dict:
         command = Command.model_validate(payload)
@@ -463,6 +501,8 @@ class WorkerRuntime:
         try:
             frame = await self.capture()
             assessment = await self.verifier.assess(frame, step)
+            if isinstance(frame, SelectedCameraFrame):
+                await self.require_camera_identity(frame.camera_identity)
             result = await self.bridge.execute(
                 "submit_visual_check",
                 command,
@@ -470,6 +510,9 @@ class WorkerRuntime:
                 frame=frame.jpeg,
                 media_type="image/jpeg",
                 captured_at=frame.captured_at,
+                expected_camera_identity=(
+                    frame.camera_identity if isinstance(frame, SelectedCameraFrame) else None
+                ),
             )
         except DomainError as error:
             if error.code in {"STALE_RUN", "STALE_STEP", "STALE_ATTEMPT", "DUPLICATE_REQUEST"}:
@@ -515,6 +558,8 @@ class WorkerRuntime:
                         },
                     },
                 )
+                if isinstance(frame, SelectedCameraFrame):
+                    await self.require_camera_identity(frame.camera_identity)
                 self.policy.require_consultation()
                 latest = await self.bridge.snapshot()
                 if latest["version"] != snapshot["version"]:
@@ -914,8 +959,15 @@ async def entrypoint(ctx: JobContext):
 
     @ctx.room.on("track_subscribed")
     def track_subscribed(track, publication, participant):
-        if participant.identity == identity and publication.kind == rtc.TrackKind.KIND_VIDEO:
-            runtime.spawn(runtime.automatic_check())
+        if (
+            publication.kind == rtc.TrackKind.KIND_VIDEO
+            and publication.source == rtc.TrackSource.SOURCE_CAMERA
+            and (
+                participant.identity == identity
+                or participant.identity.startswith("tara-camera-")
+            )
+        ):
+            runtime.spawn(runtime.camera_subscribed(participant.identity))
 
     @session.on("conversation_item_added")
     def conversation_item_added(event):

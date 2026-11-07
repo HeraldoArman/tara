@@ -175,6 +175,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs/{run_id}/camera-pairing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Run Camera Pairing */
+        get: operations["run_camera_pairing_api_v1_runs__run_id__camera_pairing_get"];
+        put?: never;
+        /** Create Run Camera Pairing */
+        post: operations["create_run_camera_pairing_api_v1_runs__run_id__camera_pairing_post"];
+        /** Delete Run Camera Pairing */
+        delete: operations["delete_run_camera_pairing_api_v1_runs__run_id__camera_pairing_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/camera-pairings/{pairing_id}/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Paired Phone Connection */
+        post: operations["paired_phone_connection_api_v1_camera_pairings__pairing_id__connection_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/camera-pairings/{pairing_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Paired Phone Status */
+        post: operations["paired_phone_status_api_v1_camera_pairings__pairing_id__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs/{run_id}/connection": {
         parameters: {
             query?: never;
@@ -663,6 +716,74 @@ export interface components {
             heading: string;
             /** Page */
             page?: number | null;
+        };
+        /** CameraPairingClaim */
+        CameraPairingClaim: {
+            /** Token */
+            token: string;
+        };
+        /** CameraPairingConnectionResponse */
+        CameraPairingConnectionResponse: {
+            /** Url */
+            url: string;
+            /** Token */
+            token: string;
+            /** Roomname */
+            roomName: string;
+            /** Participantidentity */
+            participantIdentity: string;
+            /** Expiresat */
+            expiresAt: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingCreatedResponse */
+        CameraPairingCreatedResponse: {
+            /** Id */
+            id: string;
+            /** Token */
+            token: string;
+            /** Expiresat */
+            expiresAt: string;
+            /** Participantidentity */
+            participantIdentity: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingResponse */
+        CameraPairingResponse: {
+            /** Id */
+            id: string;
+            /** Expiresat */
+            expiresAt: string;
+            /** Participantidentity */
+            participantIdentity: string;
+            /** Claimed */
+            claimed: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingRevokedResponse */
+        CameraPairingRevokedResponse: {
+            /** Revoked */
+            revoked: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingStateResponse */
+        CameraPairingStateResponse: {
+            pairing: components["schemas"]["CameraPairingResponse"] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingStatusResponse */
+        CameraPairingStatusResponse: {
+            /** Active */
+            active: boolean;
+            /** Expiresat */
+            expiresAt?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         /** Criterion */
         Criterion: {
@@ -1497,6 +1618,175 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_camera_pairing_api_v1_runs__run_id__camera_pairing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingStateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_run_camera_pairing_api_v1_runs__run_id__camera_pairing_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingCreatedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_run_camera_pairing_api_v1_runs__run_id__camera_pairing_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingRevokedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    paired_phone_connection_api_v1_camera_pairings__pairing_id__connection_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pairing_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CameraPairingClaim"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingConnectionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    paired_phone_status_api_v1_camera_pairings__pairing_id__status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pairing_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CameraPairingClaim"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingStatusResponse"];
                 };
             };
             /** @description Validation Error */

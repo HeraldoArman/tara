@@ -46,6 +46,13 @@ class DomainBridge:
             )
         )
 
+    async def camera_identity(self) -> str:
+        from tara_server.domain.camera_pairings import camera_identity
+
+        return await self.transact(
+            lambda session, actor: camera_identity(session, actor, self.run_id)
+        )
+
     async def preflight_visual(self, command: Command) -> dict | None:
         """Reuse domain authorization, command hashing and replay before spending on a frame."""
 
@@ -55,10 +62,22 @@ class DomainBridge:
 
         return await self.transact(prepare)
 
-    async def execute(self, name: str, command=None, **kwargs) -> dict:
+    async def execute(
+        self, name: str, command=None, *, expected_camera_identity: str | None = None, **kwargs
+    ) -> dict:
         operation = getattr(execution, name)
 
         async def invoke(session, actor):
+            if expected_camera_identity is not None:
+                from tara_server.domain.camera_pairings import camera_identity
+
+                selected = await camera_identity(session, actor, self.run_id)
+                if selected != expected_camera_identity:
+                    raise DomainError(
+                        "CAMERA_CHANGED",
+                        "The selected camera changed during the check. Capture a fresh frame and retry.",
+                        409,
+                    )
             if command is None:
                 return await operation(session, actor, self.run_id, **kwargs)
             return await operation(session, actor, self.run_id, command, **kwargs)

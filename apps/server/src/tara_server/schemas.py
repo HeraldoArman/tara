@@ -29,6 +29,10 @@ class WorkOrderInput(Schema):
     estimated_minutes: int = Field(default=20, ge=1, le=10080)
 
 
+class CameraPairingClaim(Schema):
+    token: str = Field(min_length=32, max_length=200)
+
+
 class Source(Schema):
     heading: str
     page: int | None = None
@@ -159,6 +163,41 @@ class UserResponse(PublicModel):
 
 class AssigneeListResponse(PublicModel):
     items: list[UserResponse]
+
+
+class CameraPairingResponse(PublicModel):
+    id: str
+    expiresAt: str
+    participantIdentity: str
+    claimed: bool
+
+
+class CameraPairingCreatedResponse(PublicModel):
+    id: str
+    token: str
+    expiresAt: str
+    participantIdentity: str
+
+
+class CameraPairingStateResponse(PublicModel):
+    pairing: CameraPairingResponse | None
+
+
+class CameraPairingConnectionResponse(PublicModel):
+    url: str
+    token: str
+    roomName: str
+    participantIdentity: str
+    expiresAt: str
+
+
+class CameraPairingStatusResponse(PublicModel):
+    active: bool
+    expiresAt: str | None = None
+
+
+class CameraPairingRevokedResponse(PublicModel):
+    revoked: bool
 
 
 class AssetResponse(PublicModel):
