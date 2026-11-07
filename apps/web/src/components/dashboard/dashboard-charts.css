@@ -1,0 +1,453 @@
+.tara-state-trend,
+.tara-sop-comparison {
+  min-width: 0;
+  margin: 0;
+  color: var(--tara-ink);
+}
+
+.tara-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.tara-chart-legend li {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--tara-muted);
+}
+
+.tara-chart-line-key {
+  width: 18px;
+  border-top: 2px solid var(--series-color);
+}
+
+.tara-chart-legend [data-series="warning"] .tara-chart-line-key {
+  border-top-style: dashed;
+}
+
+.tara-chart-legend [data-series="success"] .tara-chart-line-key {
+  border-top-style: dotted;
+}
+
+.tara-state-trend [data-series="active"],
+.tara-sop-comparison [data-series="active"],
+.tara-chart-legend [data-series="active"] {
+  --series-color: var(--tara-active);
+}
+
+.tara-state-trend [data-series="warning"],
+.tara-sop-comparison [data-series="warning"],
+.tara-chart-legend [data-series="warning"] {
+  --series-color: var(--tara-warning);
+}
+
+.tara-state-trend [data-series="success"],
+.tara-sop-comparison [data-series="success"],
+.tara-chart-legend [data-series="success"] {
+  --series-color: var(--tara-success);
+}
+
+.tara-chart-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 62px;
+  margin: 12px 0 20px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tara-chart-readout > time {
+  font-weight: 500;
+  color: var(--tara-muted);
+}
+
+.tara-chart-readout dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+}
+
+.tara-chart-readout dl > div {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.tara-chart-readout dt {
+  color: var(--tara-muted);
+}
+
+.tara-chart-readout dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--series-color);
+}
+
+.tara-trend-canvas {
+  position: relative;
+  height: 200px;
+  padding-right: 7px;
+  padding-left: 38px;
+}
+
+.tara-trend-y-axis {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tara-muted);
+}
+
+.tara-trend-y-axis span {
+  position: absolute;
+  right: 0;
+  transform: translateY(50%);
+}
+
+.tara-trend-plot {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  touch-action: pan-y;
+  cursor: crosshair;
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+}
+
+.tara-trend-plot:focus-visible {
+  outline: 2px solid var(--tara-active);
+  outline-offset: 6px;
+}
+
+.tara-trend-plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tara-chart-grid-line {
+  stroke: var(--tara-border);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.tara-chart-crosshair {
+  stroke: color-mix(in srgb, var(--tara-muted) 35%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.tara-chart-series {
+  fill: none;
+  stroke: var(--series-color);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tara-chart-selected-point {
+  fill: var(--tara-surface);
+  stroke: var(--series-color);
+  stroke-width: 2;
+}
+
+.tara-trend-x-axis {
+  position: relative;
+  height: 15px;
+  margin: 16px 7px 0 38px;
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+
+.tara-trend-x-axis > span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.tara-trend-x-axis > span:first-child:not(:only-child) {
+  transform: none;
+}
+
+.tara-trend-x-axis > span:last-child:not(:only-child) {
+  transform: translateX(-100%);
+}
+
+.tara-chart-help {
+  margin-top: 18px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--tara-muted);
+}
+
+.tara-chart-data {
+  padding-top: 14px;
+  margin-top: 16px;
+  border-top: 1px solid var(--tara-border);
+}
+
+.tara-chart-data summary {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  width: fit-content;
+  font-size: 11px;
+  color: var(--tara-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.tara-chart-data summary::-webkit-details-marker {
+  display: none;
+}
+
+.tara-chart-data summary svg {
+  width: 13px;
+  height: 13px;
+  transition: transform 150ms ease;
+}
+
+.tara-chart-data[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.tara-chart-table-wrap {
+  max-height: 260px;
+  margin-top: 14px;
+  overflow: auto;
+}
+
+.tara-chart-table-wrap table {
+  width: 100%;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  border-collapse: collapse;
+}
+
+.tara-chart-table-wrap caption {
+  padding-bottom: 10px;
+  font-size: 10px;
+  color: var(--tara-muted);
+  text-align: left;
+}
+
+.tara-chart-table-wrap :is(th, td) {
+  padding: 9px 6px;
+  font-weight: 400;
+  text-align: right;
+  border-bottom: 1px solid var(--tara-border);
+}
+
+.tara-chart-table-wrap th:first-child {
+  padding-left: 0;
+  text-align: left;
+}
+
+.tara-chart-table-wrap thead th {
+  font-weight: 550;
+  color: var(--tara-muted);
+}
+
+.tara-chart-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 24px;
+  color: var(--tara-muted);
+  text-align: center;
+}
+
+.tara-chart-empty-icon {
+  width: 30px;
+  height: 30px;
+  stroke-width: 1.3;
+}
+
+.tara-chart-empty p {
+  max-width: 260px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.tara-sop-comparison > figcaption {
+  margin-bottom: 22px;
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+
+.tara-sop-comparison > ol {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.tara-sop-comparison > ol > li {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 1.7fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.tara-comparison-sop {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 8px 0;
+  color: var(--tara-ink);
+  text-align: left;
+  background: none;
+  border: 0;
+}
+
+.tara-comparison-sop > span {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.tara-comparison-sop strong {
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.5;
+}
+
+.tara-comparison-sop > span > span {
+  font:
+    9px var(--font-geist-mono),
+    monospace;
+  color: var(--tara-muted);
+}
+
+.tara-comparison-arrow {
+  width: 14px;
+  height: 14px;
+  color: var(--tara-muted);
+}
+
+.tara-comparison-sop:hover {
+  color: var(--tara-active);
+}
+
+.tara-comparison-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+}
+
+.tara-comparison-series {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.tara-comparison-series dt {
+  font-size: 9px;
+  color: var(--tara-muted);
+}
+
+.tara-comparison-series dd {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+}
+
+.tara-comparison-track {
+  display: block;
+  flex: 1;
+  height: 7px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--series-color) 7%, transparent);
+  border-radius: 2px;
+}
+
+.tara-comparison-fill {
+  display: block;
+  height: 100%;
+  background: var(--series-color);
+  border-radius: inherit;
+}
+
+.tara-comparison-count {
+  flex: 0 0 36px;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--tara-ink);
+  text-align: right;
+}
+
+@media (max-width: 580px) {
+  .tara-chart-legend {
+    gap: 14px;
+  }
+  .tara-chart-readout {
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .tara-chart-readout > time {
+    flex-basis: 100%;
+  }
+  .tara-chart-readout dl {
+    gap: 14px;
+    width: 100%;
+  }
+  .tara-trend-canvas {
+    height: 180px;
+    padding-left: 32px;
+  }
+  .tara-trend-x-axis {
+    margin-left: 32px;
+    font-size: 9px;
+  }
+  .tara-trend-x-axis[data-label-count="5"] > span:nth-child(even) {
+    display: none;
+  }
+  .tara-sop-comparison > ol > li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .tara-comparison-sop {
+    padding-top: 0;
+  }
+  .tara-comparison-series {
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tara-chart-data summary svg {
+    transition: none;
+  }
+}
