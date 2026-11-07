@@ -116,13 +116,19 @@ jobs:
       - run: bunx playwright install --with-deps chromium
       - run: uv run alembic upgrade head && uv run python -m tara_server.seed
         working-directory: apps/server
-      - run: uv run uvicorn tara_server.api.main:app --host 0.0.0.0 --port 8000 > /tmp/tara-api.log 2>&1 &
-        working-directory: apps/server
       - run: bun run build
-      - run: NODE_OPTIONS='--import varlock/auto-load' PORT=3001 bun --cwd apps/web run start > /tmp/tara-web.log 2>&1 &
-      - run: |
+      - name: Start application and run browser acceptance tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd apps/server && exec uv run uvicorn tara_server.api.main:app --host 127.0.0.1 --port 8000) > /tmp/tara-api.log 2>&1 &
+          tara_api_pid=$!
+          (cd apps/web && NODE_ENV=production PORT=3001 exec node --import varlock/auto-load node_modules/next/dist/bin/next start --port 3001) > /tmp/tara-web.log 2>&1 &
+          tara_web_pid=$!
+          trap 'kill "$tara_api_pid" "$tara_web_pid" 2>/dev/null || true' EXIT
           python3 - <<'PY'
           import time, urllib.request
+          from pathlib import Path
           for attempt in range(30):
               try:
                   urllib.request.urlopen('http://localhost:3001/health', timeout=2)
@@ -131,14 +137,21 @@ jobs:
               except Exception:
                   time.sleep(1)
           else:
+              for filename in ('/tmp/tara-api.log', '/tmp/tara-web.log'):
+                  path = Path(filename)
+                  if path.exists():
+                      print(path.name, path.read_text()[-8000:])
               raise SystemExit('Web/API did not become ready')
           PY
-      - run: bunx playwright test
+          bunx playwright test
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: browser-diagnostics
-          path: test-results/
+          path: |
+            test-results/
+            /tmp/tara-api.log
+            /tmp/tara-web.log
           retention-days: 7
   secrets:
     runs-on: ubuntu-latest
