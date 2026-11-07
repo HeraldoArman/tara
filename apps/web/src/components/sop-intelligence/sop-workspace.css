@@ -12,6 +12,12 @@
     var(--tara-canvas);
 }
 
+.sop-workspace.sop-workspace-embedded {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .sop-workspace-inner {
   max-width: 1600px;
   margin: 0 auto;
@@ -114,6 +120,9 @@
   align-items: end;
   justify-content: space-between;
   margin: 48px 0 28px;
+}
+.sop-workspace-embedded .sop-intro {
+  margin-top: 0;
 }
 .sop-intro :where(.sop-eyebrow) span {
   margin: 0 12px;

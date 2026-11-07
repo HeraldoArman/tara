@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { unstable_rethrow } from "next/navigation";
 import { SopWorkspace } from "@/components/sop-intelligence/sop-workspace";
 import type { SavedSopVersion } from "@/components/sop-intelligence/types";
-import { PageUnavailable } from "@/components/tara/ui";
+import { AppShell, ErrorPanel, PageUnavailable } from "@/components/tara/ui";
 import { errorMessage } from "@/lib/api";
 import type { List, Sop, User } from "@/lib/contracts";
 import { currentUser, serverApi } from "@/lib/server-api";
@@ -19,10 +19,15 @@ export default async function SopIntelligencePage({
   searchParams: Promise<{ sopVersionId?: string | string[] }>;
 }) {
   let user: User;
+  try {
+    user = await currentUser();
+  } catch (cause) {
+    unstable_rethrow(cause);
+    return <PageUnavailable message={errorMessage(cause)} />;
+  }
   let versions: SavedSopVersion[];
   let initialVersionId = "";
   try {
-    user = await currentUser();
     const [sops, query] = await Promise.all([
       serverApi<List<Sop>>("/sops"),
       searchParams,
@@ -47,13 +52,19 @@ export default async function SopIntelligencePage({
           "");
   } catch (cause) {
     unstable_rethrow(cause);
-    return <PageUnavailable message={errorMessage(cause)} />;
+    return (
+      <AppShell active="/sop-intelligence" user={user}>
+        <ErrorPanel message={errorMessage(cause)} />
+      </AppShell>
+    );
   }
   return (
-    <SopWorkspace
-      initialVersionId={initialVersionId}
-      initialVersions={versions}
-      role={user.role}
-    />
+    <AppShell active="/sop-intelligence" user={user}>
+      <SopWorkspace
+        initialVersionId={initialVersionId}
+        initialVersions={versions}
+        role={user.role}
+      />
+    </AppShell>
   );
 }

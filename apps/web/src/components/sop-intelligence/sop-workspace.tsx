@@ -3,7 +3,6 @@
 import "@tara/ui/assistant.css";
 import "./sop-workspace.css";
 
-import { AssistantMark } from "@tara/ui/components/assistant-status";
 import { Badge } from "@tara/ui/components/badge";
 import { Button } from "@tara/ui/components/button";
 import {
@@ -432,43 +431,11 @@ export function SopWorkspace({
   }, []);
 
   return (
-    <main className="tara-assistant sop-workspace">
+    <div className="tara-assistant sop-workspace sop-workspace-embedded">
       <a className="sop-skip-link" href="#sop-review">
         Skip to document review
       </a>
       <div className="sop-workspace-inner">
-        <header className="sop-header">
-          <Link aria-label="TARA home" className="sop-brand" href="/">
-            <AssistantMark />
-            <span className="sop-brand-word">
-              tara<span className="sop-brand-period">.</span>
-            </span>
-          </Link>
-          <div className="sop-brand-caption">
-            <span className="sop-eyebrow">OPERATIONAL INTELLIGENCE</span>
-            <span>A little clarity. At every step.</span>
-          </div>
-          <nav aria-label="Workspace" className="sop-navigation">
-            <Link aria-current="page" href="/sop-intelligence">
-              <FileText aria-hidden="true" />
-              SOP intelligence
-            </Link>
-            <Link href="/">
-              <Sparkles aria-hidden="true" />
-              Work queue
-              <ArrowUpRight aria-hidden="true" />
-            </Link>
-          </nav>
-          <Button
-            aria-label="About SOP intelligence"
-            className="sop-help-button"
-            onClick={openHelp}
-            size="icon"
-            variant="outline"
-          >
-            <CircleHelp />
-          </Button>
-        </header>
         <section aria-labelledby="sop-title" className="sop-intro">
           <div>
             <p className="sop-eyebrow">
@@ -481,6 +448,14 @@ export function SopWorkspace({
             </p>
           </div>
           <div className="sop-intro-actions">
+            <Button
+              aria-label="About SOP intelligence"
+              onClick={openHelp}
+              size="icon"
+              variant="outline"
+            >
+              <CircleHelp />
+            </Button>
             <Button
               disabled={!ready || starting}
               onClick={exportMap}
@@ -605,6 +580,6 @@ export function SopWorkspace({
           </p>
         </DialogContent>
       </Dialog>
-    </main>
+    </div>
   );
 }
