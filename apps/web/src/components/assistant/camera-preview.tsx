@@ -243,7 +243,7 @@ function PreviewTimer() {
 
   return (
     <span
-      aria-label="Live preview elapsed time"
+      aria-label="Preview session elapsed time"
       className="tara-camera__timer"
       role="timer"
     >
@@ -252,7 +252,7 @@ function PreviewTimer() {
   );
 }
 
-function WebcamFeed({ stream }: { stream: MediaStream | null }) {
+function WebcamFeed({ stream }: { readonly stream: MediaStream | null }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -280,14 +280,14 @@ function WebcamFeed({ stream }: { stream: MediaStream | null }) {
 }
 
 export interface CameraPreviewProps {
-  children?: ReactNode;
-  className?: string;
-  observation?: string;
-  paused: boolean;
-  source: CameraSource;
-  status: AssistantState;
-  stepLabel?: string;
-  stream: MediaStream | null;
+  readonly children?: ReactNode;
+  readonly className?: string;
+  readonly observation?: string;
+  readonly paused: boolean;
+  readonly source: CameraSource;
+  readonly status: AssistantState;
+  readonly stepLabel?: string;
+  readonly stream: MediaStream | null;
 }
 
 export function CameraPreview({
@@ -303,7 +303,7 @@ export function CameraPreview({
   const caption =
     source === "simulated" ? "Simulated feed" : "Local camera · preview only";
   const previewMessage = paused
-    ? "Live view · assistant resting"
+    ? "Preview feed · assistant resting"
     : "Sample work area · no live verification";
 
   return (
@@ -326,8 +326,7 @@ export function CameraPreview({
       </div>
       <figcaption className="tara-camera__heading">
         <span className="tara-camera__live-label">
-          <span />
-          LIVE VIEW
+          <span aria-hidden="true" /> PREVIEW
         </span>
         <span className="tara-camera__source">{caption}</span>
       </figcaption>

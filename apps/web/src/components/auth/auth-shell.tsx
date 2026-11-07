@@ -7,11 +7,11 @@ import "@tara/ui/assistant.css";
 import "./auth.css";
 
 interface AuthShellProps {
-  children: ReactNode;
-  description: string;
-  eyebrow: string;
-  mode: "login" | "register";
-  title: string;
+  readonly children: ReactNode;
+  readonly description: string;
+  readonly eyebrow: string;
+  readonly mode: "login" | "register";
+  readonly title: string;
 }
 
 const workflowSteps = [
@@ -53,8 +53,8 @@ export function AuthShell({
         <section aria-labelledby="auth-story-title" className="tara-auth-story">
           <div className="tara-auth-story-copy">
             <p className="tara-auth-eyebrow">
-              <span aria-hidden="true" className="tara-auth-dot" />
-              FROM PROCEDURE TO PRACTICE
+              <span aria-hidden="true" className="tara-auth-dot" /> FROM
+              PROCEDURE TO PRACTICE
             </p>
             <h2 id="auth-story-title">
               {mode === "login" ? (

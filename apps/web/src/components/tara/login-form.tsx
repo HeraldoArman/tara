@@ -2,12 +2,6 @@
 
 import { Button } from "@tara/ui/components/button";
 import { Input } from "@tara/ui/components/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@tara/ui/components/input-group";
 import { Label } from "@tara/ui/components/label";
 import {
   ArrowRight,
@@ -19,6 +13,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { formString } from "@/components/auth/form-data";
 import { api, errorMessage } from "@/lib/api";
 
 export function LoginForm() {
@@ -40,8 +35,8 @@ export function LoginForm() {
     try {
       await api("/auth/login", {
         body: JSON.stringify({
-          password: form.get("password"),
-          username: String(form.get("username") ?? "").trim(),
+          password: formString(form, "password"),
+          username: formString(form, "username").trim(),
         }),
         method: "POST",
       });
@@ -81,12 +76,8 @@ export function LoginForm() {
         <Label className="tara-auth-label" htmlFor="password">
           Password
         </Label>
-        <InputGroup
-          aria-label="Password"
-          className="tara-auth-input-wrap"
-          controlId="password"
-        >
-          <InputGroupInput
+        <div className="tara-auth-input-wrap">
+          <Input
             autoComplete="current-password"
             className="tara-auth-input"
             disabled={busy}
@@ -96,8 +87,8 @@ export function LoginForm() {
             required
             type={showPassword ? "text" : "password"}
           />
-          <InputGroupAddon align="inline-end">
-            <InputGroupButton
+          <div className="tara-auth-password-action">
+            <Button
               aria-controls="password"
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
@@ -106,15 +97,16 @@ export function LoginForm() {
               onClick={() => setShowPassword((visible) => !visible)}
               size="icon-sm"
               type="button"
+              variant="ghost"
             >
               {showPassword ? (
                 <EyeOff aria-hidden="true" data-icon="inline-start" />
               ) : (
                 <Eye aria-hidden="true" data-icon="inline-start" />
               )}
-            </InputGroupButton>
-          </InputGroupAddon>
-        </InputGroup>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {error ? (

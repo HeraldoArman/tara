@@ -145,23 +145,19 @@ export function createAssistantAudioPlayer(): AssistantAudioPlayer {
     if (!audioContext) {
       return;
     }
-    try {
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
-      if (
-        disposed ||
-        generation !== requestedGeneration ||
-        audioContext.state !== "running"
-      ) {
-        return;
-      }
-      const start = audioContext.currentTime + 0.015;
-      for (const tone of tones[cue]) {
-        scheduleTone(audioContext, tone, start + tone.offset);
-      }
-    } catch {
-      // Browser audio restrictions must never block the assistant's state change.
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+    if (
+      disposed ||
+      generation !== requestedGeneration ||
+      audioContext.state !== "running"
+    ) {
+      return;
+    }
+    const start = audioContext.currentTime + 0.015;
+    for (const tone of tones[cue]) {
+      scheduleTone(audioContext, tone, start + tone.offset);
     }
   }
 
@@ -204,20 +200,12 @@ export function createAssistantAudioPlayer(): AssistantAudioPlayer {
   async function unlock() {
     const audioContext = getContext();
     if (audioContext?.state === "suspended") {
-      try {
-        await audioContext.resume();
-      } catch {
-        // A later gesture can retry a context blocked by the browser.
-      }
+      await audioContext.resume();
     }
   }
 
   async function closeContext(audioContext: AudioContext) {
-    try {
-      await audioContext.close();
-    } catch {
-      // Some browsers close the context when its document is discarded.
-    }
+    await audioContext.close();
   }
 
   return {
@@ -225,7 +213,9 @@ export function createAssistantAudioPlayer(): AssistantAudioPlayer {
       stop();
       disposed = true;
       if (context && context.state !== "closed") {
-        closeContext(context);
+        closeContext(context).catch(() => {
+          // Some browsers close the context when its document is discarded.
+        });
       }
       context = null;
     },
@@ -237,11 +227,15 @@ export function createAssistantAudioPlayer(): AssistantAudioPlayer {
       if (cue === "online") {
         speakOnline();
       }
-      playTones(cue, generation);
+      playTones(cue, generation).catch(() => {
+        // Browser audio restrictions must never block the assistant's state change.
+      });
     },
     stop,
     unlock() {
-      unlock();
+      unlock().catch(() => {
+        // A later gesture can retry a context blocked by the browser.
+      });
     },
   };
 }

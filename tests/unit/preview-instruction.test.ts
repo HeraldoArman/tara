@@ -49,13 +49,13 @@ test("pausing keeps the correction until the assistant resumes", () => {
   expect(paused).toEqual(warning);
   expect(paused.observation).toContain("step 2 held");
   expect(resumed.title).toBe("Inspect the faulty key");
-  expect(resumed.observation).toBe("Preview feed · awaiting visual evidence");
+  expect(resumed.observation).toBe("Preview feed · no AI verification");
   expect(
     getPreviewInstruction(initialPreviewProgress, "active", true).observation
-  ).toBe("Live view · assistant resting");
+  ).toBe("Preview feed · assistant resting");
   expect(
     getPreviewInstruction(initialPreviewProgress, "sleep", false).observation
-  ).toBe("Live view · assistant resting");
+  ).toBe("Preview feed · assistant resting");
 });
 
 test("an accepted Success finishes before Warning applies to the following step", () => {

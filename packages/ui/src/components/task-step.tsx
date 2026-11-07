@@ -5,12 +5,12 @@ import { CheckIcon, EyeIcon, TriangleAlertIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface TaskStepProps {
-  children?: ReactNode;
-  className?: string;
-  description: string;
-  title: string;
-  verificationLabel?: string;
-  verificationStatus?: VerificationStatus;
+  readonly children?: ReactNode;
+  readonly className?: string;
+  readonly description: string;
+  readonly title: string;
+  readonly verificationLabel?: string;
+  readonly verificationStatus?: VerificationStatus;
 }
 
 function TaskStep({

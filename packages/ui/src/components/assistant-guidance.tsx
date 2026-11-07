@@ -36,18 +36,18 @@ import {
 } from "react";
 
 interface AssistantGuidanceProps {
-  children?: ReactNode;
-  className?: string;
-  completedSteps?: number;
-  description: string;
-  eyebrow?: string;
-  hint?: string;
-  onViewSop?: () => void;
-  source: string;
-  status: AssistantState;
-  step: number;
-  title: string;
-  totalSteps: number;
+  readonly children?: ReactNode;
+  readonly className?: string;
+  readonly completedSteps?: number;
+  readonly description: string;
+  readonly eyebrow?: string;
+  readonly hint?: string;
+  readonly onViewSop?: () => void;
+  readonly source: string;
+  readonly status: AssistantState;
+  readonly step: number;
+  readonly title: string;
+  readonly totalSteps: number;
 }
 
 function AssistantGuidance({
@@ -134,11 +134,11 @@ function AssistantGuidance({
 }
 
 interface ReplyComposerProps {
-  disabled?: boolean;
-  onSubmit: (reply: string) => void;
-  pending?: boolean;
-  placeholder?: string;
-  statusMessage?: string;
+  readonly disabled?: boolean;
+  readonly onSubmit: (reply: string) => void;
+  readonly pending?: boolean;
+  readonly placeholder?: string;
+  readonly statusMessage?: string;
 }
 
 function ReplyComposer({

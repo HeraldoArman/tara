@@ -18,14 +18,14 @@ import {
 } from "./preview-progress";
 
 interface PreviewGuidanceProps {
-  cameraSource: CameraSource;
-  correction?: PreviewCorrection;
-  onRestart: () => void;
-  onResumeStep: () => void;
-  onViewSop: () => void;
-  progress: PreviewProgress;
-  source: string;
-  status: AssistantState;
+  readonly cameraSource: CameraSource;
+  readonly correction?: PreviewCorrection;
+  readonly onRestart: () => void;
+  readonly onResumeStep: () => void;
+  readonly onViewSop: () => void;
+  readonly progress: PreviewProgress;
+  readonly source: string;
+  readonly status: AssistantState;
 }
 
 function getGuidanceContent(
@@ -156,9 +156,9 @@ export function PreviewGuidance({
             }
           />
           {replied && !stepSucceeded && !correction ? (
-            <p className="tara-reply-notice" role="status">
+            <output className="tara-reply-notice">
               Practice reply received. Verification remains unchanged.
-            </p>
+            </output>
           ) : null}
         </>
       )}

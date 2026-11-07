@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useAssistantAudio() {
-  const [enabled, setAudioEnabled] = useState(true);
+  const [enabled, setEnabled] = useState(true);
   const enabledRef = useRef<boolean>(true);
   const playerRef = useRef<AssistantAudioPlayer | null>(null);
 
@@ -18,10 +18,10 @@ export function useAssistantAudio() {
     return playerRef.current;
   }, []);
 
-  const setEnabled = useCallback(
+  const setAudioEnabled = useCallback(
     (value: boolean) => {
       enabledRef.current = value;
-      setAudioEnabled(value);
+      setEnabled(value);
       if (value) {
         getPlayer().unlock();
       } else {
@@ -49,5 +49,5 @@ export function useAssistantAudio() {
     []
   );
 
-  return { enabled, playTransition, setEnabled };
+  return { enabled, playTransition, setEnabled: setAudioEnabled };
 }

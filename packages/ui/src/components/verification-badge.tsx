@@ -6,9 +6,9 @@ import { cn } from "@tara/ui/lib/utils";
 import { CheckIcon, CircleDashedIcon, ShieldAlertIcon } from "lucide-react";
 
 interface VerificationBadgeProps {
-  className?: string;
-  label?: string;
-  status: VerificationStatus;
+  readonly className?: string;
+  readonly label?: string;
+  readonly status: VerificationStatus;
 }
 
 function VerificationBadge({

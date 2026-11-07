@@ -194,6 +194,7 @@
   border-radius: 8px;
 }
 .tara-reply-notice {
+  display: block;
   font-size: 10px;
   line-height: 1.6;
   color: var(--tara-muted);
@@ -562,9 +563,6 @@
   .tara-workspace[data-mode="product"] .tara-workspace-header {
     padding-right: 375px;
   }
-  .tara-workspace[data-mode="product"] .tara-workspace-help {
-    display: none;
-  }
 }
 
 @media (max-width: 900px) {
@@ -618,6 +616,9 @@
   .tara-workspace[data-mode="product"] .tara-workspace-header {
     padding-right: 0;
     margin-bottom: 24px;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-help {
+    position: static;
   }
   .tara-workspace[data-mode="product"] .tara-workspace-modes {
     margin-left: auto;
@@ -678,8 +679,7 @@
   .tara-brand > span:last-child {
     font-size: 30px;
   }
-  .tara-brand-caption,
-  .tara-workspace-help {
+  .tara-brand-caption {
     display: none;
   }
   .tara-workspace-intro {

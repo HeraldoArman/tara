@@ -139,5 +139,5 @@ Product layouts share the same presentation state and use a simulated keyboard
 or local webcam preview. This route does not connect to AI or submit execution
 records; the application execution workspace lives separately at `/runs/[id]`.
 
-See [the component guide](docs/12-assistant-components.md) for imports, ownership,
+See the parent workspace's `docs/12-assistant-components.md` for imports, ownership,
 preview behavior and integration boundaries.

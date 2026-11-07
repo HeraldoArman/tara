@@ -19,9 +19,9 @@ const detailTitles = {
 } as const;
 
 interface PreviewProgressProps {
-  complete: boolean;
-  completedStepCount: number;
-  currentStepIndex: number;
+  readonly complete: boolean;
+  readonly completedStepCount: number;
+  readonly currentStepIndex: number;
 }
 
 function PreviewSop({
@@ -75,7 +75,7 @@ function PreviewRecord({
   completedStepCount,
   seededStepCount,
 }: Pick<PreviewProgressProps, "complete" | "completedStepCount"> & {
-  seededStepCount: number;
+  readonly seededStepCount: number;
 }) {
   return (
     <>
@@ -119,9 +119,9 @@ export function PreviewDetails({
   onClose,
   seededStepCount,
 }: PreviewProgressProps & {
-  kind: PreviewDetail;
-  onClose: () => void;
-  seededStepCount: number;
+  readonly kind: PreviewDetail;
+  readonly onClose: () => void;
+  readonly seededStepCount: number;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();

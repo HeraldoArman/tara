@@ -2,17 +2,12 @@
 
 import { Button } from "@tara/ui/components/button";
 import { Input } from "@tara/ui/components/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@tara/ui/components/input-group";
 import { Label } from "@tara/ui/components/label";
 import { cn } from "@tara/ui/lib/utils";
 import { ArrowRight, Eye, EyeOff, Info } from "lucide-react";
 import Link from "next/link";
 import { type ChangeEvent, type FormEvent, useCallback, useState } from "react";
+import { formString } from "./form-data";
 
 const MIN_PASSWORD_LENGTH = 16;
 const MAX_NAME_LENGTH = 200;
@@ -60,7 +55,13 @@ function validateDetails(details: RegistrationDetails): RegistrationErrors {
   return errors;
 }
 
-function FieldError({ error, id }: { error?: string; id: string }) {
+function FieldError({
+  error,
+  id,
+}: {
+  readonly error?: string;
+  readonly id: string;
+}) {
   if (!error) {
     return null;
   }
@@ -73,10 +74,10 @@ function FieldError({ error, id }: { error?: string; id: string }) {
 }
 
 interface PasswordFieldProps {
-  error?: string;
-  label: string;
-  name: "password" | "confirmPassword";
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  readonly error?: string;
+  readonly label: string;
+  readonly name: "password" | "confirmPassword";
+  readonly onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 function PasswordField({ error, label, name, onChange }: PasswordFieldProps) {
@@ -95,12 +96,8 @@ function PasswordField({ error, label, name, onChange }: PasswordFieldProps) {
       <Label className="tara-auth-label" htmlFor={inputId}>
         {label}
       </Label>
-      <InputGroup
-        aria-label={label}
-        className="tara-auth-input-wrap"
-        controlId={inputId}
-      >
-        <InputGroupInput
+      <div className="tara-auth-input-wrap">
+        <Input
           aria-describedby={error ? errorId : descriptionId}
           aria-invalid={Boolean(error)}
           autoComplete="new-password"
@@ -115,8 +112,8 @@ function PasswordField({ error, label, name, onChange }: PasswordFieldProps) {
           required
           type={visible ? "text" : "password"}
         />
-        <InputGroupAddon align="inline-end">
-          <InputGroupButton
+        <div className="tara-auth-password-action">
+          <Button
             aria-controls={inputId}
             aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`}
             aria-pressed={visible}
@@ -131,9 +128,9 @@ function PasswordField({ error, label, name, onChange }: PasswordFieldProps) {
             ) : (
               <Eye aria-hidden="true" data-icon="inline-start" />
             )}
-          </InputGroupButton>
-        </InputGroupAddon>
-      </InputGroup>
+          </Button>
+        </div>
+      </div>
       {isPassword ? (
         <p className="tara-auth-note" id="register-password-hint">
           At least {MIN_PASSWORD_LENGTH} characters. A memorable phrase works
@@ -166,11 +163,11 @@ export function RegistrationForm() {
     const form = event.currentTarget;
     const data = new FormData(form);
     const details: RegistrationDetails = {
-      companyName: String(data.get("companyName") ?? ""),
-      confirmPassword: String(data.get("confirmPassword") ?? ""),
-      name: String(data.get("name") ?? ""),
-      password: String(data.get("password") ?? ""),
-      username: String(data.get("username") ?? ""),
+      companyName: formString(data, "companyName"),
+      confirmPassword: formString(data, "confirmPassword"),
+      name: formString(data, "name"),
+      password: formString(data, "password"),
+      username: formString(data, "username"),
     };
     const nextErrors = validateDetails(details);
     setErrors(nextErrors);

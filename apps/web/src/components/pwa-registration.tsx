@@ -37,19 +37,15 @@ async function removeDevelopmentWorker() {
 }
 
 async function configureServiceWorker() {
-  try {
-    if (process.env.NODE_ENV !== "production") {
-      await removeDevelopmentWorker();
-      return;
-    }
-
-    await navigator.serviceWorker.register("/sw.js", {
-      scope: "/",
-      updateViaCache: "none",
-    });
-  } catch (error) {
-    console.error("Service worker setup failed:", error);
+  if (process.env.NODE_ENV !== "production") {
+    await removeDevelopmentWorker();
+    return;
   }
+
+  await navigator.serviceWorker.register("/sw.js", {
+    scope: "/",
+    updateViaCache: "none",
+  });
 }
 
 export default function PwaRegistration() {
@@ -57,7 +53,9 @@ export default function PwaRegistration() {
     if (!("serviceWorker" in navigator)) {
       return;
     }
-    configureServiceWorker();
+    configureServiceWorker().catch((error: unknown) => {
+      console.error("Service worker setup failed:", error);
+    });
   }, []);
 
   return null;

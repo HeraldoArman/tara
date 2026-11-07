@@ -22,9 +22,9 @@ import {
 import { type ChangeEvent, useCallback, useId } from "react";
 
 interface AssistantModeControlProps {
-  className?: string;
-  onValueChange: (value: AssistantMode) => void;
-  value: AssistantMode;
+  readonly className?: string;
+  readonly onValueChange: (value: AssistantMode) => void;
+  readonly value: AssistantMode;
 }
 
 function AssistantModeControl({
@@ -73,10 +73,10 @@ function AssistantModeControl({
 }
 
 interface AssistantStateControlProps {
-  className?: string;
-  onValueChange: (value: AssistantStateSelection) => void;
-  successDisabled?: boolean;
-  value: AssistantStateSelection;
+  readonly className?: string;
+  readonly onValueChange: (value: AssistantStateSelection) => void;
+  readonly successDisabled?: boolean;
+  readonly value: AssistantStateSelection;
 }
 
 const stateSelections = ["auto", "sleep", "active", "warning"] as const;
@@ -141,22 +141,21 @@ function AssistantStateControl({
         type="button"
         variant="ghost"
       >
-        <span aria-hidden="true" className="tara-state-dot" />
-        Success
+        <span aria-hidden="true" className="tara-state-dot" /> Success
       </Button>
     </fieldset>
   );
 }
 
 interface MediaControlsProps {
-  audioEnabled?: boolean;
-  className?: string;
-  onAudioEnabledChange?: (enabled: boolean) => void;
-  onPausedChange: (paused: boolean) => void;
-  onSourceChange: (source: CameraSource) => void;
-  paused: boolean;
-  source: CameraSource;
-  sourceBusy?: boolean;
+  readonly audioEnabled?: boolean;
+  readonly className?: string;
+  readonly onAudioEnabledChange?: (enabled: boolean) => void;
+  readonly onPausedChange: (paused: boolean) => void;
+  readonly onSourceChange: (source: CameraSource) => void;
+  readonly paused: boolean;
+  readonly source: CameraSource;
+  readonly sourceBusy?: boolean;
 }
 
 function MediaControls({

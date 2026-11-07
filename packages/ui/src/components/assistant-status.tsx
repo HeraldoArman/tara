@@ -9,11 +9,11 @@ import { cn } from "@tara/ui/lib/utils";
 import { AsteriskIcon } from "lucide-react";
 
 interface AssistantStatusProps {
-  className?: string;
-  status: AssistantState;
+  readonly className?: string;
+  readonly status: AssistantState;
 }
 
-function AssistantMark({ className }: { className?: string }) {
+function AssistantMark({ className }: { readonly className?: string }) {
   return (
     <span aria-hidden="true" className={cn("tara-assistant-mark", className)}>
       <span />

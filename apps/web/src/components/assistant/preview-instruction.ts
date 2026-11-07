@@ -71,8 +71,8 @@ export function getPreviewInstruction(
     description: step.description,
     observation:
       paused || selection === "sleep"
-        ? "Live view · assistant resting"
-        : "Preview feed · awaiting visual evidence",
+        ? "Preview feed · assistant resting"
+        : "Preview feed · no AI verification",
     title: step.title,
     verificationStatus: "not_evidenced",
   };

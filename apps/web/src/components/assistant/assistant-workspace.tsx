@@ -217,7 +217,7 @@ export function AssistantWorkspace() {
       >
         <div>
           <p className="tara-workspace-eyebrow">
-            LIVE WORKSPACE <span>/</span> {previewTask.workOrder}
+            PREVIEW WORKSPACE <span>/</span> {previewTask.workOrder}
           </p>
           <h1 id="workspace-title">Let’s get this working.</h1>
         </div>
@@ -238,7 +238,7 @@ export function AssistantWorkspace() {
       </section>
 
       <div className="tara-workspace-grid">
-        <section aria-label="Live work area" className="tara-camera-card">
+        <section aria-label="Preview work area" className="tara-camera-card">
           <CameraPreview
             observation={instruction.observation}
             paused={resting}
@@ -315,9 +315,9 @@ export function AssistantWorkspace() {
         </aside>
       </div>
 
-      <p aria-atomic="true" className="sr-only" role="status">
+      <output aria-atomic="true" className="sr-only">
         {instruction.announcement}
-      </p>
+      </output>
 
       <footer className="tara-workspace-footer">
         <span>
