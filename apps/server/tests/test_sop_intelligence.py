@@ -140,10 +140,7 @@ async def test_affirmative_fragment_cannot_hide_a_source_prohibition(workshop):
     step["sources"][0]["quote"] = "remove the cover."
     explicit = await intelligence(session, owner, version.id)
     assert explicit["opportunities"][0]["sourceQuote"] is None
-    assert any(
-        "source quote" in error
-        for error in validate_definition(version.definition, [{**SECTION, "text": source}])
-    )
+    assert validate_definition(version.definition, [{**SECTION, "text": source}]) == []
 
 
 async def test_unresolved_citation_labels_saved_instruction_without_coloring_the_wrong_page(
@@ -205,14 +202,12 @@ def test_quotes_preserve_original_text_and_require_unique_complete_tokens(
     assert unique_source_quote(text, candidate) == expected
 
 
-def test_draft_quotes_are_optional_but_invalid_or_ambiguous_quotes_block_publication():
+def test_draft_quotes_are_optional_and_do_not_block_validation():
     definition = {"sopKey": "TEST", "version": "1", "title": "Test", "steps": deepcopy(STEPS)}
     assert validate_definition(definition, [SECTION]) == []
     definition["steps"][0]["sources"][0]["quote"] = INSPECT
     assert validate_definition(definition, [SECTION]) == []
     definition["steps"][0]["sources"][0]["quote"] = "A sentence absent from the source."
-    assert any("source quote" in error for error in validate_definition(definition, [SECTION]))
+    assert validate_definition(definition, [SECTION]) == []
     definition["steps"][0]["sources"][0]["quote"] = INSPECT
-    assert any(
-        "source quote" in error for error in validate_definition(definition, [SECTION, SECTION])
-    )
+    assert validate_definition(definition, [SECTION, SECTION]) == []
