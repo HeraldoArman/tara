@@ -35,6 +35,7 @@ from tara_server.schemas import (
     ResponseCommand,
     VisualAssessment,
 )
+from tara_server.settings import get_settings
 from tara_server.telemetry import ALERTS, ATTEMPTS, CONSULTATIONS, IDEMPOTENT_REPLAYS, instrument
 
 SUCCESS = {"ai_verified", "attested", "complete", "skipped"}
@@ -620,6 +621,7 @@ async def submit_visual_check(
             accepted=passed,
             model=assessment.model,
             captured_at=captured_at,
+            source=get_settings().evidence_source,
             width=width,
             height=height,
             assessment_id=assessment.assessment_id,
@@ -849,6 +851,7 @@ async def fail_visual_attempt(
                     accepted=False,
                     model=model,
                     captured_at=captured_at,
+                    source=get_settings().evidence_source,
                     width=width,
                     height=height,
                     correlation_id=command.idempotency_key,

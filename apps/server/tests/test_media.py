@@ -98,3 +98,20 @@ def test_actual_image_signature_and_dimensions_are_required():
         image_dimensions(b"not-a-real-image", "image/jpeg")
     with pytest.raises(DomainError):
         image_dimensions(jpeg(), "image/png")
+
+
+def test_production_rejects_explicit_test_media_source():
+    from pydantic import ValidationError
+
+    from tara_server.settings import Settings
+
+    with pytest.raises(ValidationError, match="test media is only for isolated fixtures"):
+        Settings(
+            environment="production",
+            evidence_source="test_media",
+            database_url="postgresql+asyncpg://unused:unused@localhost/unused",
+            jwt_secret="unit-test-secret-of-at-least-thirty-two-characters",
+            cookie_secure=True,
+            app_origin="https://workshop.example",
+            evidence_backend="s3",
+        )

@@ -161,7 +161,7 @@ async def live():
 
 
 @app.get("/health/ready")
-async def ready(session: AsyncSession = Depends(get_session)):
+async def ready(session: AsyncSession = Depends(get_session, scope="function")):
     try:
         await session.execute(text("SELECT 1"))
         head = await session.scalar(text("SELECT version_num FROM alembic_version"))
@@ -183,7 +183,10 @@ async def ready(session: AsyncSession = Depends(get_session)):
 
 @app.post("/api/v1/auth/login", response_model=UserResponse)
 async def login(
-    body: Login, request: Request, response: Response, session: AsyncSession = Depends(get_session)
+    body: Login,
+    request: Request,
+    response: Response,
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     key = request.client.host if request.client else "unknown"
     queue = login_attempts[key]
@@ -223,7 +226,7 @@ async def me(actor: User = Depends(current_user)):
 async def work_orders(
     filter: str = "all",
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     from tara_server.db.models import WorkOrder
 
@@ -250,28 +253,36 @@ async def work_orders(
 
 @app.get("/api/v1/work-orders/{work_id}", response_model=WorkOrderResponse)
 async def work_order(
-    work_id: str, actor: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+    work_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return work_order_json(await authorize_work(session, actor, work_id))
 
 
 @app.post("/api/v1/work-orders/{work_id}/runs", response_model=RunResponse)
 async def start(
-    work_id: str, actor: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+    work_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await create_run(session, actor, work_id)
 
 
 @app.get("/api/v1/runs/{run_id}", response_model=RunResponse)
 async def run_snapshot(
-    run_id: str, actor: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+    run_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await get_run_snapshot(session, actor, run_id)
 
 
 @app.post("/api/v1/runs/{run_id}/connection")
 async def connection(
-    run_id: str, actor: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+    run_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     from livekit import api
 
@@ -346,7 +357,7 @@ async def activity(
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     await authorize_run(session, actor, run_id)
     events = (
@@ -365,7 +376,7 @@ async def activity(
 async def evidence_url(
     evidence_id: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     evidence = await session.scalar(
         select(Evidence).where(Evidence.id == evidence_id, Evidence.org_id == actor.org_id)
@@ -394,7 +405,7 @@ async def evidence_content(
     evidence_id: str,
     token: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     try:
         claims = jwt.decode(
@@ -418,7 +429,10 @@ async def evidence_content(
 
 
 @app.get("/api/v1/sops", response_model=SOPListResponse)
-async def sops(actor: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
+async def sops(
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
     rows = (await session.scalars(select(SOP).where(SOP.org_id == actor.org_id))).all()
     items = []
     for sop in rows:
@@ -443,7 +457,7 @@ async def sop_version(
     sop_id: str,
     version: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     row = await session.scalar(
         select(SOPVersion).where(
@@ -463,7 +477,7 @@ async def sop_version(
 async def sop_import(
     file: UploadFile = File(...),
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     require_roles(actor, "sop_manager", "owner")
     content = await file.read(settings.max_upload_bytes + 1)
@@ -474,7 +488,7 @@ async def sop_import(
 async def retry_import(
     document_id: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     require_roles(actor, "sop_manager", "owner")
     document = await session.scalar(
@@ -490,7 +504,7 @@ async def edit_draft(
     version_id: str,
     body: DraftEdit,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     require_roles(actor, "sop_manager", "owner")
     version = await authorized_version(session, actor, version_id)
@@ -506,7 +520,7 @@ async def edit_draft(
 async def validate_draft(
     version_id: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     require_roles(actor, "sop_manager", "owner")
     version = await authorized_version(session, actor, version_id)
@@ -519,7 +533,7 @@ async def validate_draft(
 async def publish_draft(
     version_id: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await publish(session, actor, version_id)
 
@@ -529,14 +543,15 @@ async def sop_search(
     version_id: str,
     q: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await search_sop(session, actor, version_id, q)
 
 
 @app.get("/api/v1/reports", response_model=ReportListResponse)
 async def reports(
-    actor: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     require_roles(actor, "technician", "supervisor", "owner")
     query = select(Report).where(Report.org_id == actor.org_id)
@@ -550,7 +565,7 @@ async def reports(
 async def report(
     report_id: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await report_json(session, actor, report_id)
 
@@ -560,7 +575,7 @@ async def review(
     report_id: str,
     body: Review,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await review_report(session, actor, report_id, body)
 
@@ -569,7 +584,7 @@ async def review(
 async def export(
     report_id: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     record = await authorize_report(session, actor, report_id)
     result = await report_json(session, actor, report_id)
@@ -586,7 +601,7 @@ async def resolve_escalation(
     escalation_id: str,
     body: dict,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     require_roles(actor, "supervisor", "owner")
     item = await session.scalar(
@@ -597,17 +612,24 @@ async def resolve_escalation(
     note = body.get("resolution", "")
     if not isinstance(note, str) or not note.strip() or len(note) > 4000:
         raise DomainError("VALIDATION_FAILED", "Provide a supervisor resolution note.", 422)
+    run = await session.scalar(
+        select(Run).where(Run.id == item.run_id, Run.org_id == actor.org_id).with_for_update()
+    )
+    if not run:
+        raise DomainError("NOT_FOUND", "The escalation's run is unavailable.", 404)
+    await session.refresh(item)
     if item.status != "open":
         raise DomainError("TRANSITION_REJECTED", "This escalation was already resolved.", 409)
     item.status, item.resolution, item.resolved_by = "resolved", note, actor.id
+    run.version += 1
     audit(
         session,
         actor,
-        await session.get(Run, item.run_id),
+        run,
         "escalation.resolved",
         {"escalationId": item.id, "resolution": note},
     )
-    return {"id": item.id, "status": item.status, "resolution": note}
+    return {"id": item.id, "status": item.status, "resolution": note, "runVersion": run.version}
 
 
 @app.get("/api/v1/evaluation/summary", response_model=EvaluationResponse)
@@ -617,14 +639,16 @@ async def summary(
     from_date: str | None = Query(None, alias="from"),
     to_date: str | None = Query(None, alias="to"),
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await evaluation(session, actor, sopId, technicianId, from_date, to_date)
 
 
 @app.get("/api/v1/parts")
 async def parts(
-    q: str = "", actor: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+    q: str = "",
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await lookup_parts(session, actor, q)
 
@@ -645,7 +669,7 @@ async def upload_sop_media(
     heading: str = Form(...),
     page: int | None = Form(None),
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     content = await file.read(settings.max_upload_bytes + 1)
     return await import_media(
@@ -662,7 +686,9 @@ async def upload_sop_media(
 
 @app.get("/api/v1/sop-media/{media_id}/url")
 async def sop_media_url(
-    media_id: str, actor: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+    media_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     media = await authorize_media(session, actor, media_id)
     url = await get_storage().signed_url(media.object_key)
@@ -686,7 +712,7 @@ async def sop_media_content(
     media_id: str,
     token: str,
     actor: User = Depends(current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ):
     try:
         claims = jwt.decode(

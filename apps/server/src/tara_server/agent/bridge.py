@@ -17,6 +17,7 @@ from tara_server.db.models import (
 from tara_server.db.session import session_factory
 from tara_server.domain import execution
 from tara_server.errors import DomainError
+from tara_server.schemas import Command
 
 
 class DomainBridge:
@@ -44,6 +45,15 @@ class DomainBridge:
                 self.run_id,
             )
         )
+
+    async def preflight_visual(self, command: Command) -> dict | None:
+        """Reuse domain authorization, command hashing and replay before spending on a frame."""
+
+        async def prepare(session, actor):
+            _, replay = await execution.prepare(session, actor, self.run_id, command, "visual")
+            return replay
+
+        return await self.transact(prepare)
 
     async def execute(self, name: str, command=None, **kwargs) -> dict:
         operation = getattr(execution, name)

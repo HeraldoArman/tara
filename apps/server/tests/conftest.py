@@ -12,6 +12,7 @@ async def workshop(tmp_path, monkeypatch):
     settings = get_settings()
     monkeypatch.setattr(settings, "evidence_local_path", tmp_path / "evidence")
     monkeypatch.setattr(settings, "evidence_backend", "local")
+    monkeypatch.setattr(settings, "evidence_source", "test_media")
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)

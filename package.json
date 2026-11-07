@@ -24,18 +24,28 @@
     }
   },
   "scripts": {
+    "api:generate": "node scripts/generate-api.mjs",
     "build": "nx run-many -t build",
     "check": "ultracite check",
+    "check:server": "cd apps/server && uv run ruff check src tests && uv run ruff format --check src tests && uv run mypy src",
     "check-types": "nx run-many -t check-types",
-    "dev": "nx run-many -t dev",
+    "db:migrate": "cd apps/server && uv run alembic upgrade head",
+    "db:seed": "cd apps/server && uv run python -m tara_server.seed",
+    "dev": "node scripts/dev.mjs",
+    "dev:all": "node scripts/dev.mjs --worker",
+    "dev:api": "cd apps/server && uv run uvicorn tara_server.api.main:app --reload --port 8000",
     "dev:web": "nx run-many -t dev --projects=web",
+    "dev:worker": "cd apps/server && uv run python -m tara_server.agent.worker dev",
     "docker:build": "docker compose build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "docker:up": "docker compose up -d --build",
     "env:generate": "varlock codegen --path ./apps/web/",
     "fix": "ultracite fix",
-    "postinstall": "varlock codegen --path ./apps/web/"
+    "postinstall": "varlock codegen --path ./apps/web/",
+    "test:e2e": "playwright test",
+    "test:server": "cd apps/server && uv run pytest -q",
+    "test:web": "bun test tests/web tests/unit"
   },
   "overrides": {
     "@next/env": "npm:@varlock/nextjs-integration@1.2.2"

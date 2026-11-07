@@ -1,101 +1,118 @@
-# tara
+# TARa
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, and more.
+TARa guides technicians through reviewed SOPs and preserves the evidence, attempts,
+deviations and reviews behind every completed work order. The workspace uses
+Next.js, a server-authoritative FastAPI execution service, PostgreSQL 18, private
+S3-compatible evidence storage and one Python LiveKit/OpenAI realtime worker.
 
-## Features
+Correct work stays silent. **Ask TARa** explicitly activates consultation;
+proactive corrections are tied to eligible recorded failures. Missing provider
+credentials or failed visual assessment never produce simulated verification.
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Nx** - Smart monorepo task orchestration and caching
-- **PWA** - Progressive Web App support
+## Development
 
-## Getting Started
+Requirements: Bun 1.4.4, Python 3.12+, uv and Docker Compose for PostgreSQL/MinIO.
 
-First, install the dependencies:
-
-```bash
-bun install
+```sh
+bun install --frozen-lockfile
+cd apps/server
+uv sync --locked
+cd ../..
+cp .env.example .env
+cp apps/server/.env.example apps/server/.env
 ```
 
-Then, run the development server:
+Replace the example passwords/secrets in both ignored value files. The root file
+configures Compose; `apps/server/.env` configures host-run Python tools. Use the
+same local database and MinIO credentials in each. Never reuse these credentials
+in production.
 
-```bash
-bun run dev
+Start data services, initialize schema and seed the reviewed keyboard fixture:
+
+```sh
+docker compose up -d postgres minio
+cd apps/server
+uv run alembic upgrade head
+uv run python ../../scripts/init-local-storage.py
+uv run python -m tara_server.seed
+uv run uvicorn tara_server.api.main:app --reload --port 8000
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
+In another terminal, run `bun run dev:web` from the repository root and open
+<http://localhost:3001>. Demo seeding requires an explicit `DEMO_PASSWORD`; all
+seeded usernames are reported by the seed command. The fixture includes SOP-KBD-01
+and WO-1042. Do not run demo seeding in production.
 
-## UI Customization
+For the containerized web/API path, build with `docker compose build`, then run
+migrations explicitly with `docker compose run --rm api alembic upgrade head`
+before `docker compose up -d web api`. Initialize the local S3 bucket before the
+API readiness check with the command above; source/evidence services must have a
+real writable bucket.
+Migrations never run independently in worker/web startup.
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
+## Realtime and AI
 
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
+Set scoped `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and the same
+`LIVEKIT_AGENT_NAME` on API/worker. The worker needs `OPENAI_API_KEY`;
+API offline SOP decomposition separately uses `SOP_OPENAI_API_KEY`. Set these in
+ignored environment files or the deployment platform, never in browser code.
 
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
-
-```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
+```sh
+cd apps/server
+uv run python -m tara_server.agent.worker dev
 ```
 
-Import shared components like this:
+The container alternative is `docker compose --profile realtime up -d worker`.
+The `realtime` profile is explicit so the deterministic application can run
+without provider keys. Realtime acceptance still requires actual audio, dispatch,
+exact evidence correlation and reconnect tests; a running UI is insufficient.
 
-```tsx
-import { Button } from "@tara/ui/components/button";
+## Checks
+
+```sh
+bun run check-types
+bun run build
+bunx tsc -p .railway/tsconfig.json
+cd apps/server
+uv run ruff check src tests
+uv run ruff format --check src tests
+uv run mypy src
+uv run pytest -q
 ```
 
-### Add app-specific blocks
+CI also upgrades PostgreSQL 18, checks Alembic drift, scans secrets and builds the
+web/server Docker images. Provider-free tests use explicit fakes for deterministic
+assertions; credentialed realtime smoke and reviewed model evaluation are separate
+release gates. See [evaluation protocol](tests/evaluation/README.md).
 
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
+## Repository
 
-## Environment Configuration
+- `apps/web`: queue, SOP management, execution workspace, reports and evaluation.
+- `apps/server/src/tara_server`: auth/RBAC, persistence, SOP ingestion, execution,
+  audit, evidence, reports and realtime worker.
+- `packages/ui`: shared UI primitives and tokens.
+- `.railway/railway.ts`: one environment-scoped infrastructure definition.
 
-Each app owns its environment schema in `.env.schema`. Varlock generates `src/env.ts` during installation; run `bun run env:generate` after changing a schema. Commit schemas, and keep secrets in ignored env files or your deployment platform.
+The parent workspace's `../docs/` and `../new-design/` folders are the single
+sources of truth for requirements, operational runbooks and the design reference.
+They are deliberately kept outside this standalone repository.
 
-Import the generated `ENV` accessor in application code. Shared database and auth packages receive configuration or initialized clients from the application. See [Varlock's monorepo guide](https://varlock.dev/guides/monorepos/).
-
-Bun's automatic env loading is disabled in `bunfig.toml`; the framework integration or server bootstrap loads Varlock. Node deployments must include Varlock and its dependencies alongside the app schema.
-
-Run standalone Node/Bun tools that use Varlock from the owning app directory so they load that app's schema and env files. `env:generate` only generates TypeScript files; it does not initialize environment values in a subsequent command.
+Only this standalone `tara` repository is published to
+[HeraldoArman/tara](https://github.com/HeraldoArman/tara).
 
 ## Deployment
 
-### Docker Compose
+Railway runs private API/worker, PostgreSQL 18 and private evidence storage with
+one public Next.js origin. API requests stay same-origin through Next's private
+proxy. Migrations run once in API pre-deploy. Runtime secrets are never web Docker
+build arguments. See the parent workspace's `docs/deployment.md` and the
+[Railway configuration](.railway/README.md).
 
-- Target: web
-- Config: `docker-compose.yml` (app Dockerfiles live in `apps/*/Dockerfile`)
-- Build images: bun run docker:build
-- Start: bun run docker:up
-- Logs: bun run docker:logs
-- Stop: bun run docker:down
+Use the controlled administrative CLI, documented in the parent workspace's
+`docs/admin-operations.md`, to provision
+organization users and assign work orders after the initial owner bootstrap.
+There is deliberately no self-service user administration screen.
 
-Environment variables are read from each app's `.env` file (baked into web builds for public variables) and overridden in `docker-compose.yml` for container networking.
-
-For more details, see the guide on [Deploying with Docker Compose](https://www.better-t-stack.dev/docs/guides/docker).
-
-## Project Structure
-
-```
-tara/
-├── apps/
-│   ├── web/         # Frontend application (Next.js)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-```
-
-## Available Scripts
-
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run check-types`: Check TypeScript types across all apps
-- `cd apps/web && bun run generate-pwa-assets`: Generate PWA assets
-- `bun run docker:build`: Build the Docker Compose images
-- `bun run docker:up`: Build and start the Docker Compose stack
-- `bun run docker:logs`: Tail logs from the Docker Compose stack
-- `bun run docker:down`: Stop the Docker Compose stack
+Production requires isolated credentials/data, secure cookies, tested database
+and evidence recovery, actual provider evaluation and measured latency budgets.
+Railway buckets alone do not establish immutable evidence or automatic backups.

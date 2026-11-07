@@ -1,49 +1,11 @@
-<svg
-  height="92"
-  version="1.1"
-  width="92"
-  xmlns="http://www.w3.org/2000/svg"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
->
-  <svg
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <title>TARa field assistant</title>
+  <rect fill="#fff" height="128" rx="28" width="128" />
+  <path
+    d="m37 49-7 29m28-40L48 89m31-49L68 88m30-37-7 27"
     fill="none"
-    height="92"
-    viewBox="0 0 92 92"
-    width="92"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <rect
-      fill="#F5EEFF"
-      height="76"
-      rx="12"
-      stroke="#B79AFF"
-      stroke-width="3"
-      width="76"
-      x="8"
-      y="8"
-    ></rect>
-    <text
-      fill="#8F5BFF"
-      font-family="monospace"
-      font-size="40"
-      text-anchor="middle"
-      x="46"
-      y="56"
-    >
-      $
-      <tspan dx="0" dy="0">_</tspan>
-    </text>
-  </svg>
-  <style>
-  @media (prefers-color-scheme: light) {
-    :root {
-      filter: none;
-    }
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      filter: none;
-    }
-  }
-  </style>
+    stroke="#3869ed"
+    stroke-linecap="round"
+    stroke-width="8"
+  />
 </svg>

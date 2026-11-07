@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "../index.css";
-import Header from "@/components/header";
 import Providers from "@/components/providers";
 import PwaRegistration from "@/components/pwa-registration";
 
@@ -17,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  description: "tara",
-  title: "tara",
+  description:
+    "SOP-grounded field work, backed by evidence. Your work, in focus.",
+  title: { default: "TARa · Your work, in focus", template: "%s · TARa" },
 };
 
 export default function RootLayout({
@@ -33,12 +33,7 @@ export default function RootLayout({
       >
         <PwaRegistration />
 
-        <Providers>
-          <div className="grid h-svh grid-rows-[auto_1fr]">
-            <Header />
-            {children}
-          </div>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

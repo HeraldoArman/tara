@@ -20,6 +20,7 @@ from livekit.agents import (
     function_tool,
     room_io,
 )
+from livekit.agents.voice.speech_handle import SpeechHandle
 from livekit.plugins import openai
 from openai.types.realtime.realtime_audio_input_turn_detection import SemanticVad
 from pydantic import BaseModel, ValidationError
@@ -78,10 +79,16 @@ class WorkerRuntime:
         self.lock = asyncio.Lock()
         self.tasks: set[asyncio.Task] = set()
         self.alert_output = False
+        self.alert_lock = asyncio.Lock()
+        self.alert_task: asyncio.Task | None = None
+        self.alert_handle: SpeechHandle | None = None
+        self.active_alert: dict | None = None
+        self.alert_generation = 0
+        self.snapshot_version = 0
         self.ready = False
         self.automatically_checked: set[str] = set()
 
-    def spawn(self, coroutine) -> None:
+    def spawn(self, coroutine) -> asyncio.Task:
         task = asyncio.create_task(coroutine)
         self.tasks.add(task)
 
@@ -94,8 +101,12 @@ class WorkerRuntime:
                 )
 
         task.add_done_callback(finished)
+        return task
 
     async def close(self) -> None:
+        self.ready = False
+        with contextlib.suppress(Exception):
+            await self.cancel_alert("session-closed")
         self.policy.deactivate()
         if self.session:
             self.session.input.set_audio_enabled(False)
@@ -137,7 +148,10 @@ class WorkerRuntime:
         await self.emit("agent.state", value)
         return value
 
-    async def apply(self, snapshot: dict) -> dict:
+    async def apply(self, snapshot: dict, *, from_model_tool: bool = False) -> dict:
+        if snapshot["version"] < self.snapshot_version:
+            return snapshot
+        self.snapshot_version = snapshot["version"]
         if snapshot.get("interactionMode") != "consultation":
             self.policy.deactivate()
             if self.session:
@@ -145,9 +159,7 @@ class WorkerRuntime:
         if self.agent:
             await self.agent.update_instructions(instructions_for(snapshot))
         await self.emit("run.updated", snapshot)
-        for alert in snapshot.get("alerts", []):
-            if alert.get("status") == "pending":
-                self.spawn(self.speak_alert(alert))
+        await self.schedule_alert(snapshot, from_model_tool=from_model_tool)
         self.spawn(self.automatic_check())
         return snapshot
 
@@ -187,28 +199,109 @@ class WorkerRuntime:
                 }
             )
 
-    async def speak_alert(self, alert: dict) -> None:
-        status = self.policy.alert_status(alert)
-        if status == "suppressed":
-            return
-        await self.emit("alert.created", alert)
-        if status == "muted":
-            await self.bridge.agent_output(alert["message"], "alert", "muted", alert["id"])
-            return
-        latest = await self.bridge.snapshot()
-        if alert.get("stepId") != latest.get("currentStepId") or latest.get("status") != "active":
-            await self.bridge.agent_output(alert["message"], "alert", "superseded", alert["id"])
-            return
-        # In consultation the normal tool response supplies the correction once.
-        if self.policy.mode == "consultation":
-            await self.bridge.agent_output(alert["message"], "alert", "superseded", alert["id"])
-            return
-        await self.bridge.agent_output(alert["message"], "alert", "requested", alert["id"])
-        self.alert_output = True
+    async def cancel_alert(self, reason: str) -> None:
+        async with self.alert_lock:
+            await self._cancel_alert(reason)
+
+    async def _cancel_alert(self, reason: str) -> None:
+        previous = self.active_alert
+        task, handle = self.alert_task, self.alert_handle
+        self.alert_generation += 1
+        self.active_alert = None
+        self.alert_task = None
+        self.alert_handle = None
+        self.alert_output = False
+        if handle and not handle.done():
+            handle.interrupt(force=True)
+        if task and not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+        if previous:
+            await self.bridge.agent_output(
+                previous["message"],
+                "alert",
+                "superseded",
+                previous["id"],
+                metadata={"reason": reason},
+            )
+
+    async def schedule_alert(self, snapshot: dict, *, from_model_tool: bool) -> None:
+        """Keep one eligible correction slot; newer attempts replace old queued speech."""
+        async with self.alert_lock:
+            current_step = snapshot.get("currentStepId")
+            current_attempt = snapshot.get("currentAttemptId")
+            active = snapshot.get("status") == "active"
+            pending = [
+                item for item in snapshot.get("alerts", []) if item.get("status") == "pending"
+            ]
+            eligible = [
+                item
+                for item in pending
+                if active
+                and item.get("stepId") == current_step
+                and item.get("attemptId") in {None, current_attempt}
+            ]
+            newest = eligible[-1] if eligible else None
+            previous = self.active_alert
+            previous_is_current = (
+                previous
+                and active
+                and previous.get("stepId") == current_step
+                and previous.get("attemptId") in {None, current_attempt}
+            )
+            replacement = newest and previous and newest["id"] != previous["id"]
+            if previous and (not previous_is_current or replacement or from_model_tool):
+                await self._cancel_alert(
+                    "newer-attempt-or-step" if not from_model_tool else "model-tool-response"
+                )
+            for stale in pending:
+                if newest and stale["id"] == newest["id"]:
+                    continue
+                if stale["id"] in self.policy.emitted_alerts:
+                    continue
+                self.policy.emitted_alerts.add(stale["id"])
+                await self.bridge.agent_output(
+                    stale["message"],
+                    "alert",
+                    "superseded",
+                    stale["id"],
+                    metadata={"reason": "newer-attempt-or-step"},
+                )
+            if not newest or (self.active_alert and self.active_alert["id"] == newest["id"]):
+                return
+            status = self.policy.alert_status(newest)
+            if status == "suppressed":
+                return
+            await self.emit("alert.created", newest)
+            if from_model_tool and self.policy.mode == "consultation":
+                # That same model turn receives the committed failure and supplies its correction.
+                await self.bridge.agent_output(
+                    newest["message"],
+                    "alert",
+                    "superseded",
+                    newest["id"],
+                    metadata={"reason": "model-tool-response"},
+                )
+                return
+            self.alert_generation += 1
+            generation = self.alert_generation
+            self.active_alert = newest
+            self.alert_task = self.spawn(self.speak_alert(newest, generation, status))
+
+    async def speak_alert(self, alert: dict, generation: int, status: str) -> None:
         try:
+            if status == "muted":
+                await self.bridge.agent_output(alert["message"], "alert", "muted", alert["id"])
+                return
+            await self.bridge.agent_output(alert["message"], "alert", "requested", alert["id"])
+            self.alert_output = True
             await self.emit(
                 "agent.state",
-                {"mode": "alert", "microphoneEnabled": False, "muted": self.policy.muted},
+                {
+                    "mode": "alert",
+                    "microphoneEnabled": self.policy.mode == "consultation",
+                    "muted": self.policy.muted,
+                },
             )
             if self.session:
                 handle = self.session.generate_reply(
@@ -217,17 +310,30 @@ class WorkerRuntime:
                     + ". Then stop.",
                     tool_choice="none",
                 )
+                self.alert_handle = handle
                 await handle
                 if handle.exception():
                     raise DomainError(
                         "PROVIDER_UNAVAILABLE", "The corrective audio could not play.", 503
                     )
+                if handle.interrupted:
+                    await self.bridge.agent_output(
+                        alert["message"], "alert", "superseded", alert["id"]
+                    )
+                    return
             await self.bridge.agent_output(alert["message"], "alert", "spoken", alert["id"])
+        except asyncio.CancelledError:
+            raise
         except Exception:
             await self.bridge.agent_output(alert["message"], "alert", "failed", alert["id"])
         finally:
-            self.alert_output = False
-            await self.state()
+            # An older cancelled task must not reset a newer task's audio/mode ownership.
+            if generation == self.alert_generation:
+                self.alert_output = False
+                self.active_alert = None
+                self.alert_task = None
+                self.alert_handle = None
+                await self.state()
 
     async def capture(self) -> CapturedFrame:
         participant = self.ctx.room.remote_participants.get(self.participant_identity)
@@ -264,8 +370,11 @@ class WorkerRuntime:
         finally:
             await stream.aclose()
 
-    async def visual(self, payload: dict) -> dict:
+    async def visual(self, payload: dict, *, from_model_tool: bool = False) -> dict:
         command = Command.model_validate(payload)
+        replay = await self.bridge.preflight_visual(command)
+        if replay is not None:
+            return replay
         snapshot = await self.bridge.snapshot()
         if snapshot["version"] != command.expected_version:
             raise DomainError("STALE_RUN", "The run changed. Refresh and retry.", 409)
@@ -305,9 +414,9 @@ class WorkerRuntime:
                 captured_at=frame.captured_at if frame else None,
                 model=get_settings().vision_model,
             )
-        return await self.apply(result)
+        return await self.apply(result, from_model_tool=from_model_tool)
 
-    async def dispatch(self, method: str, payload: dict) -> dict:
+    async def dispatch(self, method: str, payload: dict, *, from_model_tool: bool = False) -> dict:
         if not self.ready and method != "assistant.deactivate":
             raise DomainError(
                 "AGENT_STARTING", "The assistant is starting. Try again shortly.", 503
@@ -324,6 +433,9 @@ class WorkerRuntime:
             return await self.state()
         if method in {"assistant.activate", "assistant.deactivate"}:
             active = method == "assistant.activate"
+            await self.cancel_alert(
+                "consultation-activated" if active else "consultation-deactivated"
+            )
             snapshot = await self.bridge.execute("set_consultation", active=active)
             if active:
                 self.policy.activate()
@@ -348,7 +460,7 @@ class WorkerRuntime:
                 self.session.generate_reply(user_input=text)
             return {"accepted": True}
         if method == "run.retry":
-            return await self.visual(payload)
+            return await self.visual(payload, from_model_tool=from_model_tool)
         operations: dict[str, tuple[str, type[BaseModel]]] = {
             "run.respond": ("respond", ResponseCommand),
             "run.control": ("control", ControlCommand),
@@ -358,7 +470,10 @@ class WorkerRuntime:
         if method not in operations:
             raise DomainError("VALIDATION_FAILED", "Unknown worker method.", 422)
         name, schema = operations[method]
-        return await self.apply(await self.bridge.execute(name, schema.model_validate(payload)))
+        return await self.apply(
+            await self.bridge.execute(name, schema.model_validate(payload)),
+            from_model_tool=from_model_tool,
+        )
 
     def register_rpc(self) -> None:
         methods = [
@@ -658,6 +773,7 @@ async def entrypoint(ctx: JobContext):
     ctx.add_shutdown_callback(runtime.close)
     # Authorize the opaque dispatch context against Postgres before accepting RPCs.
     snapshot = await runtime.bridge.execute("set_consultation", active=False)
+    runtime.snapshot_version = snapshot["version"]
     agent = Agent(instructions=instructions_for(snapshot), tools=build_tools(runtime))
     runtime.agent = agent
     session: AgentSession[None] = AgentSession(
@@ -691,7 +807,7 @@ async def entrypoint(ctx: JobContext):
         text = item.text_content
         if not text or item.role not in {"user", "assistant"}:
             return
-        mode = "alert" if runtime.alert_output else runtime.policy.mode
+        mode = "alert" if runtime.alert_output and item.role == "assistant" else runtime.policy.mode
         if mode == "silent":
             return
 

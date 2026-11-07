@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     background_color: "#ffffff",
-    description: "my pwa app",
+    description: "SOP-grounded field work, backed by evidence.",
     display: "standalone",
     icons: [
       {
@@ -17,9 +17,9 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
     ],
-    name: "tara",
-    short_name: "tara",
+    name: "TARa · Field assistant",
+    short_name: "TARa",
     start_url: "/",
-    theme_color: "#000000",
+    theme_color: "#3869ed",
   };
 }

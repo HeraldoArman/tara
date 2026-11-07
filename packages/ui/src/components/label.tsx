@@ -3,7 +3,12 @@
 import { cn } from "@tara/ui/lib/utils";
 import type * as React from "react";
 
-function Label({ className, ...props }: React.ComponentProps<"label">) {
+function Label({
+  className,
+  htmlFor,
+  children,
+  ...props
+}: React.ComponentProps<"label">) {
   return (
     <label
       className={cn(
@@ -11,8 +16,11 @@ function Label({ className, ...props }: React.ComponentProps<"label">) {
         className
       )}
       data-slot="label"
+      htmlFor={htmlFor}
       {...props}
-    />
+    >
+      {children}
+    </label>
   );
 }
 

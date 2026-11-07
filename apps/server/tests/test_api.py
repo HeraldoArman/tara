@@ -165,3 +165,73 @@ async def test_livekit_dispatch_precedes_room_scoped_token_and_failure_returns_n
     assert failed.status_code == 503
     assert "token" not in failed.json()
     assert "sensitive" not in failed.text
+
+
+async def test_failed_transaction_cannot_send_success_response(api_client):
+    from sqlalchemy import func, select
+
+    from tara_server.db.models import Run
+    from tara_server.errors import DomainError
+
+    client, session, users, work = api_client
+    client.cookies.set(COOKIE_NAME, token_for(users["technician"]))
+
+    async def fail_commit():
+        try:
+            yield session
+            raise DomainError("COMMIT_FAILED", "The transaction could not commit.", 503)
+        finally:
+            await session.rollback()
+
+    app.dependency_overrides[get_session] = fail_commit
+    response = await client.post(
+        f"/api/v1/work-orders/{work.id}/runs", headers={"Origin": get_settings().app_origin}
+    )
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "COMMIT_FAILED"
+    assert await session.scalar(select(func.count()).select_from(Run)) == 0
+
+
+async def test_supervisor_resolution_bumps_run_version_and_stale_actions_fail(api_client):
+    import uuid
+
+    from tara_server.domain import execution
+    from tara_server.errors import DomainError
+    from tara_server.schemas import ControlCommand, IssueCommand
+
+    client, session, users, work = api_client
+    snapshot = await execution.create_run(session, users["technician"], work.id)
+    snapshot = await execution.record_issue(
+        session,
+        users["technician"],
+        snapshot["id"],
+        IssueCommand(
+            expectedVersion=snapshot["version"],
+            expectedStepId=snapshot["currentStepId"],
+            idempotencyKey=str(uuid.uuid4()),
+            note="Supervisor inspection required.",
+            escalate=True,
+        ),
+    )
+    escalation_id = snapshot["escalations"][0]["id"]
+    client.cookies.set(COOKIE_NAME, token_for(users["supervisor"]))
+    response = await client.post(
+        f"/api/v1/escalations/{escalation_id}/resolve",
+        headers={"Origin": get_settings().app_origin},
+        json={"resolution": "Proceed with the published inspection."},
+    )
+    assert response.status_code == 200
+    assert response.json()["runVersion"] == snapshot["version"] + 1
+    with pytest.raises(DomainError) as error:
+        await execution.control(
+            session,
+            users["technician"],
+            snapshot["id"],
+            ControlCommand(
+                expectedVersion=snapshot["version"],
+                expectedStepId=snapshot["currentStepId"],
+                idempotencyKey=str(uuid.uuid4()),
+                action="pause",
+            ),
+        )
+    assert error.value.code == "STALE_RUN"

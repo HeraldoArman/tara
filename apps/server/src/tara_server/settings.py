@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     livekit_api_secret: str = ""
     livekit_agent_name: str = "tara-agent"
     evidence_backend: str = "local"
+    evidence_source: Literal["live_camera", "test_media"] = "live_camera"
     evidence_local_path: Path = Path(".data/evidence")
     s3_endpoint_url: str | None = None
     s3_access_key_id: str = ""
@@ -50,6 +52,10 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def production_requirements(self):
         if self.environment == "production":
+            if self.evidence_source != "live_camera":
+                raise ValueError(
+                    "Production requires live camera evidence; test media is only for isolated fixtures"
+                )
             if not self.database_url.startswith("postgresql+asyncpg://"):
                 raise ValueError("Production requires PostgreSQL via asyncpg")
             if self.service_role != "worker" and (

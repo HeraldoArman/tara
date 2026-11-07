@@ -2,14 +2,32 @@
 
 import {
   MessageScroller as MessageScrollerPrimitive,
-  useMessageScroller,
-  useMessageScrollerScrollable,
-  useMessageScrollerVisibility,
+  useMessageScroller as usePrimitiveMessageScroller,
+  useMessageScrollerScrollable as usePrimitiveMessageScrollerScrollable,
+  useMessageScrollerVisibility as usePrimitiveMessageScrollerVisibility,
 } from "@shadcn/react/message-scroller";
 import { Button } from "@tara/ui/components/button";
 import { cn } from "@tara/ui/lib/utils";
 import { ArrowDownIcon } from "lucide-react";
 import type * as React from "react";
+
+function useMessageScroller(
+  ...args: Parameters<typeof usePrimitiveMessageScroller>
+) {
+  return usePrimitiveMessageScroller(...args);
+}
+
+function useMessageScrollerScrollable(
+  ...args: Parameters<typeof usePrimitiveMessageScrollerScrollable>
+) {
+  return usePrimitiveMessageScrollerScrollable(...args);
+}
+
+function useMessageScrollerVisibility(
+  ...args: Parameters<typeof usePrimitiveMessageScrollerVisibility>
+) {
+  return usePrimitiveMessageScrollerVisibility(...args);
+}
 
 function MessageScrollerProvider(
   props: React.ComponentProps<typeof MessageScrollerPrimitive.Provider>

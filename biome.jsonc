@@ -1,5 +1,22 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "!!**/.agents",
+      "!!prototype",
+      "!!new-design",
+      "!!apps/web/src/lib/generated",
+      "!!apps/web/openapi.json",
+      "!!**/.venv"
+    ]
+  },
+  // React Compiler memoizes component handlers, including item-specific callbacks.
+  "overrides": [
+    {
+      "includes": ["apps/web/src/components/tara/**"],
+      "linter": { "rules": { "performance": { "noJsxPropsBind": "off" } } }
+    }
+  ],
   "extends": [
     "ultracite/biome/core",
     "ultracite/biome/react",
