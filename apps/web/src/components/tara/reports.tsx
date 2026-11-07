@@ -100,8 +100,8 @@ export function ReportList({ items }: { items: Report[] }) {
         </div>
       ) : (
         <EmptyState
-          description="Closed runs appear here with every attempt, evidence frame and unresolved issue preserved."
-          title="No reports in this view."
+          description="Open sessions and their saved images are available above. Closing a session creates its final report."
+          title="No finalized reports in this view."
         />
       )}
     </>
@@ -289,7 +289,7 @@ export function ReportDetail({ report, user }: { report: Report; user: User }) {
               <span className="count">{evidence.length}</span>
             </header>
             <div className="panel-body">
-              <EvidenceRecords evidence={evidence} />
+              <EvidenceRecords evidence={evidence} steps={steps} />
             </div>
           </section>
           <section className="panel">

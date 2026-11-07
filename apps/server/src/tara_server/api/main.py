@@ -26,7 +26,6 @@ from tara_server.db.models import (
     SOP,
     AuditEvent,
     Escalation,
-    Evidence,
     Report,
     Run,
     SOPDocument,
@@ -44,6 +43,7 @@ from tara_server.domain.camera_pairings import (
     phone_status,
     revoke_pairing,
 )
+from tara_server.domain.evidence_access import authorize_evidence, evidence_content_response
 from tara_server.domain.execution import (
     audit,
     audit_json,
@@ -63,6 +63,7 @@ from tara_server.domain.reports import (
     review_report,
 )
 from tara_server.domain.run_assets import register_asset
+from tara_server.domain.run_records import list_run_records
 from tara_server.domain.sop_intelligence import intelligence
 from tara_server.domain.sop_sessions import start_sop_session
 from tara_server.domain.sops import (
@@ -92,6 +93,7 @@ from tara_server.schemas import (
     ReportResponse,
     Review,
     RunAssetRegistration,
+    RunRecordListResponse,
     RunResponse,
     SopIntelligenceResponse,
     SOPListResponse,
@@ -508,54 +510,30 @@ async def evidence_url(
     actor: User = Depends(current_user),
     session: AsyncSession = Depends(get_session, scope="function"),
 ):
-    evidence = await session.scalar(
-        select(Evidence).where(Evidence.id == evidence_id, Evidence.org_id == actor.org_id)
-    )
-    if not evidence:
-        raise DomainError("NOT_FOUND", "Evidence not found.", 404)
-    await authorize_run(session, actor, evidence.run_id)
-    url = await get_storage().signed_url(evidence.object_key)
-    if not url:
-        token = jwt.encode(
-            {
-                "sub": evidence.id,
-                "actor": actor.id,
-                "iss": "tara-evidence",
-                "exp": now() + timedelta(seconds=120),
-            },
-            settings.jwt_secret,
-            algorithm="HS256",
-        )
-        url = f"/api/v1/evidence/{evidence.id}/content?token={token}"
-    return {"url": url, "expiresIn": 120}
+    evidence = await authorize_evidence(session, actor, evidence_id)
+    return {"url": f"/api/v1/evidence/{evidence.id}/content", "expiresIn": None}
 
 
 @app.get("/api/v1/evidence/{evidence_id}/content")
 async def evidence_content(
     evidence_id: str,
-    token: str,
+    token: str | None = None,
     actor: User = Depends(current_user),
     session: AsyncSession = Depends(get_session, scope="function"),
 ):
-    try:
-        claims = jwt.decode(
-            token, settings.jwt_secret, algorithms=["HS256"], issuer="tara-evidence"
-        )
-        if claims["sub"] != evidence_id or claims["actor"] != actor.id:
-            raise ValueError("Scope mismatch")
-    except (jwt.InvalidTokenError, ValueError, KeyError):
-        raise DomainError(
-            "FORBIDDEN", "The evidence link expired or is not authorized.", 403
-        ) from None
-    evidence = await session.get(Evidence, evidence_id)
-    if not evidence:
-        raise DomainError("NOT_FOUND", "Evidence not found.", 404)
-    await authorize_run(session, actor, evidence.run_id)
-    return Response(
-        await get_storage().read_local(evidence.object_key),
-        media_type=evidence.media_type,
-        headers={"Cache-Control": "no-store"},
-    )
+    # Earlier local-storage links included a short-lived actor-bound token.
+    if token is not None:
+        try:
+            claims = jwt.decode(
+                token, settings.jwt_secret, algorithms=["HS256"], issuer="tara-evidence"
+            )
+            if claims["sub"] != evidence_id or claims["actor"] != actor.id:
+                raise ValueError("Scope mismatch")
+        except (jwt.InvalidTokenError, ValueError, KeyError):
+            raise DomainError(
+                "FORBIDDEN", "The evidence link expired or is not authorized.", 403
+            ) from None
+    return await evidence_content_response(session, actor, evidence_id)
 
 
 @app.get("/api/v1/sops", response_model=SOPListResponse)
@@ -711,6 +689,16 @@ async def sop_search(
     session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await search_sop(session, actor, version_id, q)
+
+
+@app.get("/api/v1/run-records", response_model=RunRecordListResponse)
+async def run_records(
+    limit: int = Query(100, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await list_run_records(session, actor, limit, offset)
 
 
 @app.get("/api/v1/reports", response_model=ReportListResponse)

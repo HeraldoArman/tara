@@ -1,4 +1,5 @@
 "use client";
+import "./evaluation-dashboard.css";
 import {
   Activity,
   CheckCheck,
@@ -6,9 +7,11 @@ import {
   ScanLine,
   ShieldAlert,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { api, duration, errorMessage, humanize } from "@/lib/api";
 import type { Evaluation, Sop, TechnicianMetric } from "@/lib/contracts";
+import { EvaluationEvidence, EvaluationInsights } from "./evaluation-insights";
 export function EvaluationView({
   initialSummary,
   ownOnly = false,
@@ -21,10 +24,24 @@ export function EvaluationView({
   const [data, setData] = useState(initialSummary);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const filter = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const [appliedQuery, setAppliedQuery] = useState("");
+  const load = async (query: string) => {
     setBusy(true);
     setError("");
+    try {
+      setData(await api<Evaluation>(`/evaluation/summary?${query}`));
+      setAppliedQuery(query);
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const filter = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy) {
+      return;
+    }
     const form = new FormData(event.currentTarget);
     const query = new URLSearchParams();
     for (const [key, value] of form) {
@@ -32,66 +49,84 @@ export function EvaluationView({
         query.set(key, String(value));
       }
     }
-    try {
-      setData(await api<Evaluation>(`/evaluation/summary?${query}`));
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
+    await load(query.toString());
+  };
+  const refresh = async () => {
+    if (!busy) {
+      await load(appliedQuery);
     }
   };
+  const stepRows = data.stepMetrics
+    .filter((step) => step.attempts > 0 || step.held > 0)
+    .sort((a, b) => b.held - a.held || b.attempts - a.attempts);
   const percent = (value: unknown) =>
     typeof value === "number"
       ? `${(value <= 1 ? value * 100 : value).toFixed(1)}%`
       : "—";
   const metrics = [
     {
+      hint: "All sessions in this view",
       icon: ClipboardCheck,
-      label: "Recorded runs",
-      value: data.totalRuns ?? data.runs ?? 0,
+      label: "Sessions started",
+      value: data.runs,
     },
     {
-      icon: CheckCheck,
-      label: "Complete runs",
-      value: data.completedRuns ?? data.completed ?? 0,
-    },
-    {
-      icon: ShieldAlert,
-      label: "Partial runs",
-      value: data.partialRuns ?? data.partial ?? 0,
-    },
-    {
+      hint: "Active and paused work",
       icon: Activity,
-      label: "First-pass success",
-      value: percent(data.firstPassRate),
+      label: "Open sessions",
+      value: data.active,
     },
     {
+      hint: `${data.partial} closed with unresolved work`,
+      icon: CheckCheck,
+      label: "Completed sessions",
+      value: data.completed,
+    },
+    {
+      hint: "Steps needing recovery or a retest",
+      icon: ShieldAlert,
+      label: "Held steps",
+      value: data.held ?? 0,
+    },
+    {
+      hint: `${data.acceptedEvidenceFrames ?? 0} accepted as visual evidence`,
       icon: ScanLine,
-      label: "Evidence coverage",
-      value: percent(data.evidenceCoverage),
+      label: "Saved camera images",
+      value: data.evidenceFrames ?? 0,
+    },
+    {
+      hint: `${data.firstPassCount ?? 0} of ${data.firstAttemptCount ?? 0} first attempts`,
+      icon: CheckCheck,
+      label: "First-pass steps",
+      value: percent(data.firstPassRate),
     },
   ];
   const tables = [
     {
       columns: [
-        { key: "stepId", label: "Step" },
+        { key: "stepTitle", label: "Step" },
+        { key: "sopKey", label: "Procedure" },
         { key: "runs", label: "Runs" },
         { key: "attempts", label: "Attempts" },
         { key: "firstPass", label: "Passed first time" },
         { key: "held", label: "Held" },
       ],
-      description: "Attempts, completion and retakes by procedure step.",
+      description:
+        "Attempted and held steps. Open a step to review its session and images.",
       key: "stepMetrics",
       title: "Success by step",
     },
     {
       columns: [
-        { key: "criterionId", label: "Criterion" },
-        { key: "count", label: "Failed checks" },
+        { key: "criterionDescription", label: "Criterion" },
+        { key: "stepTitle", label: "Step" },
+        { key: "count", label: "Failed" },
+        { key: "unclearCount", label: "Unclear" },
       ],
-      description: "Where visual checks need attention.",
+      description:
+        "Counts include saved attempts and retakes, with unclear checks counted separately.",
       key: "criterionFailures",
-      title: "Criterion failures",
+      title: "Recorded criterion results",
     },
     {
       description: "Performance within your authorized scope.",
@@ -104,13 +139,13 @@ export function EvaluationView({
         { key: "durationMs", label: "Response time" },
         { key: "status", label: "Status" },
       ],
-      description: "Measured model and tool response times.",
+      description: "The most recent 100 measured model and tool actions.",
       key: "latency",
       title: "Service latency",
     },
   ];
   return (
-    <>
+    <div className="evaluation-dashboard">
       <form className="evaluation-filters panel" onSubmit={filter}>
         <div>
           <label htmlFor="filter-sop">Procedure</label>
@@ -149,9 +184,19 @@ export function EvaluationView({
           <label htmlFor="filter-to">To</label>
           <input id="filter-to" name="to" type="date" />
         </div>
-        <button className="button primary" disabled={busy} type="submit">
-          {busy ? "Applying…" : "Apply filters"}
-        </button>
+        <div className="evaluation-filter-actions">
+          <button className="button primary" disabled={busy} type="submit">
+            {busy ? "Loading…" : "Apply filters"}
+          </button>
+          <button
+            className="button"
+            disabled={busy}
+            onClick={refresh}
+            type="button"
+          >
+            Refresh data
+          </button>
+        </div>
       </form>
       {error ? (
         <div className="notice danger" role="alert">
@@ -159,14 +204,16 @@ export function EvaluationView({
         </div>
       ) : null}
       <div className="metrics-row evaluation-metrics">
-        {metrics.map(({ icon: Icon, label, value }) => (
+        {metrics.map(({ icon: Icon, label, value, hint }) => (
           <div className="metric" key={label}>
             <Icon size={19} />
             <strong>{String(value)}</strong>
             <span>{label}</span>
+            <small>{hint}</small>
           </div>
         ))}
       </div>
+      <EvaluationInsights data={data} />
       <div className="evaluation-grid">
         {tables.map((table) => (
           <section className="panel" key={table.key}>
@@ -182,17 +229,19 @@ export function EvaluationView({
               <MetricTable
                 columns={table.columns ?? []}
                 title={table.title}
-                value={data[table.key]}
+                value={table.key === "stepMetrics" ? stepRows : data[table.key]}
               />
             )}
           </section>
         ))}
       </div>
+      <EvaluationEvidence data={data} />
       <p className="subtle-note">
-        Evidence coverage, exceptions and first-pass success are separate
-        measures. These values come from recorded execution data.
+        {data.scope ||
+          "These values use saved sessions in your authorized scope."}{" "}
+        {data.firstPassRateScope}
       </p>
-    </>
+    </div>
   );
 }
 function TechnicianOutcomes({ metrics }: { metrics: TechnicianMetric[] }) {
@@ -288,7 +337,9 @@ function MetricTable({
               )}
             >
               {columns.map(({ key }) => (
-                <td key={key}>{metricValue(key, row[key])}</td>
+                <td key={key}>
+                  <MetricCell field={key} row={row} />
+                </td>
               ))}
             </tr>
           ))}
@@ -308,4 +359,36 @@ function metricValue(key: string, value: unknown): string {
       : `${(value / 1000).toFixed(1)} s`;
   }
   return typeof value === "string" ? humanize(value) : String(value);
+}
+
+function MetricCell({
+  field,
+  row,
+}: {
+  field: string;
+  row: Record<string, unknown>;
+}) {
+  const value = metricValue(field, row[field]);
+  if (
+    (field === "stepTitle" || field === "criterionDescription") &&
+    typeof row.runId === "string"
+  ) {
+    return (
+      <Link
+        className="evaluation-record-link"
+        href={`/reports/runs/${encodeURIComponent(row.runId)}`}
+      >
+        {value}
+      </Link>
+    );
+  }
+  if (field === "sopKey" && typeof row.version === "string") {
+    return (
+      <span>
+        {value}
+        <small className="table-subtext">v{row.version}</small>
+      </span>
+    );
+  }
+  return value;
 }

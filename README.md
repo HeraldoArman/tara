@@ -148,6 +148,16 @@ An open session started from the same version is resumed on repeat requests.
 Asset details are explicitly marked as not provided for these sessions.
 Technicians cannot assign or reassign other users' work.
 
+**Reports** includes read-only session records while work is ongoing. Each record
+shows progress, attempts, issues and saved camera images. Completing a session or
+closing it with unresolved work creates its immutable final report. **Evaluation**
+uses real authorized sessions, including unfinished work, and links procedure
+steps and recent images back to their session records. Unclear checks are counted
+separately from confirmed failures. Visual evidence coverage measures distinct
+required camera checkpoints with accepted frames; saved-image counts include
+frames that were not accepted. Evidence images load through authenticated
+same-origin endpoints backed by private S3 storage, with per-image retry controls.
+
 Inside a connected session, **Pair phone camera** optionally replaces the laptop
 camera. Scan the QR code with a phone and choose **Start phone camera** in its
 camera-only Product view. The laptop stays in Demo view and keeps the microphone,

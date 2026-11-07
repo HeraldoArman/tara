@@ -981,9 +981,16 @@
           {
             "name": "token",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Token"
             }
           },
@@ -1576,6 +1583,75 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/run-records": {
+      "get": {
+        "summary": "Run Records",
+        "operationId": "run_records_api_v1_run_records_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "tara_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tara Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunRecordListResponse"
+                }
               }
             }
           },
@@ -2631,6 +2707,104 @@
         ],
         "title": "DraftEdit"
       },
+      "EvaluationCriterionMetric": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "sopVersionId": {
+            "type": "string",
+            "title": "Sopversionid"
+          },
+          "stepId": {
+            "type": "string",
+            "title": "Stepid"
+          },
+          "stepTitle": {
+            "type": "string",
+            "title": "Steptitle"
+          },
+          "sopKey": {
+            "type": "string",
+            "title": "Sopkey"
+          },
+          "sopTitle": {
+            "type": "string",
+            "title": "Soptitle"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "runId": {
+            "type": "string",
+            "title": "Runid"
+          },
+          "criterionId": {
+            "type": "string",
+            "title": "Criterionid"
+          },
+          "criterionDescription": {
+            "type": "string",
+            "title": "Criteriondescription"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "unclearCount": {
+            "type": "integer",
+            "title": "Unclearcount"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "sopVersionId",
+          "stepId",
+          "stepTitle",
+          "sopKey",
+          "sopTitle",
+          "version",
+          "runId",
+          "criterionId",
+          "criterionDescription",
+          "count",
+          "unclearCount"
+        ],
+        "title": "EvaluationCriterionMetric"
+      },
+      "EvaluationLatency": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tool": {
+            "type": "string",
+            "title": "Tool"
+          },
+          "durationMs": {
+            "type": "integer",
+            "title": "Durationms"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "tool",
+          "durationMs",
+          "status"
+        ],
+        "title": "EvaluationLatency"
+      },
       "EvaluationResponse": {
         "properties": {
           "runs": {
@@ -2673,35 +2847,179 @@
           },
           "stepMetrics": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/EvaluationStepMetric"
             },
             "type": "array",
             "title": "Stepmetrics"
           },
           "criterionFailures": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/EvaluationCriterionMetric"
             },
             "type": "array",
             "title": "Criterionfailures"
           },
           "latency": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/EvaluationLatency"
             },
             "type": "array",
             "title": "Latency"
           },
           "technicianMetrics": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/EvaluationTechnicianMetric"
             },
             "type": "array",
             "title": "Technicianmetrics"
+          },
+          "returned": {
+            "type": "integer",
+            "title": "Returned",
+            "default": 0
+          },
+          "aiVerified": {
+            "type": "integer",
+            "title": "Aiverified",
+            "default": 0
+          },
+          "attested": {
+            "type": "integer",
+            "title": "Attested",
+            "default": 0
+          },
+          "held": {
+            "type": "integer",
+            "title": "Held",
+            "default": 0
+          },
+          "unreached": {
+            "type": "integer",
+            "title": "Unreached",
+            "default": 0
+          },
+          "retakes": {
+            "type": "integer",
+            "title": "Retakes",
+            "default": 0
+          },
+          "deviations": {
+            "type": "integer",
+            "title": "Deviations",
+            "default": 0
+          },
+          "openEscalations": {
+            "type": "integer",
+            "title": "Openescalations",
+            "default": 0
+          },
+          "activeSeconds": {
+            "type": "integer",
+            "title": "Activeseconds",
+            "default": 0
+          },
+          "toolFailureRate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toolfailurerate"
+          },
+          "alerts": {
+            "type": "integer",
+            "title": "Alerts",
+            "default": 0
+          },
+          "suppressedAlerts": {
+            "type": "integer",
+            "title": "Suppressedalerts",
+            "default": 0
+          },
+          "evidenceFrames": {
+            "type": "integer",
+            "title": "Evidenceframes",
+            "default": 0
+          },
+          "acceptedEvidenceFrames": {
+            "type": "integer",
+            "title": "Acceptedevidenceframes",
+            "default": 0
+          },
+          "unacceptedEvidenceFrames": {
+            "type": "integer",
+            "title": "Unacceptedevidenceframes",
+            "default": 0
+          },
+          "visualSteps": {
+            "type": "integer",
+            "title": "Visualsteps",
+            "default": 0
+          },
+          "verifiedVisualSteps": {
+            "type": "integer",
+            "title": "Verifiedvisualsteps",
+            "default": 0
+          },
+          "attemptedSteps": {
+            "type": "integer",
+            "title": "Attemptedsteps",
+            "default": 0
+          },
+          "firstPassCount": {
+            "type": "integer",
+            "title": "Firstpasscount",
+            "default": 0
+          },
+          "firstAttemptCount": {
+            "type": "integer",
+            "title": "Firstattemptcount",
+            "default": 0
+          },
+          "visualChecks": {
+            "type": "integer",
+            "title": "Visualchecks",
+            "default": 0
+          },
+          "errorChecks": {
+            "type": "integer",
+            "title": "Errorchecks",
+            "default": 0
+          },
+          "unclearChecks": {
+            "type": "integer",
+            "title": "Unclearchecks",
+            "default": 0
+          },
+          "recentEvidence": {
+            "items": {
+              "$ref": "#/components/schemas/RecentEvidenceResponse"
+            },
+            "type": "array",
+            "title": "Recentevidence"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "evidenceCoverageScope": {
+            "type": "string",
+            "title": "Evidencecoveragescope",
+            "default": ""
+          },
+          "technicianMetricsScope": {
+            "type": "string",
+            "title": "Technicianmetricsscope",
+            "default": ""
+          },
+          "firstPassRateScope": {
+            "type": "string",
+            "title": "Firstpassratescope",
+            "default": ""
           }
         },
         "additionalProperties": true,
@@ -2718,6 +3036,146 @@
           "latency"
         ],
         "title": "EvaluationResponse"
+      },
+      "EvaluationStepMetric": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "sopVersionId": {
+            "type": "string",
+            "title": "Sopversionid"
+          },
+          "stepId": {
+            "type": "string",
+            "title": "Stepid"
+          },
+          "stepTitle": {
+            "type": "string",
+            "title": "Steptitle"
+          },
+          "sopKey": {
+            "type": "string",
+            "title": "Sopkey"
+          },
+          "sopTitle": {
+            "type": "string",
+            "title": "Soptitle"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "runId": {
+            "type": "string",
+            "title": "Runid"
+          },
+          "runs": {
+            "type": "integer",
+            "title": "Runs"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "firstPass": {
+            "type": "integer",
+            "title": "Firstpass"
+          },
+          "held": {
+            "type": "integer",
+            "title": "Held"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "sopVersionId",
+          "stepId",
+          "stepTitle",
+          "sopKey",
+          "sopTitle",
+          "version",
+          "runId",
+          "runs",
+          "attempts",
+          "firstPass",
+          "held"
+        ],
+        "title": "EvaluationStepMetric"
+      },
+      "EvaluationTechnicianMetric": {
+        "properties": {
+          "technicianId": {
+            "type": "string",
+            "title": "Technicianid"
+          },
+          "technicianName": {
+            "type": "string",
+            "title": "Technicianname"
+          },
+          "runs": {
+            "type": "integer",
+            "title": "Runs"
+          },
+          "completed": {
+            "type": "integer",
+            "title": "Completed"
+          },
+          "partial": {
+            "type": "integer",
+            "title": "Partial"
+          },
+          "active": {
+            "type": "integer",
+            "title": "Active"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "attemptedSteps": {
+            "type": "integer",
+            "title": "Attemptedsteps"
+          },
+          "firstPassRate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firstpassrate"
+          },
+          "retakes": {
+            "type": "integer",
+            "title": "Retakes"
+          },
+          "activeSeconds": {
+            "type": "integer",
+            "title": "Activeseconds"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "technicianId",
+          "technicianName",
+          "runs",
+          "completed",
+          "partial",
+          "active",
+          "attempts",
+          "attemptedSteps",
+          "firstPassRate",
+          "retakes",
+          "activeSeconds"
+        ],
+        "title": "EvaluationTechnicianMetric"
       },
       "EvidenceResponse": {
         "properties": {
@@ -2857,6 +3315,124 @@
           "password"
         ],
         "title": "Login"
+      },
+      "RecentEvidenceResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "stepId": {
+            "type": "string",
+            "title": "Stepid"
+          },
+          "attemptId": {
+            "type": "string",
+            "title": "Attemptid"
+          },
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "mediaType": {
+            "type": "string",
+            "title": "Mediatype"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "capturedAt": {
+            "type": "string",
+            "title": "Capturedat"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "assessmentId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessmentid"
+          },
+          "correlationId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlationid"
+          },
+          "urlEndpoint": {
+            "type": "string",
+            "title": "Urlendpoint"
+          },
+          "runId": {
+            "type": "string",
+            "title": "Runid"
+          },
+          "stepTitle": {
+            "type": "string",
+            "title": "Steptitle"
+          },
+          "sopKey": {
+            "type": "string",
+            "title": "Sopkey"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "stepId",
+          "attemptId",
+          "accepted",
+          "sha256",
+          "mediaType",
+          "source",
+          "model",
+          "capturedAt",
+          "urlEndpoint",
+          "runId",
+          "stepTitle",
+          "sopKey"
+        ],
+        "title": "RecentEvidenceResponse"
       },
       "ReportListResponse": {
         "properties": {
@@ -3052,11 +3628,163 @@
         ],
         "title": "RunAssetRegistration"
       },
+      "RunProgressResponse": {
+        "properties": {
+          "completed": {
+            "type": "integer",
+            "title": "Completed"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "held": {
+            "type": "integer",
+            "title": "Held"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "completed",
+          "total",
+          "held"
+        ],
+        "title": "RunProgressResponse"
+      },
+      "RunRecordListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RunRecordResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "title": "Hasmore"
+          },
+          "nextOffset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextoffset"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "items",
+          "offset",
+          "limit",
+          "hasMore",
+          "nextOffset"
+        ],
+        "title": "RunRecordListResponse"
+      },
+      "RunRecordResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "startedAt": {
+            "type": "string",
+            "title": "Startedat"
+          },
+          "elapsedSeconds": {
+            "type": "integer",
+            "title": "Elapsedseconds"
+          },
+          "workOrder": {
+            "$ref": "#/components/schemas/WorkOrderResponse"
+          },
+          "sop": {
+            "$ref": "#/components/schemas/SOPSummaryResponse"
+          },
+          "sopVersionId": {
+            "type": "string",
+            "title": "Sopversionid"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/RunProgressResponse"
+          },
+          "attemptCount": {
+            "type": "integer",
+            "title": "Attemptcount"
+          },
+          "evidenceCount": {
+            "type": "integer",
+            "title": "Evidencecount"
+          },
+          "acceptedEvidenceCount": {
+            "type": "integer",
+            "title": "Acceptedevidencecount"
+          },
+          "reportId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportid"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "startedAt",
+          "elapsedSeconds",
+          "workOrder",
+          "sop",
+          "sopVersionId",
+          "progress",
+          "attemptCount",
+          "evidenceCount",
+          "acceptedEvidenceCount",
+          "reportId"
+        ],
+        "title": "RunRecordResponse"
+      },
       "RunResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
+          },
+          "reportId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportid"
           },
           "workOrderId": {
             "type": "string",

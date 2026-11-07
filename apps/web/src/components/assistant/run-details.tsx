@@ -206,7 +206,7 @@ export function RunDetails({
         <ActivityRecord key={run.id} runId={run.id} />
       ) : null}
       {panel === "Evidence record" ? (
-        <EvidenceRecords evidence={run.evidence} />
+        <EvidenceRecords evidence={run.evidence} steps={run.steps} />
       ) : null}
       {panel === "Supplementary references" ? (
         <ToolResults data={session.presentation} />
@@ -246,14 +246,18 @@ export function RunDetails({
       {panel === "Service reports" ? (
         <div className="problem-form">
           <p className="lede">
-            Review complete and partial execution reports, including every
-            attempt and exception.
+            Review this session's saved camera images, attempts, and exceptions.
+            Closing a session also creates its final report.
           </p>
           <Link
             className="button primary"
-            href={run.reportId ? `/reports/${run.reportId}` : "/reports"}
+            href={
+              run.reportId
+                ? `/reports/${run.reportId}`
+                : `/reports/runs/${run.id}`
+            }
           >
-            Open service reports
+            {run.reportId ? "Open final report" : "View saved session record"}
             <ArrowUpRight size={15} />
           </Link>
         </div>

@@ -297,6 +297,7 @@ class SOPSummaryResponse(PublicModel):
 
 class RunResponse(PublicModel):
     id: str
+    reportId: str | None = None
     workOrderId: str
     version: int
     status: str
@@ -403,6 +404,92 @@ class ReportListResponse(PublicModel):
     items: list[ReportResponse]
 
 
+class RunProgressResponse(PublicModel):
+    completed: int
+    total: int
+    held: int
+
+
+class RunRecordResponse(PublicModel):
+    id: str
+    status: str
+    startedAt: str
+    elapsedSeconds: int
+    workOrder: WorkOrderResponse
+    sop: SOPSummaryResponse
+    sopVersionId: str
+    progress: RunProgressResponse
+    attemptCount: int
+    evidenceCount: int
+    acceptedEvidenceCount: int
+    reportId: str | None
+
+
+class RunRecordListResponse(PublicModel):
+    items: list[RunRecordResponse]
+    offset: int
+    limit: int
+    hasMore: bool
+    nextOffset: int | None
+
+
+class RecentEvidenceResponse(EvidenceResponse):
+    runId: str
+    stepTitle: str
+    sopKey: str
+
+
+class EvaluationStepMetric(PublicModel):
+    id: str
+    sopVersionId: str
+    stepId: str
+    stepTitle: str
+    sopKey: str
+    sopTitle: str
+    version: str
+    runId: str
+    runs: int
+    attempts: int
+    firstPass: int
+    held: int
+
+
+class EvaluationCriterionMetric(PublicModel):
+    id: str
+    sopVersionId: str
+    stepId: str
+    stepTitle: str
+    sopKey: str
+    sopTitle: str
+    version: str
+    runId: str
+    criterionId: str
+    criterionDescription: str
+    count: int
+    unclearCount: int
+
+
+class EvaluationTechnicianMetric(PublicModel):
+    technicianId: str
+    technicianName: str
+    runs: int
+    completed: int
+    partial: int
+    active: int
+    attempts: int
+    attemptedSteps: int
+    firstPassRate: float | None
+    retakes: int
+    activeSeconds: int
+
+
+class EvaluationLatency(PublicModel):
+    id: str
+    tool: str
+    durationMs: int
+    status: str
+
+
 class EvaluationResponse(PublicModel):
     runs: int
     completed: int
@@ -410,7 +497,35 @@ class EvaluationResponse(PublicModel):
     active: int
     firstPassRate: float | None
     evidenceCoverage: float | None
-    stepMetrics: list[dict]
-    criterionFailures: list[dict]
-    latency: list[dict]
-    technicianMetrics: list[dict] = Field(default_factory=list)
+    stepMetrics: list[EvaluationStepMetric]
+    criterionFailures: list[EvaluationCriterionMetric]
+    latency: list[EvaluationLatency]
+    technicianMetrics: list[EvaluationTechnicianMetric] = Field(default_factory=list)
+    returned: int = 0
+    aiVerified: int = 0
+    attested: int = 0
+    held: int = 0
+    unreached: int = 0
+    retakes: int = 0
+    deviations: int = 0
+    openEscalations: int = 0
+    activeSeconds: int = 0
+    toolFailureRate: float | None = None
+    alerts: int = 0
+    suppressedAlerts: int = 0
+    evidenceFrames: int = 0
+    acceptedEvidenceFrames: int = 0
+    unacceptedEvidenceFrames: int = 0
+    visualSteps: int = 0
+    verifiedVisualSteps: int = 0
+    attemptedSteps: int = 0
+    firstPassCount: int = 0
+    firstAttemptCount: int = 0
+    visualChecks: int = 0
+    errorChecks: int = 0
+    unclearChecks: int = 0
+    recentEvidence: list[RecentEvidenceResponse] = Field(default_factory=list)
+    scope: str = ""
+    evidenceCoverageScope: str = ""
+    technicianMetricsScope: str = ""
+    firstPassRateScope: str = ""

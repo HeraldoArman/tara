@@ -209,8 +209,17 @@ async def get_run_snapshot(session: AsyncSession, actor: User, run_id: str) -> d
     elapsed = run.active_seconds
     if run.status == "active" and run.resumed_at:
         elapsed += max(0, int((now() - run.resumed_at.replace(tzinfo=UTC)).total_seconds()))
+    report_id = None
+    if run.status not in {"active", "paused"}:
+        report_id = await session.scalar(
+            select(Report.id)
+            .where(Report.run_id == run.id, Report.org_id == actor.org_id)
+            .order_by(Report.revision.desc())
+            .limit(1)
+        )
     return {
         "id": run.id,
+        "reportId": report_id,
         "workOrderId": work.id,
         "version": run.version,
         "status": run.status,
