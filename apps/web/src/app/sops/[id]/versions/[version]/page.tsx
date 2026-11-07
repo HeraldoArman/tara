@@ -29,9 +29,18 @@ export default async function VersionPage({
         eyebrow={`PROCEDURES / ${data.sop.key ?? "VERSION"}`}
         title={data.sop.title}
       >
+        <Link
+          className="button primary"
+          href={`/sop-intelligence?sopVersionId=${encodeURIComponent(data.sop.id)}`}
+        >
+          {data.sop.status === "published" &&
+          ["technician", "owner"].includes(data.user.role)
+            ? "Select SOP & start session"
+            : "Explore this SOP"}
+        </Link>
         {data.user.role === "owner" && data.sop.status === "published" ? (
           <Link
-            className="button primary"
+            className="button"
             href={`/work-orders/new?sopVersionId=${encodeURIComponent(data.sop.id)}`}
           >
             Create job from this SOP

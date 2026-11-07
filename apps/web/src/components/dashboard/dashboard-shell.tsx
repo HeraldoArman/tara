@@ -51,6 +51,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             SOP library
             <ArrowUpRight aria-hidden="true" className="dash-nav-external" />
           </Link>
+          <Link href="/sop-intelligence">
+            <Sparkles aria-hidden="true" />
+            SOP intelligence
+            <ArrowUpRight aria-hidden="true" className="dash-nav-external" />
+          </Link>
           <Link href="/reports">
             <ClipboardList aria-hidden="true" />
             Execution reports
@@ -61,8 +66,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <Sparkles aria-hidden="true" />
           <strong>A little perspective.</strong>
           <p>See where guidance makes a difference, one procedure at a time.</p>
-          <Link href="/assistant">
-            Open field assistant
+          <Link href="/sop-intelligence">
+            Select SOP &amp; start session
             <ArrowUpRight aria-hidden="true" />
           </Link>
         </div>

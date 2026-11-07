@@ -52,7 +52,7 @@ Migrations never run independently in worker/web startup.
 
 ## Realtime and AI
 
-SOP imports accept Markdown, TXT and unencrypted text-based PDFs up to 10 MiB.
+SOP imports accept Markdown, TXT, DOCX and unencrypted text-based PDFs up to 10 MiB.
 The default extraction limits are 250 PDF pages and 300,000 text characters,
 configurable with `MAX_PDF_PAGES` and `MAX_SOURCE_CHARACTERS`. Extraction has a
 20-second deadline. Scanned/image-only PDFs require OCR and are not supported.
@@ -138,8 +138,22 @@ and publishes the camera to LiveKit in one action, then enables voice listening.
 Use **Pause listening** or **Resume listening** to control the microphone, and
 **Enable speaker** to restore audio replies. Text consultation remains available
 if microphone access is denied. TARa speaks only in response to a request;
-recorded mistakes appear visually without spoken interruptions. Technician
-accounts cannot create or reassign jobs.
+recorded mistakes appear visually without spoken interruptions.
+
+Technicians and owners can also choose **Select SOP & start session** from the
+work queue, then select a saved published version in **SOP intelligence** and
+choose **Start session**. The backend creates a session assigned to that user,
+pinned to the selected version, and records it in the normal queue/report flow.
+An open session started from the same version is resumed on repeat requests.
+Asset details are explicitly marked as not provided for these sessions.
+Technicians cannot assign or reassign other users' work.
+
+SOP intelligence loads saved source passages and configured checks from the API.
+Its visual checkpoint labels describe the procedure's verification method, not
+a completed verification. Owners and SOP managers can import a source into a
+saved AI draft, review it, and publish it before execution. Other roles can only
+select published versions. Exported maps preserve the selected version and
+source links.
 
 Use the controlled administrative CLI, documented in the parent workspace's
 `docs/admin-operations.md`, to provision organization users or bulk-import work

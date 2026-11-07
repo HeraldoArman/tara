@@ -1,3 +1,5 @@
+import type { components } from "@/lib/generated/api";
+
 export type OpportunityCategory =
   | "ai-assisted"
   | "ai-verified"
@@ -15,10 +17,11 @@ export interface SopDocument {
   format: string;
   id: string;
   name: string;
-  origin: "sample" | "upload";
+  origin: "sample" | "upload" | "server";
   pageCount: number | null;
   sections: SourceSection[];
-  size: number;
+  size?: number | null;
+  sourceKind?: "source-document" | "procedure-definition";
   title: string;
 }
 
@@ -36,12 +39,15 @@ export interface SopAnalysis {
   opportunities: Opportunity[];
 }
 
+export type SavedSopAnalysis = components["schemas"]["SopIntelligenceResponse"];
+export type SavedSopVersion = SavedSopAnalysis["version"];
+
 export type OpportunityFilter = "all" | "assist" | "human";
 
 export const categoryLabels: Record<OpportunityCategory, string> = {
   "ai-assisted": "AI-assisted",
-  "ai-verified": "AI-verified",
-  "human-approval": "Human approval",
+  "ai-verified": "Visual checkpoint",
+  "human-approval": "Human confirmation",
   "human-performed": "Human-performed",
 };
 

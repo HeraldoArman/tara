@@ -51,7 +51,11 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
             <FileText aria-hidden="true" />
           </span>
           <div>
-            <h2 id="document-heading">Source document</h2>
+            <h2 id="document-heading">
+              {document.sourceKind === "procedure-definition"
+                ? "Saved procedure"
+                : "Source document"}
+            </h2>
             <p title={document.name}>{document.name}</p>
           </div>
         </div>
@@ -60,7 +64,10 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
 
       <div className="sop-document-toolbar">
         <span>
-          <ScanText aria-hidden="true" /> Extracted text
+          <ScanText aria-hidden="true" />{" "}
+          {document.sourceKind === "procedure-definition"
+            ? "Procedure definition · original source unavailable"
+            : "Extracted text"}
         </span>
         <fieldset className="sop-zoom">
           <legend className="sr-only">Document text size</legend>

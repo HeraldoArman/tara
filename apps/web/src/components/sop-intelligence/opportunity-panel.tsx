@@ -73,11 +73,11 @@ export function OpportunityPanel({
             <Sparkles aria-hidden="true" />
           </span>
           <div>
-            <h2 id="opportunity-heading">AI opportunity map</h2>
-            <p>A closer look at where TARA can help.</p>
+            <h2 id="opportunity-heading">Procedure assistance map</h2>
+            <p>Source-linked verification configuration.</p>
           </div>
         </div>
-        <Badge variant="outline">Preview</Badge>
+        <Badge variant="outline">Saved SOP</Badge>
       </header>
 
       <div className="sop-opportunity-filters">
@@ -178,7 +178,7 @@ export function OpportunityPanel({
       </div>
       <footer className="sop-map-footer">
         <span className="sop-state-dot" />
-        Suggestions are ready for your review
+        Configuration describes checks; it does not verify completed work
       </footer>
     </aside>
   );

@@ -27,19 +27,42 @@ import {
   useState,
 } from "react";
 
-import { createPreviewAnalysis } from "./preview-analysis";
-import { readDocument, validateDocument } from "./read-document";
-import type { SopAnalysis } from "./types";
+import { ApiError, api, errorMessage } from "@/lib/api";
+import type { SopVersion } from "@/lib/contracts";
+import { validateDocument } from "./read-document";
 
 interface UploadDialogProps {
-  onAnalyze: (analysis: SopAnalysis) => void;
   onClose: () => void;
+  onImported: (version: SopVersion) => void;
 }
 
-export function UploadDialog({ onClose, onAnalyze }: UploadDialogProps) {
+async function importSource(
+  file: File | null,
+  documentId: string | null,
+  signal: AbortSignal
+): Promise<SopVersion> {
+  if (documentId) {
+    return await api<SopVersion>(
+      `/sops/imports/${encodeURIComponent(documentId)}/retry`,
+      { method: "POST", signal }
+    );
+  }
+  const body = new FormData();
+  if (file) {
+    body.append("file", file, file.name);
+  }
+  return await api<SopVersion>("/sops/imports", {
+    body,
+    method: "POST",
+    signal,
+  });
+}
+
+export function UploadDialog({ onClose, onImported }: UploadDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [documentId, setDocumentId] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -65,12 +88,13 @@ export function UploadDialog({ onClose, onAnalyze }: UploadDialogProps) {
       const message = validateDocument(selected);
       setError(message);
       setFile(message ? null : selected);
+      setDocumentId(null);
     },
     [busy]
   );
 
   const analyze = useCallback(async () => {
-    if (!file || busy) {
+    if (!(file || documentId) || busy) {
       return;
     }
     const request = new AbortController();
@@ -78,31 +102,33 @@ export function UploadDialog({ onClose, onAnalyze }: UploadDialogProps) {
     setBusy(true);
     setError(null);
     try {
-      const document = await readDocument(file, request.signal);
+      const version = await importSource(file, documentId, request.signal);
       if (!request.signal.aborted) {
-        onAnalyze(createPreviewAnalysis(document));
+        onImported(version);
       }
     } catch (cause) {
       if (!request.signal.aborted) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "This document could not be read. Try another PDF, DOCX, or text file."
-        );
+        setError(errorMessage(cause));
+        if (
+          cause instanceof ApiError &&
+          typeof cause.details.documentId === "string"
+        ) {
+          setDocumentId(cause.details.documentId);
+        }
       }
     } finally {
       if (!request.signal.aborted) {
         setBusy(false);
       }
     }
-  }, [file, busy, onAnalyze]);
+  }, [file, documentId, busy, onImported]);
   const changeOpen = useCallback(
     (open: boolean) => {
-      if (!open) {
+      if (!(open || busy)) {
         onClose();
       }
     },
-    [onClose]
+    [busy, onClose]
   );
   const leaveDropzone = useCallback(() => setDragging(false), []);
   const dragOver = useCallback(
@@ -133,11 +159,18 @@ export function UploadDialog({ onClose, onAnalyze }: UploadDialogProps) {
   const removeFile = useCallback(() => {
     setFile(null);
     setError(null);
+    setDocumentId(null);
     dropzone.current?.focus();
   }, []);
 
+  let submitLabel = documentId
+    ? "Retry draft generation"
+    : "Generate SOP draft";
+  if (busy) {
+    submitLabel = "Creating draft…";
+  }
   return (
-    <Dialog defaultOpen onOpenChange={changeOpen}>
+    <Dialog onOpenChange={changeOpen} open>
       <DialogContent className="tara-assistant sop-dialog">
         <DialogHeader>
           <span className="sop-dialog-icon">
@@ -145,8 +178,8 @@ export function UploadDialog({ onClose, onAnalyze }: UploadDialogProps) {
           </span>
           <DialogTitle>Give your SOP a closer look.</DialogTitle>
           <DialogDescription>
-            Upload a document to explore its steps and opportunities for AI
-            assistance.
+            Save your source and generate a reviewable SOP draft on the
+            application server.
           </DialogDescription>
         </DialogHeader>
 
@@ -182,7 +215,7 @@ export function UploadDialog({ onClose, onAnalyze }: UploadDialogProps) {
           <span id="upload-formats">
             PDF, DOCX, TXT, or Markdown · up to 10 MB
           </span>
-          <span>Text-based PDFs, up to 50 pages</span>
+          <span>Text-based PDFs, up to 250 pages · no scanned documents</span>
         </button>
 
         {file ? (
@@ -209,31 +242,38 @@ export function UploadDialog({ onClose, onAnalyze }: UploadDialogProps) {
         {error ? (
           <Alert variant="destructive">
             <AlertCircle />
-            <AlertTitle>We couldn’t read this document</AlertTitle>
+            <AlertTitle>We couldn’t prepare this procedure</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
+        {documentId ? (
+          <p className="sop-upload-privacy" role="status">
+            Your original source is saved. Retry draft generation without
+            uploading it again.
+          </p>
+        ) : null}
 
         <p className="sop-upload-privacy">
-          <LockKeyhole aria-hidden="true" /> Your document stays in this
-          browser. Suggestions use local preview rules and need human review.
+          <LockKeyhole aria-hidden="true" /> Your source is uploaded to your
+          organization’s private storage. AI-generated drafts require review
+          before publication.
         </p>
         <div aria-live="polite" className="sop-upload-status" role="status">
           {busy
-            ? "Reading the document and preparing source-linked suggestions…"
+            ? "Saving the source and preparing a reviewable SOP draft…"
             : ""}
         </div>
         <DialogFooter>
-          <Button onClick={onClose} variant="outline">
-            {busy ? "Cancel analysis" : "Cancel"}
+          <Button disabled={busy} onClick={onClose} variant="outline">
+            Cancel
           </Button>
-          <Button disabled={!file || busy} onClick={analyze}>
+          <Button disabled={!(file || documentId) || busy} onClick={analyze}>
             {busy ? (
               <LoaderCircle className="sop-spinner" data-icon="inline-start" />
             ) : (
               <Sparkles data-icon="inline-start" />
             )}
-            {busy ? "Reading document…" : "Analyze document"}
+            {submitLabel}
             {busy ? null : <ArrowRight data-icon="inline-end" />}
           </Button>
         </DialogFooter>

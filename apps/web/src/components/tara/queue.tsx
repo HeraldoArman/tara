@@ -85,7 +85,7 @@ export function WorkQueue({
             </h2>
             <p>
               {role === "technician"
-                ? "Choose an assigned job to start your video session."
+                ? "Open an assigned job, or select an SOP to start your own session."
                 : "Assignments across your organization, in one place."}
             </p>
           </div>
@@ -193,19 +193,21 @@ export function WorkQueue({
                 </h3>
                 <p>
                   {role === "owner"
-                    ? "Create a job using a published procedure and assign it to a technician. You can also assign it to yourself."
-                    : "An owner must create a job using a published procedure and assign it to your account. Your job will then show a Start video session button here."}
+                    ? "Select a published SOP to start your own session, or create a job and assign it to a technician."
+                    : "Select a published SOP to start your own session. Jobs assigned by an owner also appear here."}
                 </p>
+                {["technician", "owner"].includes(role) ? (
+                  <Link className="button primary" href="/sop-intelligence">
+                    Select SOP &amp; start session
+                    <ArrowRight size={15} />
+                  </Link>
+                ) : null}
                 {role === "owner" ? (
-                  <Link className="button primary" href="/work-orders/new">
+                  <Link className="button" href="/work-orders/new">
                     Create job
                     <ArrowRight size={15} />
                   </Link>
-                ) : (
-                  <p>
-                    After the owner assigns your job, select Refresh jobs above.
-                  </p>
-                )}
+                ) : null}
               </>
             ) : (
               <>

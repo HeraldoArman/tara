@@ -46,6 +46,7 @@ export function AppShell({
                 ? []
                 : [{ href: "/" as const, label: "Work queue" }]),
               { href: "/sops", label: "SOP library" },
+              { href: "/sop-intelligence", label: "SOP intelligence" },
               ...(user.role === "sop_manager"
                 ? []
                 : [{ href: "/reports" as const, label: "Reports" }]),
