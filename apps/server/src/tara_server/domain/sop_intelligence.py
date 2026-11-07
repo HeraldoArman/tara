@@ -93,7 +93,11 @@ async def intelligence(session: AsyncSession, actor: User, version_id: str) -> d
         if not matches:
             section = {
                 "id": f"{version.id}-step-{index + 1}",
-                "heading": f"Procedure step {index + 1}: {title}",
+                "heading": (
+                    f"Saved instruction — original source citation unresolved: {title}"
+                    if has_source
+                    else f"Procedure step {index + 1}: {title}"
+                ),
                 "page": None,
                 "text": str(step.get("instruction") or "No saved instruction."),
             }
