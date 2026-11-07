@@ -10,41 +10,84 @@ import {
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, api, errorMessage } from "@/lib/api";
 import type { SopVersion } from "@/lib/contracts";
 import { objectRecord } from "@/lib/draft-preview";
+import { retainedSopDocumentId } from "@/lib/sop-import-retry";
 import { sopVersionPath } from "@/lib/sop-version-route";
 import { ProcedureRequirements } from "./procedure-requirements";
 import { ReferenceMediaCards, SopReferenceUpload } from "./reference-media";
 import { SourceDocument, ToolResults } from "./tool-results";
 import { Status } from "./ui";
 
-export function SopImport() {
+const MAX_SOURCE_BYTES = 10 * 1024 * 1024;
+const SOURCE_EXTENSION = /\.(md|txt|docx|pdf)$/i;
+
+function sourceFileError(file: File): string {
+  if (!SOURCE_EXTENSION.test(file.name)) {
+    return "Choose a Markdown (.md), TXT, DOCX or text-based PDF document.";
+  }
+  if (file.size === 0 || file.size > MAX_SOURCE_BYTES) {
+    return "Choose a nonempty document no larger than 10 MB.";
+  }
+  return "";
+}
+
+export function SopImport({
+  initialDocumentId = null,
+}: {
+  initialDocumentId?: string | null;
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<"" | "upload" | "retry">("");
   const [filename, setFilename] = useState("");
-  const [documentId, setDocumentId] = useState<string | null>(null);
+  const [documentId, setDocumentId] = useState(initialDocumentId);
+  useEffect(() => {
+    setDocumentId(initialDocumentId);
+    if (initialDocumentId) {
+      setFilename("");
+    }
+  }, [initialDocumentId]);
+  const retainDocument = (id: string | null) => {
+    setDocumentId(id);
+    router.replace(
+      id ? `/sops/import?documentId=${encodeURIComponent(id)}` : "/sops/import",
+      { scroll: false }
+    );
+  };
   const showFailure = (cause: unknown, fallbackId: string | null = null) => {
     setError(errorMessage(cause));
     const retainedId =
       cause instanceof ApiError ? cause.details.documentId : null;
-    setDocumentId(
-      typeof retainedId === "string" && retainedId ? retainedId : fallbackId
-    );
+    retainDocument(retainedSopDocumentId(retainedId) ?? fallbackId);
   };
   const openDraft = (result: SopVersion) => {
     router.push(sopVersionPath(result));
   };
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (busy || documentId) {
+      return;
+    }
+    const data = new FormData(event.currentTarget);
+    const file = data.get("file");
+    if (!(file instanceof File)) {
+      setError("Choose a source document first.");
+      return;
+    }
+    const invalid = sourceFileError(file);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     setBusy("upload");
     setError("");
     try {
       openDraft(
         await api<SopVersion>("/sops/imports", {
-          body: new FormData(event.currentTarget),
+          body: data,
           method: "POST",
         })
       );
@@ -55,7 +98,7 @@ export function SopImport() {
     }
   };
   const retry = async () => {
-    if (!documentId) {
+    if (!documentId || busy) {
       return;
     }
     setBusy("retry");
@@ -74,26 +117,39 @@ export function SopImport() {
     }
   };
   return (
-    <form className="import-form panel" onSubmit={submit}>
+    <form aria-busy={!!busy} className="import-form panel" onSubmit={submit}>
       <label className="upload-zone" htmlFor="source-file">
         <span className="upload-icon">
           <Upload size={30} />
         </span>
-        <h2>{filename || "Start with your approved source."}</h2>
-        <p>Choose a Markdown, TXT or text-based PDF document.</p>
+        <h2>
+          {filename ||
+            (documentId
+              ? "Your source is saved."
+              : "Start with your approved source.")}
+        </h2>
+        <p>
+          Choose a Markdown, TXT, DOCX or text-based PDF document, up to 10 MB.
+        </p>
         <span className="button">
           Choose document
           <ArrowRight size={15} />
         </span>
         <input
-          accept=".md,.markdown,.txt,.pdf,text/plain,text/markdown,application/pdf"
+          accept=".md,.txt,.docx,.pdf,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           disabled={!!busy}
           id="source-file"
           name="file"
           onChange={(event) => {
-            setFilename(event.target.files?.[0]?.name ?? "");
-            setDocumentId(null);
-            setError("");
+            const file = event.currentTarget.files?.[0];
+            const invalid = file ? sourceFileError(file) : "";
+            setFilename(invalid ? "" : (file?.name ?? ""));
+            setError(invalid);
+            if (invalid) {
+              event.currentTarget.value = "";
+            } else if (file && documentId) {
+              retainDocument(null);
+            }
           }}
           required
           type="file"
@@ -178,10 +234,12 @@ export function SopEditor({
   );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
+  const [referenceBusy, setReferenceBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<unknown>(null);
   const editable = canEdit && version.status === "draft";
+  const pending = !!busy || referenceBusy;
   const preview = objectRecord(version.definition);
   const saveDraft = async () => {
     const parsed: unknown = JSON.parse(definition);
@@ -195,6 +253,9 @@ export function SopEditor({
     return saved;
   };
   const action = async (kind: string) => {
+    if (pending) {
+      return;
+    }
     setBusy(kind);
     setError("");
     setMessage("");
@@ -235,6 +296,9 @@ export function SopEditor({
           : "Schema and business validation passed."
       );
     } catch (cause) {
+      if (cause instanceof ApiError && Array.isArray(cause.details.errors)) {
+        setErrors(cause.details.errors);
+      }
       setError(errorMessage(cause));
     } finally {
       setBusy("");
@@ -257,7 +321,7 @@ export function SopEditor({
     }
   };
   return (
-    <div className="sop-editor">
+    <div aria-busy={pending} className="sop-editor">
       <section className="panel">
         <header className="panel-head">
           <div>
@@ -280,6 +344,7 @@ export function SopEditor({
           {editable ? (
             <SopReferenceUpload
               disabled={
+                !!busy ||
                 definition !== JSON.stringify(version.definition, null, 2)
               }
               onAttached={(saved) => {
@@ -287,6 +352,7 @@ export function SopEditor({
                 setDefinition(JSON.stringify(saved.definition, null, 2));
                 setErrors(saved.validationErrors ?? []);
               }}
+              onBusyChange={setReferenceBusy}
               version={version}
             />
           ) : null}
@@ -303,6 +369,7 @@ export function SopEditor({
               </label>
               <textarea
                 className="code-editor"
+                disabled={pending}
                 id="sop-definition"
                 onChange={(event) => setDefinition(event.target.value)}
                 rows={26}
@@ -312,7 +379,7 @@ export function SopEditor({
               <div className="form-actions">
                 <button
                   className="button"
-                  disabled={!!busy}
+                  disabled={pending}
                   onClick={() => action("save")}
                   type="button"
                 >
@@ -320,7 +387,7 @@ export function SopEditor({
                 </button>
                 <button
                   className="button"
-                  disabled={!!busy}
+                  disabled={pending}
                   onClick={() => action("validate")}
                   type="button"
                 >
@@ -329,7 +396,7 @@ export function SopEditor({
                 </button>
                 <button
                   className="button primary"
-                  disabled={!!busy}
+                  disabled={pending}
                   onClick={() => action("publish")}
                   type="button"
                 >

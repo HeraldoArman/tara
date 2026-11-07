@@ -23,8 +23,8 @@ test("assistant hydrates and reloads without client-rendering errors", async ({
   );
   await expect(workspace).toHaveAttribute("data-state", "active");
   await expect(
-    page.getByRole("progressbar", { name: "Completed steps" })
-  ).toHaveAttribute("value", "2");
+    page.getByRole("button", { name: "Session record 2/5 complete" })
+  ).toBeVisible();
 
   await page.reload();
   await page.getByRole("button", { name: "Mute assistant audio" }).click();

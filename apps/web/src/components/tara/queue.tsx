@@ -193,17 +193,11 @@ export function WorkQueue({
                 </h3>
                 <p>
                   {role === "owner"
-                    ? "Select a published SOP to start your own session, or create a job and assign it to a technician."
-                    : "Select a published SOP to start your own session. Jobs assigned by an owner also appear here."}
+                    ? "Create a job, choose its published SOP, and assign it to a technician."
+                    : "Jobs assigned to you appear here. Open a job to start its video session."}
                 </p>
-                {["technician", "owner"].includes(role) ? (
-                  <Link className="button primary" href="/sops">
-                    Select SOP &amp; start session
-                    <ArrowRight size={15} />
-                  </Link>
-                ) : null}
                 {role === "owner" ? (
-                  <Link className="button" href="/work-orders/new">
+                  <Link className="button primary" href="/work-orders/new">
                     Create job
                     <ArrowRight size={15} />
                   </Link>

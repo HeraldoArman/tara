@@ -156,7 +156,9 @@ test("SOP manager gets the draft import flow and clear invalid-document feedback
     mimeType: "text/plain",
     name: "empty.txt",
   });
-  await page.getByRole("button", { name: "Generate SOP draft" }).click();
+  await expect(
+    page.getByRole("button", { name: "Generate SOP draft" })
+  ).toBeDisabled();
   await expect(page.locator('.notice[role="alert"]')).toBeVisible();
   await expect(page).toHaveURL(importPath);
 });

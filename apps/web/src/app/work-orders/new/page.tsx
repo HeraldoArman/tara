@@ -38,7 +38,7 @@ export default async function NewWorkOrderPage({
         .filter((version) => version.status === "published")
         .map((version) => ({
           id: version.id,
-          label: `${sop.key} · ${sop.title} · v${version.version}`,
+          label: `${sop.key} · ${sop.title} · v${version.version} · revision ${version.versionNumber}`,
         }))
     );
     if (

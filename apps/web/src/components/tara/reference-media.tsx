@@ -1,7 +1,7 @@
 "use client";
 import { ArrowUpRight, ImagePlus } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import type { ReferenceMedia, SopVersion } from "@/lib/contracts";
 import { objectRecord, referenceStepsForDraft } from "@/lib/draft-preview";
@@ -71,25 +71,35 @@ export function ReferenceMediaCards({ items }: { items: ReferenceMedia[] }) {
 export function SopReferenceUpload({
   version,
   onAttached,
+  onBusyChange,
   disabled,
 }: {
   version: SopVersion;
   onAttached: (saved: SopVersion) => void;
+  onBusyChange?: (busy: boolean) => void;
   disabled: boolean;
 }) {
   const steps = referenceStepsForDraft(version.definition);
   const [stepId, setStepId] = useState(steps?.[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
+  const mounted = useRef<boolean>(true);
   const [error, setError] = useState("");
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const selected = steps?.find((step) => step.id === stepId) ?? steps?.[0];
   const source = selected?.sources[0];
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const rawDefinition = objectRecord(version.definition);
-    if (!(source && steps && selected && rawDefinition)) {
+    if (disabled || busy || !(source && steps && selected && rawDefinition)) {
       return;
     }
     setBusy(true);
+    onBusyChange?.(true);
     setError("");
     try {
       const form = new FormData(event.currentTarget);
@@ -119,11 +129,18 @@ export function SopReferenceUpload({
         body: JSON.stringify({ definition }),
         method: "PATCH",
       });
-      onAttached(saved);
+      if (mounted.current) {
+        onAttached(saved);
+      }
     } catch (e) {
-      setError(errorMessage(e));
+      if (mounted.current) {
+        setError(errorMessage(e));
+      }
     } finally {
-      setBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        onBusyChange?.(false);
+      }
     }
   };
   if (!steps) {
@@ -138,7 +155,7 @@ export function SopReferenceUpload({
     );
   }
   return (
-    <form className="reference-upload" onSubmit={submit}>
+    <form aria-busy={busy} className="reference-upload" onSubmit={submit}>
       <h3>
         <ImagePlus size={17} />
         Add a source reference image
