@@ -39,6 +39,10 @@ class Verification(Schema):
                 "Attestation and finalization require a nonblank accepted response of at most "
                 "1000 characters"
             )
+        if self.kind == "choice" and any(
+            not option.strip() or len(option) > 1000 for option in self.options + self.pass_options
+        ):
+            raise ValueError("Choice responses must be nonblank and at most 1000 characters")
         return self
 
 

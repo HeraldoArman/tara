@@ -33,12 +33,14 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { api, dateTime, duration, errorMessage, humanize } from "@/lib/api";
-import type { AuditEvent, List, Part, Run } from "@/lib/contracts";
+import { api, duration, errorMessage, humanize } from "@/lib/api";
+import type { List, Part, Run } from "@/lib/contracts";
 import { useRunSession } from "@/lib/use-run-session";
+import { ActivityRecord } from "./activity-record";
 import { Drawer } from "./drawer";
 import { Escalations } from "./escalations";
 import { EvidenceRecords } from "./evidence";
+import { ProcedureRequirements } from "./procedure-requirements";
 import { ReferenceMediaCards } from "./reference-media";
 import { ToolResults } from "./tool-results";
 import { Status, Wordmark } from "./ui";
@@ -84,7 +86,6 @@ export function Workspace({
   const router = useRouter();
   const [layout, setLayout] = useState("demo");
   const [panel, setPanel] = useState("");
-  const [events, setEvents] = useState<AuditEvent[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
   const [panelError, setPanelError] = useState("");
   const [text, setText] = useState("");
@@ -119,17 +120,13 @@ export function Workspace({
       return;
     }
     const loadPanel = async () => {
-      if (payload.panel === "activity") {
-        const result = await api<List<AuditEvent>>(`/runs/${run.id}/activity`);
-        setEvents(result.items);
-      }
       if (payload.panel === "parts") {
         const result = await api<List<Part>>("/parts");
         setParts(result.items);
       }
     };
     loadPanel().catch((e: unknown) => setPanelError(errorMessage(e)));
-  }, [session.presentation, run.id]);
+  }, [session.presentation]);
   useEffect(() => {
     setElapsed(run.elapsedSeconds);
     if (run.status !== "active") {
@@ -142,10 +139,6 @@ export function Workspace({
     setPanel(name);
     setPanelError("");
     try {
-      if (name === "Session record") {
-        const result = await api<List<AuditEvent>>(`/runs/${run.id}/activity`);
-        setEvents(result.items);
-      }
       if (name === "Parts inventory") {
         const result = await api<List<Part>>("/parts");
         setParts(result.items);
@@ -410,6 +403,14 @@ export function Workspace({
                 </span>
               </header>
               <div className="guidance-content">
+                <details className="workspace-prerequisites" open={index === 0}>
+                  <summary>Scope and prerequisites</summary>
+                  <ProcedureRequirements
+                    compact
+                    prerequisites={run.sop.prerequisites}
+                    scope={run.sop.scope}
+                  />
+                </details>
                 <p className="focus-kicker">
                   <BookOpen size={14} />
                   {run.sop.title}
@@ -751,6 +752,10 @@ export function Workspace({
               <h3>{run.sop.title}</h3>
               <p>{run.sop.key}</p>
             </div>
+            <ProcedureRequirements
+              prerequisites={run.sop.prerequisites}
+              scope={run.sop.scope}
+            />
             <ReferenceMediaCards items={run.media ?? []} />
             {run.steps.map((item, i) => (
               <section className="sop-step" key={item.id}>
@@ -781,24 +786,7 @@ export function Workspace({
           </>
         ) : null}
         {panel === "Session record" ? (
-          <ol className="audit-timeline">
-            {events.map((event) => (
-              <li key={event.id}>
-                <span className="timeline-dot" />
-                <div>
-                  <strong>
-                    {humanize(event.type ?? event.eventType ?? "Event")}
-                  </strong>
-                  <p>{event.message ?? JSON.stringify(event.payload ?? {})}</p>
-                  <time>
-                    {dateTime(
-                      event.occurredAt ?? event.createdAt ?? run.startedAt
-                    )}
-                  </time>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <ActivityRecord key={run.id} runId={run.id} />
         ) : null}
         {panel === "Parts inventory" ? (
           <>

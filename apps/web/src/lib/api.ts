@@ -1,15 +1,49 @@
 export class ApiError extends Error {
   readonly code: string;
+  readonly details: Record<string, unknown>;
+  readonly requestId?: string;
   readonly status: number;
   constructor(
     message: string,
-    options: ErrorOptions & { code?: string; status?: number } = {}
+    options: ErrorOptions & {
+      code?: string;
+      status?: number;
+      details?: Record<string, unknown>;
+      requestId?: string;
+    } = {}
   ) {
     super(message, options);
     this.name = "ApiError";
     this.code = options.code ?? "REQUEST_FAILED";
+    this.details = options.details ?? {};
+    this.requestId = options.requestId;
     this.status = options.status ?? 500;
   }
+}
+export function apiErrorFromResponse(data: unknown, status: number): ApiError {
+  const envelope =
+    data && typeof data === "object" ? (data as Record<string, unknown>) : {};
+  const error =
+    envelope.error && typeof envelope.error === "object"
+      ? (envelope.error as Record<string, unknown>)
+      : {};
+  return new ApiError(
+    typeof error.message === "string"
+      ? error.message
+      : "The request could not be completed.",
+    {
+      code: typeof error.code === "string" ? error.code : undefined,
+      details:
+        error.details &&
+        typeof error.details === "object" &&
+        !Array.isArray(error.details)
+          ? (error.details as Record<string, unknown>)
+          : {},
+      requestId:
+        typeof error.requestId === "string" ? error.requestId : undefined,
+      status,
+    }
+  );
 }
 export async function api<T>(
   path: string,
@@ -35,10 +69,7 @@ export async function api<T>(
   }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new ApiError(
-      data.error?.message ?? "The request could not be completed.",
-      { code: data.error?.code, status: response.status }
-    );
+    throw apiErrorFromResponse(data, response.status);
   }
   return data as T;
 }

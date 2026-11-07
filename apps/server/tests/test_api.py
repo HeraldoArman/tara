@@ -201,6 +201,28 @@ async def test_unfinishable_attestation_is_rejected_before_publication(
     assert draft.status == "draft"
 
 
+@pytest.mark.parametrize("passing_option", ["", " \t ", "x" * 1001])
+async def test_unfinishable_choice_is_rejected_before_publication(api_client, passing_option):
+    client, session, users, work = api_client
+    draft = await draft_for_work(session, users, work)
+    definition = copy.deepcopy(draft.definition)
+    definition["steps"][0]["verification"] = {
+        "kind": "choice",
+        "options": [passing_option, "fail"],
+        "passOptions": [passing_option],
+    }
+    client.cookies.set(COOKIE_NAME, token_for(users["sop_manager"]))
+    origin = {"Origin": get_settings().app_origin}
+    edited = await client.patch(
+        f"/api/v1/sop-versions/{draft.id}", json={"definition": definition}, headers=origin
+    )
+    assert edited.status_code == 200
+    assert edited.json()["validationErrors"]
+    published = await client.post(f"/api/v1/sop-versions/{draft.id}/publish", headers=origin)
+    assert published.status_code == 422
+    assert draft.status == "draft"
+
+
 async def test_import_retry_errors_keep_original_document_id(api_client, monkeypatch):
     from tara_server.api import main
     from tara_server.domain import sops

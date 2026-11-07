@@ -322,6 +322,7 @@ async function runSmoke() {
     await expect(
       page.locator('.tool-result a[href^="https://"]').first()
     ).toBeVisible({ timeout });
+    await page.keyboard.press("Escape");
     stage = "return to silent and stop microphone";
     await page
       .getByRole("button", { exact: true, name: "Return to silent mode" })

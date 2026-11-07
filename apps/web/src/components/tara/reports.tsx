@@ -14,7 +14,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, dateTime, errorMessage, humanize } from "@/lib/api";
 import type { Report, Review, User } from "@/lib/contracts";
+import { reportToolHistory } from "@/lib/report-tool-history";
+import { AuditTimeline, ToolCallHistory } from "./activity-record";
 import { EvidenceRecords } from "./evidence";
+import { ProcedureRequirements } from "./procedure-requirements";
 import { EmptyState, Status } from "./ui";
 
 export function ReportList({ items }: { items: Report[] }) {
@@ -108,12 +111,16 @@ export function ReportList({ items }: { items: Report[] }) {
 export function ReportDetail({ report, user }: { report: Report; user: User }) {
   const { steps, evidence, deviations, escalations } = report;
   const events = report.auditEvents;
+  const toolHistory = reportToolHistory(report);
+  const toolCalls = toolHistory.calls;
   const [reviews, setReviews] = useState<Review[]>(report.reviews);
   useEffect(() => {
     let original: { element: HTMLDetailsElement; open: boolean }[] = [];
     const prepare = () => {
       original = Array.from(
-        document.querySelectorAll<HTMLDetailsElement>("details.report-step")
+        document.querySelectorAll<HTMLDetailsElement>(
+          "details.report-step, details.tool-call-details"
+        )
       ).map((element) => ({ element, open: element.open }));
       for (const { element } of original) {
         element.open = true;
@@ -165,6 +172,35 @@ export function ReportDetail({ report, user }: { report: Report; user: User }) {
       ) : null}
       <div className="report-grid">
         <div className="report-primary">
+          <section className="panel">
+            <div className="panel-body">
+              <ProcedureRequirements
+                prerequisites={report.sop.prerequisites}
+                scope={report.sop.scope}
+              />
+            </div>
+          </section>
+          <section aria-label="Recorded tool calls" className="panel">
+            <header className="panel-head">
+              <div>
+                <h2>Recorded tool calls</h2>
+                <p>{toolHistory.scope}</p>
+              </div>
+              <span className="count">
+                {toolHistory.captured ? toolCalls.length : "Not captured"}
+              </span>
+            </header>
+            <div className="panel-body">
+              <ToolCallHistory
+                calls={toolCalls}
+                emptyMessage={
+                  toolHistory.captured
+                    ? "No tool calls were recorded in this history."
+                    : toolHistory.scope
+                }
+              />
+            </div>
+          </section>
           <section className="panel">
             <header className="panel-head">
               <div>
@@ -264,28 +300,7 @@ export function ReportDetail({ report, user }: { report: Report; user: User }) {
               </div>
             </header>
             <div className="panel-body">
-              <ol className="audit-timeline">
-                {events.map((event) => (
-                  <li key={event.id}>
-                    <span className="timeline-dot" />
-                    <div>
-                      <strong>
-                        {humanize(event.type ?? event.eventType ?? "Event")}
-                      </strong>
-                      <p>
-                        {event.message ?? JSON.stringify(event.payload ?? {})}
-                      </p>
-                      <time>
-                        {dateTime(
-                          event.occurredAt ??
-                            event.createdAt ??
-                            report.createdAt
-                        )}
-                      </time>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <AuditTimeline events={events} />
               {events.length ? null : (
                 <p className="inline-empty">No timeline events returned.</p>
               )}

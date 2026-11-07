@@ -2,7 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ENV } from "@/env";
-import { ApiError } from "./api";
+import { ApiError, apiErrorFromResponse } from "./api";
 import type { User } from "./contracts";
 
 const TRAILING_SLASH = /\/$/;
@@ -31,10 +31,7 @@ export async function serverApi<T>(path: string): Promise<T> {
   }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new ApiError(
-      data.error?.message ?? "This page could not be loaded.",
-      { code: data.error?.code, status: response.status }
-    );
+    throw apiErrorFromResponse(data, response.status);
   }
   return data as T;
 }
