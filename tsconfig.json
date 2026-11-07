@@ -1,0 +1,3 @@
+{
+  "extends": "@tara/config/tsconfig.base.json"
+}

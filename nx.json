@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{workspaceRoot}/apps/web/.next/**",
+      "!{workspaceRoot}/apps/web/out/**",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json"
+    ],
+    "sharedGlobals": []
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"],
+      "inputs": ["default", "^default"]
+    },
+    "dev": {
+      "cache": false,
+      "continuous": true
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "continuous": true
+    }
+  }
+}

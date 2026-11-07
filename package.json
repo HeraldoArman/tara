@@ -1,0 +1,56 @@
+{
+  "name": "tara",
+  "private": true,
+  "type": "module",
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "zod": "^4.5.4",
+      "typescript": "^6.0.3",
+      "@types/node": "^26.4.1",
+      "varlock": "1.23.0",
+      "lucide-react": "^1.41.0",
+      "next-themes": "^0.4.6",
+      "react": "^19.2.8",
+      "react-dom": "^19.2.8",
+      "sonner": "^2.0.8",
+      "@tailwindcss/postcss": "^4.3.3",
+      "@types/react": "^19.2.18",
+      "@types/react-dom": "^19.2.7",
+      "tailwindcss": "^4.3.3"
+    }
+  },
+  "scripts": {
+    "build": "nx run-many -t build",
+    "check": "ultracite check",
+    "check-types": "nx run-many -t check-types",
+    "dev": "nx run-many -t dev",
+    "dev:web": "nx run-many -t dev --projects=web",
+    "docker:build": "docker compose build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:up": "docker compose up -d --build",
+    "env:generate": "varlock codegen --path ./apps/web/",
+    "fix": "ultracite fix",
+    "postinstall": "varlock codegen --path ./apps/web/"
+  },
+  "overrides": {
+    "@next/env": "npm:@varlock/nextjs-integration@1.2.2"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@tara/config": "workspace:*",
+    "@types/node": "catalog:",
+    "nx": "^24.0.1",
+    "typescript": "catalog:",
+    "ultracite": "8.0.0",
+    "varlock": "catalog:"
+  },
+  "packageManager": "bun@1.4.4"
+}
