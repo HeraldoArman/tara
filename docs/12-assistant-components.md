@@ -1,9 +1,9 @@
 # Real-time assistant UI foundation
 
-The `/assistant` route is a frontend component preview based on `tara.txt`, the supplied
-workspace screenshots, and `new-design/`. The existing home route remains available for
-the team's queue work. The preview uses TARA branding and English interface copy to match
-the visual reference.
+The `/assistant` route is a frontend component preview based on the supplied workspace
+screenshots and project requirements. It uses TARA branding and English interface copy
+to match the visual reference. The authenticated work queue at `/` and execution workspace
+at `/runs/[id]` are separate application routes; this preview does not replace them.
 
 ## Ownership
 
@@ -44,8 +44,8 @@ export function CurrentTask() {
 
 The `.tara-assistant` wrapper supplies component tokens. `data-state` changes the accent;
 it does not mutate execution data. Components also accept `className` for composition.
-The preview deliberately uses a light workspace surface, including inside the application's
-dark theme, to preserve the reference design without replacing the team's global theme.
+Demo mode uses a light workspace surface. Product mode uses translucent dark overlays
+above the camera. Both appearances are scoped to the assistant preview.
 
 ## Component contracts
 
@@ -103,15 +103,24 @@ Keep the three concerns separate:
 2. **Interaction:** silent / alert / consultation, owned by the application and worker.
 3. **Execution:** authoritative step, attempt, evidence, and verification state.
 
-The preview types are view models. Generate server DTOs from OpenAPI and map them into
-these props in `apps/web`; do not make `packages/ui` depend on FastAPI or LiveKit.
+The preview types are view models. Use the existing [frontend contracts](../apps/web/src/lib/contracts.ts),
+backed by [generated OpenAPI types](../apps/web/src/lib/generated/api.d.ts), and map server
+data into these props in `apps/web`; do not make `packages/ui` depend on FastAPI or LiveKit.
+Run `bun run api:generate` when regenerating types from the server schema.
 
-Follow [the API/frontend plan](05-api-frontend.md) for `assistant.activate`,
-`assistant.deactivate`, `assistant.text`, `run.retry`, `run.respond`, and server events.
+The application already has a separate [execution workspace](../apps/web/src/components/tara/workspace.tsx)
+at `/runs/[id]`. Its [session hook](../apps/web/src/lib/use-run-session.ts) handles connection,
+`assistant.activate`, `assistant.deactivate`, and server events; the workspace sends
+`assistant.text`, `run.retry`, and `run.respond` through that session. The server-side
+[agent bridge](../apps/server/src/tara_server/agent/bridge.py) and
+[execution domain](../apps/server/src/tara_server/domain/execution.py) own command handling
+and authoritative run transitions.
+
+Integrating these shared components into that workspace remains separate work. Keep its
+existing session, evidence and audit behavior when replacing presentation elements.
 The UI must not implement a second local verification engine or turn a typed confirmation
 into a verified visual result. A verified checkpoint and a completed workflow remain
-separate outcomes. Voice, live AI, evidence persistence, and production run routes are
-future integration work, not features of this preview.
+separate outcomes. Voice, live AI and evidence persistence are not features of `/assistant`.
 
 ## Local checks
 

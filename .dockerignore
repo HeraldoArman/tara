@@ -31,3 +31,16 @@ docker-compose.yml
 local.db
 local.db-*
 .data
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.nx
+**/*.pyc
+**/local.db
+**/local.db-*
+**/.data
+**/coverage
+**/test-results
+**/playwright-report

@@ -1,0 +1,164 @@
+name: Checks
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - run: bun run check-types
+      - run: bun run test:web
+      - run: bunx tsc -p .railway/tsconfig.json
+      - run: bun run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+  server:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: tara_test
+          POSTGRES_USER: tara
+          POSTGRES_PASSWORD: ci-only-test-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U tara -d tara_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    defaults:
+      run:
+        working-directory: apps/server
+    env:
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql+asyncpg://tara:ci-only-test-password@localhost:5432/tara_test
+      JWT_SECRET: ci-only-random-looking-secret-not-a-production-credential
+      EVIDENCE_BACKEND: local
+      EVIDENCE_LOCAL_PATH: .data/evidence
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: 0.10.9
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check src tests
+      - run: uv run ruff format --check src tests
+      - run: uv run mypy src
+      - run: uv run alembic upgrade head
+      - run: uv run alembic check
+      - run: TARA_POSTGRES_TEST_URL="$DATABASE_URL" uv run pytest -q ../../tests/postgres
+      - run: uv run pytest -q
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/server/Dockerfile
+          push: false
+          cache-from: type=gha,scope=server
+          cache-to: type=gha,scope=server,mode=max
+  browser:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: tara_browser
+          POSTGRES_USER: tara
+          POSTGRES_PASSWORD: ci-only-browser-database
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U tara -d tara_browser"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql+asyncpg://tara:ci-only-browser-database@localhost:5432/tara_browser
+      JWT_SECRET: ci-only-browser-secret-not-a-production-credential
+      EVIDENCE_BACKEND: local
+      DEMO_PASSWORD: ci-only-browser-demonstration
+      TARA_E2E_PASSWORD: ci-only-browser-demonstration
+      APP_ORIGIN: http://localhost:3001
+      API_INTERNAL_URL: http://localhost:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: 0.10.9
+          enable-cache: true
+      - run: bun install --frozen-lockfile
+      - run: uv sync --project apps/server --locked
+      - run: bunx playwright install --with-deps chromium
+      - run: uv run alembic upgrade head && uv run python -m tara_server.seed
+        working-directory: apps/server
+      - run: bun run build
+      - name: Start application and run browser acceptance tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd apps/server && exec uv run uvicorn tara_server.api.main:app --host 127.0.0.1 --port 8000) > /tmp/tara-api.log 2>&1 &
+          tara_api_pid=$!
+          (cd apps/web && NODE_ENV=production PORT=3001 exec node --import varlock/auto-load node_modules/next/dist/bin/next start --port 3001) > /tmp/tara-web.log 2>&1 &
+          tara_web_pid=$!
+          trap 'kill "$tara_api_pid" "$tara_web_pid" 2>/dev/null || true' EXIT
+          python3 - <<'PY'
+          import time, urllib.request
+          from pathlib import Path
+          for attempt in range(30):
+              try:
+                  urllib.request.urlopen('http://localhost:3001/health', timeout=2)
+                  urllib.request.urlopen('http://localhost:8000/health/ready', timeout=2)
+                  break
+              except Exception:
+                  time.sleep(1)
+          else:
+              for filename in ('/tmp/tara-api.log', '/tmp/tara-web.log'):
+                  path = Path(filename)
+                  if path.exists():
+                      print(path.name, path.read_text()[-8000:])
+              raise SystemExit('Web/API did not become ready')
+          PY
+          bunx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-diagnostics
+          path: |
+            test-results/
+            /tmp/tara-api.log
+            /tmp/tara-web.log
+          retention-days: 7
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

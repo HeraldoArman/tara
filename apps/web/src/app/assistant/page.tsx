@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "A preview of TARA's reusable real-time workforce assistant components.",
   robots: { follow: false, index: false },
-  title: "Live workspace · TARA",
+  title: "Live workspace",
 };
 
 export default function AssistantPage() {

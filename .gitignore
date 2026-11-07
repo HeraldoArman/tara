@@ -66,6 +66,9 @@ __pycache__/
 .mypy_cache/
 *.egg-info/
 .evidence/
+.data/
+test-results/
+playwright-report/
 .env.*
 !.env.example
 !.env.schema
