@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "./api";
 import type { Connection, Run } from "./contracts";
 import { publishCameraTrack } from "./publish-camera";
+import { usePhoneCamera } from "./use-phone-camera";
 import { recoverWorkerContext } from "./worker-readiness";
 
 export function useRunSession(initialRun: Run) {
@@ -87,7 +88,7 @@ export function useRunSession(initialRun: Run) {
           element.remove();
         }
         audioElements.current = audioElements.current.filter(
-          (element) => !detached.includes(element)
+          (candidate) => !detached.includes(candidate)
         );
       }
       const element = track.attach();
@@ -183,6 +184,13 @@ export function useRunSession(initialRun: Run) {
         .catch(() => undefined);
     }
   }, []);
+  const phoneCamera = usePhoneCamera({
+    connection,
+    enabled: ["active", "paused"].includes(run.status),
+    room,
+    runId: run.id,
+    stopLocalCamera: stopCamera,
+  });
   const releaseRoom = useCallback(
     async (target: Room | null) => {
       if (room.current === target) {
@@ -294,6 +302,42 @@ export function useRunSession(initialRun: Run) {
     },
     [apply, applyMuted, refresh, unlockAudio]
   );
+  const synchronizeSpeaker = useCallback(
+    async (
+      active: Room,
+      workerIdentity: string,
+      reload: () => Promise<Run>,
+      ownsRoom: () => boolean
+    ): Promise<boolean> => {
+      const snapshot = await waitForWorkerReady(
+        active,
+        workerIdentity,
+        reload,
+        ownsRoom
+      );
+      if (!ownsRoom()) {
+        return false;
+      }
+      apply(snapshot);
+      reconcileAudio(active);
+      const audioState = parseWorkerResponse(
+        await active.localParticipant.performRpc({
+          destinationIdentity: workerIdentity,
+          method: "assistant.mute",
+          payload: JSON.stringify({ muted: muteRef.current }),
+          responseTimeout: 15_000,
+        })
+      );
+      if (!ownsRoom()) {
+        return false;
+      }
+      if (typeof audioState.muted === "boolean") {
+        applyMuted(audioState.muted);
+      }
+      return true;
+    },
+    [apply, applyMuted, reconcileAudio]
+  );
   const connect = useCallback((): Promise<Room | null> => {
     if (!mounted.current) {
       return Promise.resolve(null);
@@ -324,7 +368,8 @@ export function useRunSession(initialRun: Run) {
         if (!isCurrent()) {
           return null;
         }
-        const active = new Room({ adaptiveStream: true, dynacast: true });
+        // The preview renders a MediaStream directly, rather than using track.attach().
+        const active = new Room({ adaptiveStream: false, dynacast: true });
         nextRoom = active;
         worker.current = credentials.workerIdentity;
         room.current = active;
@@ -485,30 +530,14 @@ export function useRunSession(initialRun: Run) {
           await releaseRoom(active);
           return null;
         }
-        const snapshot = await waitForWorkerReady(
+        const synchronized = await synchronizeSpeaker(
           active,
           credentials.workerIdentity,
           reload,
           ownsRoom
         );
-        if (!ownsRoom()) {
+        if (!synchronized) {
           return null;
-        }
-        apply(snapshot);
-        reconcileAudio(active);
-        const audioState = parseWorkerResponse(
-          await active.localParticipant.performRpc({
-            destinationIdentity: credentials.workerIdentity,
-            method: "assistant.mute",
-            payload: JSON.stringify({ muted: muteRef.current }),
-            responseTimeout: 15_000,
-          })
-        );
-        if (!ownsRoom()) {
-          return null;
-        }
-        if (typeof audioState.muted === "boolean") {
-          applyMuted(audioState.muted);
         }
         updateConnection("connected");
         return active;
@@ -534,10 +563,17 @@ export function useRunSession(initialRun: Run) {
     reconcileAudio,
     releaseRoom,
     stopCamera,
+    synchronizeSpeaker,
     updateAudioBlocked,
     updateConnection,
   ]);
   const startCamera = useCallback((): Promise<boolean> => {
+    if (phoneCamera.pairingRef.current?.claimed) {
+      setError(
+        "Select Use laptop camera to disconnect the paired phone first."
+      );
+      return Promise.resolve(false);
+    }
     if (startingCamera.current) {
       return startingCamera.current.then(() => cameraTrack.current !== null);
     }
@@ -551,7 +587,12 @@ export function useRunSession(initialRun: Run) {
     setError("");
     const publish = async () => {
       const active = await connect();
-      if (!active || room.current !== active || !mounted.current) {
+      if (
+        !active ||
+        room.current !== active ||
+        !mounted.current ||
+        phoneCamera.pairingRef.current?.claimed
+      ) {
         return false;
       }
       const generation = cameraGeneration.current;
@@ -559,7 +600,8 @@ export function useRunSession(initialRun: Run) {
         mounted.current &&
         room.current === active &&
         cameraGeneration.current === generation &&
-        connectionRef.current === "connected";
+        connectionRef.current === "connected" &&
+        !phoneCamera.pairingRef.current?.claimed;
       try {
         const track: LocalVideoTrack | null = await publishCameraTrack({
           create: () =>
@@ -602,7 +644,7 @@ export function useRunSession(initialRun: Run) {
     });
     startingCamera.current = pending;
     return pending;
-  }, [connect]);
+  }, [connect, phoneCamera.pairingRef]);
   const toggleCamera = useCallback(async () => {
     if (startingCamera.current) {
       return await startingCamera.current;
@@ -732,13 +774,33 @@ export function useRunSession(initialRun: Run) {
     applyMuted(true);
     await action("assistant.mute", { muted: true });
   }, [action, applyMuted, enableAudio]);
+  const startPhoneSession = useCallback(async (): Promise<boolean> => {
+    const active = await connect();
+    if (!(active && mounted.current)) {
+      return false;
+    }
+    if (current.current.status !== "active") {
+      return current.current.status === "paused";
+    }
+    await enableAudio();
+    if (mounted.current && current.current.interactionMode !== "consultation") {
+      await consultation();
+    }
+    return true;
+  }, [connect, consultation, enableAudio]);
   const startSession = useCallback((): Promise<boolean> => {
     if (startingSession.current) {
       return startingSession.current;
     }
     const start = async () => {
+      if (phoneCamera.pairingRef.current?.claimed) {
+        return await startPhoneSession();
+      }
       const started = await startCamera();
-      if (!started || !mounted.current || current.current.status !== "active") {
+      if (
+        !(started && mounted.current) ||
+        current.current.status !== "active"
+      ) {
         return started;
       }
       await enableAudio();
@@ -757,7 +819,28 @@ export function useRunSession(initialRun: Run) {
     });
     startingSession.current = pending;
     return pending;
-  }, [consultation, enableAudio, startCamera]);
+  }, [
+    consultation,
+    enableAudio,
+    phoneCamera.pairingRef,
+    startCamera,
+    startPhoneSession,
+  ]);
+  const useLaptopCamera = useCallback(async (): Promise<boolean> => {
+    try {
+      await api(`/runs/${current.current.id}/camera-pairing`, {
+        method: "DELETE",
+      });
+      phoneCamera.clear();
+      await phoneCamera.refresh();
+      return await startSession();
+    } catch (cause) {
+      if (mounted.current) {
+        setError(errorMessage(cause));
+      }
+      return false;
+    }
+  }, [phoneCamera.clear, phoneCamera.refresh, startSession]);
   useEffect(() => {
     apply(initialRun);
   }, [apply, initialRun]);
@@ -778,26 +861,36 @@ export function useRunSession(initialRun: Run) {
     audioBlocked,
     audioReady,
     busy,
-    camera,
+    camera: phoneCamera.pairing?.claimed ? phoneCamera.connected : camera,
     cameraBusy,
-    cameraStream,
+    cameraSource: phoneCamera.pairing?.claimed
+      ? ("phone" as const)
+      : ("laptop" as const),
+    cameraStream: phoneCamera.pairing?.claimed
+      ? phoneCamera.stream
+      : cameraStream,
     checking,
     connect,
     connection,
     consultation,
-    error,
     enableAudio,
+    error,
     microphone,
     muted,
+    phoneConnected: phoneCamera.connected,
+    phonePairing: phoneCamera.pairing,
     presentation,
     refresh,
+    refreshPhonePairing: phoneCamera.refresh,
     run,
     startCamera,
+    startPhoneSession,
     startSession,
     stopCamera,
     toggleCamera,
     toggleMute,
     transcript,
+    useLaptopCamera,
     video,
   };
 }

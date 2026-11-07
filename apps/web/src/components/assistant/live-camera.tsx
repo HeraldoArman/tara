@@ -19,6 +19,8 @@ export function LiveCamera({
   paused,
   running,
   startDisabled,
+  startDescription,
+  startLabel = "Start bench camera",
   status,
   stepLabel,
   stream,
@@ -33,6 +35,8 @@ export function LiveCamera({
   paused: boolean;
   running: boolean;
   startDisabled: boolean;
+  startDescription?: string;
+  startLabel?: string;
   status: AssistantState;
   stepLabel: string;
   stream: MediaStream | null;
@@ -69,6 +73,7 @@ export function LiveCamera({
   if (checking) {
     observation = "Checking a fresh camera frame…";
   }
+  const buttonLabel = busy ? "Starting video…" : startLabel;
   return (
     <figure
       aria-label="Live work area"
@@ -91,9 +96,10 @@ export function LiveCamera({
           <Camera aria-hidden="true" />
           <h2>Your work area, in focus.</h2>
           <p>
-            {onStart
-              ? "Start your camera to share the work area with TARA."
-              : "No live video is available in this view."}
+            {startDescription ??
+              (onStart
+                ? "Start your camera to share the work area with TARA."
+                : "No live video is available in this view.")}
           </p>
           {onStart ? (
             <Button disabled={startDisabled || busy} onClick={onStart}>
@@ -102,7 +108,7 @@ export function LiveCamera({
               ) : (
                 <Camera aria-hidden="true" />
               )}
-              {busy ? "Starting video…" : "Start bench camera"}
+              {buttonLabel}
             </Button>
           ) : null}
         </div>

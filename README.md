@@ -148,6 +148,20 @@ An open session started from the same version is resumed on repeat requests.
 Asset details are explicitly marked as not provided for these sessions.
 Technicians cannot assign or reassign other users' work.
 
+Inside a connected session, **Pair phone camera** optionally replaces the laptop
+camera. Scan the QR code with a phone and choose **Start phone camera** in its
+camera-only Product view. The laptop stays in Demo view and keeps the microphone,
+assistant speaker and procedure controls. The rear phone camera is used for the
+laptop preview and TARa's visual checks; the phone receives no session audio or
+procedure controls. **Use laptop camera** disconnects the phone and restores the
+normal camera flow. Keep the phone page open and its screen awake while sharing.
+
+Pairing links expire after ten minutes if unused and permit only camera
+publication into that specific session, without a phone sign-in. Claimed
+pairings last up to eight hours and can be revoked or replaced from the laptop.
+The QR secret stays in the URL fragment and only its hash is stored. Ending the
+session revokes the pairing. No pairing is needed to use the laptop camera.
+
 SOP intelligence loads saved source passages and configured checks from the API.
 Its visual checkpoint labels describe the procedure's verification method, not
 a completed verification. Owners and SOP managers can import a source into a

@@ -1,0 +1,149 @@
+.tara-phone-camera {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding: max(22px, env(safe-area-inset-top)) 20px
+    max(24px, env(safe-area-inset-bottom));
+  overflow: hidden;
+  color: #f3f7ff;
+  background: radial-gradient(ellipse at 10% 0, #293b6b, #0e1725 65%);
+  isolation: isolate;
+}
+.tara-phone-camera > video {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tara-phone-camera::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(
+    #08122199,
+    transparent 30%,
+    transparent 45%,
+    #081221dc
+  );
+  box-shadow: inset 0 0 80px #7184ff24;
+}
+.tara-phone-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.tara-phone-brand {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -2px;
+}
+.tara-phone-status {
+  padding: 9px 13px;
+  font-size: 12px;
+  text-transform: capitalize;
+  background: #172439b3;
+  border: 1px solid #dae7ff3d;
+  border-radius: 24px;
+  backdrop-filter: blur(14px);
+}
+.tara-phone-status[data-live="true"] {
+  color: #bbf8dc;
+  border-color: #7cf7bd66;
+}
+.tara-phone-intro {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  width: min(100%, 420px);
+  padding: 60px 0;
+  margin: auto;
+  text-align: center;
+}
+.tara-phone-intro > svg {
+  width: 46px;
+  height: 46px;
+  color: #b9c6ff;
+}
+.tara-phone-intro h1 {
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+.tara-phone-intro p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #d6e1f3;
+}
+.tara-phone-controls {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 540px);
+  padding: 20px;
+  margin: auto auto 0;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: center;
+  background: #10203999;
+  border: 1px solid #e3edff36;
+  border-radius: 20px;
+  backdrop-filter: blur(16px);
+}
+.tara-phone-controls > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+.tara-phone-controls button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 18px;
+  color: #101d32;
+  background: #e4ebff;
+  border: 1px solid #fff5;
+  border-radius: 12px;
+}
+.tara-phone-controls button:focus-visible {
+  outline: 3px solid #a1b5ff;
+  outline-offset: 4px;
+}
+.tara-phone-controls button:disabled {
+  opacity: 0.5;
+}
+.tara-phone-controls button svg {
+  width: 18px;
+  height: 18px;
+}
+.tara-phone-controls small {
+  color: #c2d0e9;
+}
+.tara-phone-error {
+  padding: 10px 12px;
+  color: #ffd6df;
+  background: #5e203766;
+  border: 1px solid #ff9eb14d;
+  border-radius: 10px;
+}
+.tara-phone-spin {
+  animation: tara-phone-rotate 1s linear infinite;
+}
+@keyframes tara-phone-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tara-phone-spin {
+    animation: none;
+  }
+}
