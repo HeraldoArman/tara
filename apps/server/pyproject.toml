@@ -1,0 +1,29 @@
+[project]
+name = "tara-server"
+version = "0.1.0"
+description = "Server-authoritative SOP execution and evidence service"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn[standard]>=0.34,<1", "pydantic-settings>=2.7,<3",
+  "sqlalchemy[asyncio]>=2.0.36,<3", "asyncpg>=0.30,<1", "aiosqlite>=0.20,<1",
+  "alembic>=1.14,<2", "argon2-cffi>=23.1,<26", "PyJWT>=2.10,<3", "python-multipart>=0.0.20,<1",
+  "httpx>=0.28,<1", "boto3>=1.36,<2", "pypdf>=5.1,<7", "livekit-api>=1.0,<2", "livekit-agents[openai]~=1.8", "pillow>=11,<13", "prometheus-client>=0.21,<1", "opentelemetry-api>=1.29,<2"
+]
+[dependency-groups]
+dev = ["pytest>=8.3,<10", "pytest-asyncio>=0.25,<2", "ruff>=0.9,<1", "mypy>=1.14,<2", "boto3-stubs[s3]>=1.36,<2"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.build.targets.wheel]
+packages = ["src/tara_server"]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+[tool.ruff]
+line-length = 100
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+[tool.ruff.lint.per-file-ignores]
+"src/tara_server/api/*.py" = ["B008"]
+"src/tara_server/auth.py" = ["B008"]
