@@ -141,7 +141,8 @@ function AssistantStateControl({
         type="button"
         variant="ghost"
       >
-        <span aria-hidden="true" className="tara-state-dot" /> Success
+        <span aria-hidden="true" className="tara-state-dot" />
+        <span>Success</span>
       </Button>
     </fieldset>
   );
