@@ -198,6 +198,14 @@ work order or registered identifiers. Large procedures include a step outline
 and retrieve further details from that same saved SOP. Identity matching remains
 required only when the current published check calls for it.
 
+Choose **Review my progress**, or ask which step you are on and whether anything
+was skipped. The assistant compares one fresh camera frame with the selected
+SOP's steps, then checks the candidate against recorded progress. It separates
+explicit recorded skips from earlier required steps without verification. An
+unclear view stays uncertain, and invisible actions cannot be reconstructed from
+a still image. This review does not advance or verify any step. Without an
+available camera, it reports saved progress and explains the limitation.
+
 SOP intelligence loads saved source passages and configured checks from the API.
 Its visual checkpoint labels describe the procedure's verification method, not
 a completed verification. Owners and SOP managers can import a source into a

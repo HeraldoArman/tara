@@ -395,6 +395,24 @@ function RunConsultation({
         </Button>
         <span>{consulting ? "Listening" : "Listening paused"}</span>
       </div>
+      <div className="tara-consultation-control">
+        <Button
+          aria-describedby="run-progress-review-help"
+          disabled={!(canAct && consulting)}
+          onClick={async () => {
+            await session.action("assistant.text", {
+              text: "Review my progress against the selected SOP. Look at the current camera view, identify the likely step, and tell me which earlier required steps lack recorded verification or were explicitly skipped.",
+            });
+          }}
+          variant="outline"
+        >
+          <ScanLine aria-hidden="true" />
+          Review my progress
+        </Button>
+        <span id="run-progress-review-help">
+          Checks the current camera view against saved progress.
+        </span>
+      </div>
       <ReplyComposer
         disabled={!(canAct && consulting)}
         onSubmit={async (text) => {

@@ -31,6 +31,7 @@ from pydantic import BaseModel, ValidationError
 
 from tara_server.agent.bridge import DomainBridge
 from tara_server.agent.policy import SYSTEM_INSTRUCTIONS, SpeechPolicy
+from tara_server.agent.progress import build_progress
 from tara_server.agent.search import search_references
 from tara_server.agent.vision import CapturedFrame, StillImageVerifier, encode_frame
 from tara_server.domain.sop_sessions import SESSION_REFERENCE_PREFIX
@@ -682,6 +683,71 @@ class WorkerRuntime:
             # Reconsider an initial check postponed by this bounded read-only request.
             self.spawn(self.automatic_check())
 
+    async def review_progress(self, question: str, use_camera: bool = True) -> dict:
+        """Compare a fresh observation with saved progress without changing step state."""
+        self.policy.require_consultation()
+        if not isinstance(question, str) or not question.strip() or len(question) > 2000:
+            raise DomainError(
+                "VALIDATION_FAILED", "Ask a progress question of up to 2000 characters.", 422
+            )
+        if self.lock.locked():
+            raise DomainError(
+                "CHECK_IN_PROGRESS", "Wait for the current camera action to finish.", 409
+            )
+        async with self.lock:
+            snapshot = await self.bridge.snapshot()
+            observation = None
+            frame = None
+            limitations = []
+            if use_camera and snapshot["status"] == "active":
+                try:
+                    frame = await self.capture()
+                    observation = await self.verifier.recognize_step(
+                        frame, snapshot["steps"], question
+                    )
+                except DomainError as error:
+                    if error.code not in {
+                        "EVIDENCE_MISSING",
+                        "TIMEOUT",
+                        "PROVIDER_UNAVAILABLE",
+                    }:
+                        raise
+                    limitations.append(
+                        f"Camera activity could not be assessed: {error.message} "
+                        "Only saved session progress is available."
+                    )
+            elif use_camera:
+                limitations.append(
+                    "Camera activity recognition requires an active session; "
+                    "this review uses saved progress only."
+                )
+            if isinstance(frame, SelectedCameraFrame):
+                await self.require_camera_identity(frame.camera_identity)
+            self.policy.require_consultation()
+            latest = await self.bridge.snapshot()
+            if latest["version"] != snapshot["version"]:
+                raise DomainError(
+                    "STALE_RUN", "Progress changed during the review. Ask again.", 409
+                )
+            observed_id = observation["observedStepId"] if observation else None
+            result = build_progress(latest, observed_id)
+            result["cameraObservation"] = observation
+            result["limitations"].extend(limitations)
+            result["purpose"] = "consultation_only"
+            result["stepVerified"] = False
+            await self.bridge.audit(
+                "consultation.progress_reviewed",
+                {
+                    "observedStepId": observed_id,
+                    "recordedCurrentStepId": latest["currentStepId"],
+                    "cameraUsed": observation is not None,
+                    "frameSha256": frame.sha256 if frame else None,
+                    "model": observation["model"] if observation else None,
+                    "responseId": observation["responseId"] if observation else None,
+                },
+            )
+            return result
+
     async def read_label(self) -> dict:
         """Read visible identity text without changing the asset or step record."""
         snapshot = await self.bridge.snapshot()
@@ -916,6 +982,14 @@ def build_tools(runtime: WorkerRuntime):
         )
 
     @model_tool
+    async def review_progress(question: str, use_camera: bool = True) -> dict:
+        """Identify the likely visible SOP step and list earlier missing checks or recorded skips."""
+        runtime.policy.require_consultation()
+        return await runtime.bridge.logged_tool(
+            "review_progress", {}, lambda: runtime.review_progress(question, use_camera)
+        )
+
+    @model_tool
     async def submit_visual_check(context: RunContext, expected_step_id: str) -> dict:
         """Capture one fresh camera frame and submit a criterion assessment through the server."""
         context.disallow_interruptions()
@@ -1018,6 +1092,7 @@ def build_tools(runtime: WorkerRuntime):
         get_run_context,
         search_sop,
         inspect_camera,
+        review_progress,
         submit_visual_check,
         submit_step_response,
         record_issue,
