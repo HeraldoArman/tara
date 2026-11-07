@@ -5,9 +5,9 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 WORKDIR /app/apps/server
 COPY apps/server/pyproject.toml apps/server/uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-install-project
+RUN uv sync --locked --no-dev --no-install-project
 COPY apps/server/src ./src
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev
+RUN uv sync --locked --no-dev
 
 FROM python:3.12.12-slim AS runner
 ENV PYTHONUNBUFFERED=1
