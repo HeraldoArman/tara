@@ -154,7 +154,9 @@ camera-only Product view. The laptop stays in Demo view and keeps the microphone
 assistant speaker and procedure controls. The rear phone camera is used for the
 laptop preview and TARa's visual checks; the phone receives no session audio or
 procedure controls. **Use laptop camera** disconnects the phone and restores the
-normal camera flow. Keep the phone page open and its screen awake while sharing.
+normal camera flow. The phone camera starts horizontally, requesting landscape
+fullscreen where supported; otherwise turn the phone sideways before starting.
+Keep the phone page open and its screen awake while sharing.
 
 Pairing links expire after ten minutes if unused and permit only camera
 publication into that specific session, without a phone sign-in. Claimed

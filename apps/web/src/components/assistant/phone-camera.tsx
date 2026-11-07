@@ -10,9 +10,16 @@ import {
   RoomEvent,
   Track,
 } from "livekit-client";
-import { Camera, CameraOff, RefreshCw, RotateCw } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  RefreshCw,
+  RotateCw,
+  Smartphone,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import { usePhoneLandscape } from "@/lib/use-phone-landscape";
 
 interface CameraCapability {
   id: string;
@@ -147,7 +154,12 @@ function usePhoneConnection() {
       }
       const camera = await createLocalVideoTrack({
         facingMode: facing.current,
-        resolution: { frameRate: 15, height: 720, width: 1280 },
+        resolution: {
+          aspectRatio: 16 / 9,
+          frameRate: 15,
+          height: 720,
+          width: 1280,
+        },
       });
       if (!owns()) {
         camera.stop();
@@ -191,7 +203,12 @@ function usePhoneConnection() {
       const next = facing.current === "environment" ? "user" : "environment";
       await camera.restartTrack({
         facingMode: next,
-        resolution: { frameRate: 15, height: 720, width: 1280 },
+        resolution: {
+          aspectRatio: 16 / 9,
+          frameRate: 15,
+          height: 720,
+          width: 1280,
+        },
       });
       if (mounted.current && generation.current === current) {
         facing.current = next;
@@ -303,6 +320,12 @@ function usePhoneConnection() {
 
 export function PhoneCamera() {
   const camera = usePhoneConnection();
+  const { enterLandscape, portrait } = usePhoneLandscape();
+  const startLandscapeCamera = useCallback(async () => {
+    if (await enterLandscape()) {
+      await camera.start();
+    }
+  }, [camera.start, enterLandscape]);
   const video = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const element = video.current;
@@ -331,7 +354,17 @@ export function PhoneCamera() {
           {camera.status === "live" ? "Camera connected" : camera.status}
         </span>
       </header>
-      {live ? null : (
+      {!live && portrait ? (
+        <section className="tara-phone-orientation" role="status">
+          <Smartphone aria-hidden="true" />
+          <h1>Turn your phone sideways.</h1>
+          <p>
+            Use the camera horizontally for a wider view of your work area. Turn
+            off your phone’s rotation lock if the view stays vertical.
+          </p>
+        </section>
+      ) : null}
+      {live || portrait ? null : (
         <section className="tara-phone-intro">
           <Camera aria-hidden="true" />
           <h1>Your phone. Your work area.</h1>
@@ -375,7 +408,7 @@ export function PhoneCamera() {
           ) : (
             <button
               disabled={!camera.paired || camera.busy}
-              onClick={camera.start}
+              onClick={startLandscapeCamera}
               type="button"
             >
               {camera.busy ? (
