@@ -1,0 +1,393 @@
+.tara-landing-preview {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  padding-top: 8px;
+}
+.tara-landing-preview-frame {
+  padding: 8px;
+  background: #ffffffb8;
+  border: 1px solid #fff;
+  border-radius: 25px;
+  box-shadow:
+    0 28px 80px #2634641a,
+    0 5px 18px #26346408;
+}
+.tara-landing-preview-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 0 13px 6px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--tara-muted);
+  letter-spacing: 1.6px;
+}
+.tara-landing-preview-bar > svg {
+  width: 15px;
+  height: 15px;
+  color: var(--tara-accent);
+}
+.tara-landing-preview-window-dots {
+  display: flex;
+  gap: 5px;
+}
+.tara-landing-preview-window-dots > i {
+  width: 5px;
+  height: 5px;
+  background: #b4bdd2;
+  border-radius: 50%;
+}
+.tara-landing-preview-scene {
+  position: relative;
+  min-height: 400px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 24% 10%, #55606d61, transparent 70%), #111a23;
+  border: 1px solid #ffffff14;
+  border-radius: 18px;
+  box-shadow: inset 0 0 100px
+    color-mix(in srgb, var(--tara-accent) 17%, transparent);
+  transition: box-shadow 300ms ease;
+}
+.tara-landing-preview-scene::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    #ffffff02 3px,
+    #ffffff02 4px
+  );
+}
+.tara-landing-preview-camera-label {
+  position: absolute;
+  top: 23px;
+  left: 23px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 8px;
+  font-weight: 500;
+  color: #cad4e5;
+  letter-spacing: 1px;
+}
+.tara-landing-preview-camera-label > span {
+  width: 4px;
+  height: 4px;
+  background: #b5c5ea;
+  border-radius: 50%;
+  box-shadow: 0 0 7px #b5c5ea;
+}
+.tara-landing-preview-orb {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  z-index: 1;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 131px;
+  padding: 10px 14px 10px 11px;
+  background: linear-gradient(120deg, #ffffffed, #eef2ffc9);
+  border: 1px solid #ffffffa1;
+  border-radius: 17px;
+  box-shadow: 0 8px 20px #0000001a;
+  backdrop-filter: blur(16px);
+}
+.tara-landing-preview-orb .tara-assistant-mark {
+  width: 29px;
+  height: 29px;
+  transform: scale(0.75) rotate(16deg);
+}
+.tara-landing-preview-orb > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tara-landing-preview-orb :where(div > span) {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 6px;
+  font-weight: 600;
+  color: #59667e;
+  letter-spacing: 1.6px;
+}
+.tara-landing-preview-orb strong {
+  font-size: 18px;
+  font-weight: 450;
+  line-height: 1;
+  color: var(--tara-accent);
+  letter-spacing: -0.6px;
+}
+.tara-landing-preview-keyboard {
+  position: absolute;
+  top: 72px;
+  left: -5%;
+  width: 110%;
+  height: 245px;
+  filter: drop-shadow(0 15px 20px #00000040);
+}
+.tara-landing-preview-keyboard text {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  text-anchor: middle;
+  fill: #b5bec9;
+}
+.tara-landing-preview-keyboard g > rect {
+  stroke: #ffffff0d;
+}
+.tara-landing-preview-keyboard [data-highlighted] > rect {
+  filter: drop-shadow(0 0 5px #e4b46b40);
+  fill: #624c2a;
+  stroke: #e2b46b;
+  stroke-width: 3.5px;
+}
+.tara-landing-preview-keyboard [data-highlighted] > text {
+  fill: #f1d8a9;
+}
+.tara-landing-preview-cable {
+  fill: none;
+  stroke: #0b1117;
+  stroke-width: 5px;
+}
+.tara-landing-preview-screws {
+  fill: #73808a80;
+}
+.tara-landing-preview-work-area {
+  position: absolute;
+  inset: 105px 35px 116px;
+}
+.tara-landing-preview-work-area > span {
+  position: absolute;
+  top: -19px;
+  left: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 7px;
+  color: #9ca8b9;
+  letter-spacing: 2px;
+}
+.tara-landing-preview-work-area > i {
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  border-color: #9aacc04d;
+  border-style: solid;
+}
+.tara-landing-preview-work-area > i:nth-of-type(1) {
+  top: 0;
+  left: 0;
+  border-width: 1px 0 0 1px;
+  border-top-left-radius: 5px;
+}
+.tara-landing-preview-work-area > i:nth-of-type(2) {
+  top: 0;
+  right: 0;
+  border-width: 1px 1px 0 0;
+  border-top-right-radius: 5px;
+}
+.tara-landing-preview-work-area > i:nth-of-type(3) {
+  right: 0;
+  bottom: 0;
+  border-width: 0 1px 1px 0;
+  border-bottom-right-radius: 5px;
+}
+.tara-landing-preview-work-area > i:nth-of-type(4) {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 1px 1px;
+  border-bottom-left-radius: 5px;
+}
+.tara-landing-preview-instruction {
+  position: absolute;
+  right: 17px;
+  bottom: 17px;
+  left: 17px;
+  z-index: 1;
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  min-height: 92px;
+  padding: 16px;
+  background: linear-gradient(120deg, #fffffff0, #edf2ffde);
+  border: 1px solid #ffffffa6;
+  border-radius: 17px;
+  box-shadow: 0 8px 30px #0000001a;
+  backdrop-filter: blur(15px);
+}
+.tara-landing-preview-step-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--tara-accent);
+  background: color-mix(in srgb, var(--tara-accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tara-accent) 10%, transparent);
+  border-radius: 12px;
+}
+.tara-landing-preview-step-icon > svg {
+  width: 18px;
+  height: 18px;
+}
+.tara-landing-preview-instruction h2 {
+  margin: 2px 0 4px;
+  font-size: 16px;
+  font-weight: 550;
+  line-height: 1.3;
+  color: var(--tara-ink);
+  letter-spacing: -0.4px;
+}
+.tara-landing-preview-note {
+  margin: 0;
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--tara-accent);
+}
+.tara-landing-preview-description {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #59667e;
+}
+.tara-landing-preview-context {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 12px 9px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--tara-ink);
+}
+.tara-landing-preview-context > span:last-child {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 7px;
+  font-weight: 400;
+  color: var(--tara-muted);
+  letter-spacing: 0.6px;
+}
+.tara-landing-preview-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 22px;
+}
+.tara-landing-preview-controls > p {
+  margin: 0;
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+.tara-landing-preview-controls fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 4px;
+  margin: 0;
+  background: #ffffffa1;
+  border: 1px solid var(--tara-border);
+  border-radius: 12px;
+}
+.tara-landing-preview-state[data-slot="button"] {
+  gap: 5px;
+  min-height: 32px;
+  padding: 7px 10px;
+  font-size: 10px;
+  font-weight: 450;
+  color: var(--tara-muted);
+  border-radius: 8px;
+}
+.tara-landing-preview-state > span {
+  width: 4px;
+  height: 4px;
+  background: var(--tara-accent);
+  border-radius: 50%;
+}
+.tara-landing-preview-state[aria-pressed="true"] {
+  color: var(--tara-accent);
+  background: var(--tara-accent-soft);
+}
+.tara-landing-preview-state:focus-visible {
+  outline: 2px solid var(--tara-accent);
+  outline-offset: 2px;
+}
+.tara-landing-preview-disclaimer {
+  margin: 10px 0 0;
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--tara-muted);
+  text-align: center;
+}
+
+@media (max-width: 580px) {
+  .tara-landing-preview-frame {
+    padding: 6px;
+    border-radius: 21px;
+  }
+  .tara-landing-preview-scene {
+    min-height: 360px;
+  }
+  .tara-landing-preview-keyboard {
+    top: 65px;
+    left: -16%;
+    width: 132%;
+    height: 220px;
+  }
+  .tara-landing-preview-context {
+    flex-direction: column;
+    gap: 4px;
+    align-items: start;
+    padding: 11px 10px 7px;
+  }
+  .tara-landing-preview-camera-label {
+    top: 24px;
+    left: 15px;
+    font-size: 7px;
+  }
+  .tara-landing-preview-orb {
+    top: 13px;
+    right: 13px;
+    gap: 5px;
+    min-width: 113px;
+    padding: 8px;
+    border-radius: 14px;
+  }
+  .tara-landing-preview-instruction {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    gap: 10px;
+    padding: 13px;
+    border-radius: 14px;
+  }
+  .tara-landing-preview-instruction h2 {
+    font-size: 14px;
+  }
+  .tara-landing-preview-step-icon {
+    width: 31px;
+    height: 31px;
+    border-radius: 10px;
+  }
+  .tara-landing-preview-controls {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .tara-landing-preview-work-area {
+    inset-inline: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tara-landing-preview-scene,
+  .tara-landing-preview-state {
+    transition: none;
+  }
+}

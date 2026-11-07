@@ -7,7 +7,14 @@ import type { User } from "./contracts";
 
 const TRAILING_SLASH = /\/$/;
 
-export async function serverApi<T>(path: string): Promise<T> {
+interface ServerApiOptions {
+  readonly onUnauthorized?: "redirect" | "throw";
+}
+
+export async function serverApi<T>(
+  path: string,
+  options: ServerApiOptions = {}
+): Promise<T> {
   const jar = await cookies();
   const origin = ENV.API_INTERNAL_URL;
   let response: Response;
@@ -26,7 +33,7 @@ export async function serverApi<T>(path: string): Promise<T> {
       { cause, code: "PROVIDER_UNAVAILABLE", status: 503 }
     );
   }
-  if (response.status === 401) {
+  if (response.status === 401 && options.onUnauthorized !== "throw") {
     redirect("/login");
   }
   const data = await response.json().catch(() => ({}));
@@ -37,4 +44,20 @@ export async function serverApi<T>(path: string): Promise<T> {
 }
 export async function currentUser(): Promise<User> {
   return await serverApi<User>("/auth/me");
+}
+
+/** Public entry skips the API entirely for guests; protected pages still redirect. */
+export async function optionalCurrentUser(): Promise<User | null> {
+  const jar = await cookies();
+  if (!jar.get("tara_session")?.value) {
+    return null;
+  }
+  try {
+    return await serverApi<User>("/auth/me", { onUnauthorized: "throw" });
+  } catch (cause) {
+    if (cause instanceof ApiError && cause.status === 401) {
+      return null;
+    }
+    throw cause;
+  }
 }

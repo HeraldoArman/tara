@@ -1,0 +1,882 @@
+.tara-landing {
+  --landing-line: #dfe4ef;
+  --landing-soft: #edf0fb;
+  overflow: clip;
+  font-family: var(--font-geist-sans), sans-serif;
+  background:
+    radial-gradient(ellipse 70% 18% at 91% 9%, #dce3ff9c, transparent),
+    radial-gradient(ellipse 40% 15% at 0% 0%, #f2f0fc, transparent),
+    var(--tara-canvas);
+}
+.tara-landing :where(h1, h2, h3) {
+  text-wrap: balance;
+}
+.tara-landing :where(p) {
+  text-wrap: pretty;
+}
+.tara-landing :where(a, button, summary):focus-visible {
+  outline: 2px solid var(--tara-active);
+  outline-offset: 5px;
+}
+.tara-landing :where(section[id]) {
+  scroll-margin-top: 40px;
+}
+.tara-landing-header,
+.tara-landing main,
+.tara-landing-footer {
+  width: min(1440px, calc(100% - 112px));
+  margin-inline: auto;
+}
+.tara-landing-header {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  min-height: 112px;
+}
+.tara-landing-brand {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.tara-landing-brand > span:last-child {
+  font-size: 36px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.tara-landing-period {
+  color: var(--tara-active);
+}
+.tara-landing-header nav {
+  display: flex;
+  gap: 30px;
+  margin-inline: auto;
+  font-size: 12px;
+  color: var(--tara-muted);
+}
+.tara-landing-header-actions {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.tara-landing-signin {
+  padding-block: 12px;
+  font-size: 12px;
+  font-weight: 550;
+}
+.tara-landing-button[data-slot="button"] {
+  min-height: 44px;
+  padding-inline: 21px;
+  font-size: 12px;
+  color: var(--primary-foreground);
+  border-radius: 11px;
+}
+.tara-landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.83fr) minmax(0, 1.17fr);
+  gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+  padding-block: 65px 95px;
+}
+.tara-landing-eyebrow {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font:
+    500 10px / 1.6 var(--font-geist-mono),
+    monospace;
+  color: var(--tara-muted);
+  letter-spacing: 1.3px;
+}
+.tara-landing-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--tara-active);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #4758db10;
+}
+.tara-landing-hero h1 {
+  margin-block: 25px 26px;
+  font-size: clamp(60px, 6.5vw, 94px);
+  font-weight: 450;
+  line-height: 1.01;
+  letter-spacing: -0.065em;
+}
+.tara-landing-hero :where(h1) span {
+  color: var(--tara-active);
+}
+.tara-landing-lede {
+  max-width: 420px;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--tara-muted);
+}
+.tara-landing-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  margin-top: 30px;
+}
+.tara-landing-text-link {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding-block: 10px;
+  font-size: 12px;
+  font-weight: 550;
+}
+.tara-landing-text-link svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 180ms ease;
+}
+.tara-landing-text-link:where(:hover) svg {
+  transform: translate(2px, -2px);
+}
+.tara-landing-hero-note {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-top: 22px;
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+.tara-landing-hero-note svg {
+  width: 13px;
+  height: 13px;
+}
+.tara-landing-hero-product {
+  min-width: 0;
+  padding-top: 20px;
+}
+.tara-landing-preview-caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 2px 0;
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+.tara-landing-preview-caption a {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--tara-active);
+}
+.tara-landing-preview-caption svg {
+  width: 12px;
+  height: 12px;
+}
+.tara-landing-intro-strip {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding-block: 29px;
+  border-block: 1px solid var(--landing-line);
+}
+.tara-landing-intro-strip > p {
+  flex: 1;
+  font-size: 12px;
+  color: var(--tara-muted);
+}
+.tara-landing-intro-strip strong {
+  font-weight: 500;
+  color: var(--tara-ink);
+}
+.tara-landing-intro-strip > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 11px;
+}
+.tara-landing-intro-strip svg {
+  width: 16px;
+  height: 16px;
+  color: var(--tara-active);
+}
+.tara-landing-strip-line {
+  width: 35px;
+  height: 1px;
+  background: var(--landing-line);
+}
+.tara-landing-section {
+  padding-block: 105px 0;
+}
+.tara-landing-section-heading {
+  display: flex;
+  gap: 40px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 44px;
+}
+.tara-landing :where(h2) {
+  margin-top: 18px;
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 450;
+  line-height: 1.16;
+  letter-spacing: -0.045em;
+}
+.tara-landing-section-heading > p {
+  max-width: 345px;
+  padding-bottom: 3px;
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--tara-muted);
+}
+.tara-landing-workflow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  border-block: 1px solid var(--landing-line);
+}
+.tara-landing-workflow li {
+  padding: 26px 25px 29px;
+  border-right: 1px solid var(--landing-line);
+}
+.tara-landing-workflow li:first-child {
+  padding-left: 0;
+}
+.tara-landing-workflow li:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+.tara-landing-flow-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.tara-landing-flow-top span {
+  font:
+    11px var(--font-geist-mono),
+    monospace;
+  color: var(--tara-muted);
+}
+.tara-landing-flow-top svg {
+  width: 18px;
+  height: 18px;
+  color: var(--tara-active);
+}
+.tara-landing-workflow h3 {
+  margin-bottom: 10px;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+}
+.tara-landing-workflow p {
+  font-size: 12px;
+  line-height: 1.85;
+  color: var(--tara-muted);
+}
+.tara-landing-teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.tara-landing-team {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(26px, 3.5vw, 48px);
+  overflow: hidden;
+  border: 1px solid var(--landing-line);
+  border-radius: 24px;
+}
+.tara-landing-team-management {
+  background: linear-gradient(140deg, #fff, #edf0fb);
+}
+.tara-landing-team-worker {
+  background: linear-gradient(140deg, #fff, #f1f5f6);
+}
+.tara-landing-team-label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font:
+    500 10px var(--font-geist-mono),
+    monospace;
+  color: var(--tara-muted);
+  letter-spacing: 1.2px;
+}
+.tara-landing-team-label svg {
+  width: 17px;
+  height: 17px;
+  color: var(--tara-active);
+}
+.tara-landing-team h3 {
+  margin-block: 30px 16px;
+  font-size: clamp(26px, 2.6vw, 37px);
+  font-weight: 450;
+  line-height: 1.16;
+  letter-spacing: -1.2px;
+}
+.tara-landing-team > p {
+  max-width: 400px;
+  font-size: 13px;
+  color: var(--tara-muted);
+}
+.tara-landing-team ul {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  margin-block: 25px 30px;
+  list-style: none;
+}
+.tara-landing-team li {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 11px;
+}
+.tara-landing-team :where(li) svg {
+  width: 14px;
+  height: 14px;
+  color: var(--tara-active);
+}
+.tara-landing-team > a {
+  align-self: flex-start;
+  margin-top: 22px;
+}
+.tara-landing-record {
+  padding: 20px;
+  margin-top: auto;
+  background: #ffffffb5;
+  border: 1px solid #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px #344b6b04;
+}
+.tara-landing-record > div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-block: 10px;
+  font-size: 10px;
+}
+.tara-landing-record > div:first-child {
+  padding-top: 0;
+  margin-bottom: 3px;
+  font:
+    9px var(--font-geist-mono),
+    monospace;
+  color: var(--tara-muted);
+}
+.tara-landing-record > div > span:last-child {
+  margin-left: auto;
+  color: var(--tara-muted);
+}
+.tara-landing-record strong {
+  font-weight: 500;
+}
+.tara-landing-record-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--tara-success);
+  border-radius: 50%;
+}
+.tara-landing-record-dot[data-tone="warning"] {
+  background: var(--tara-warning);
+}
+.tara-landing-record-dot[data-tone="active"] {
+  background: var(--tara-active);
+}
+.tara-landing-moment {
+  display: flex;
+  flex: 1;
+  gap: 22px;
+  align-items: center;
+  min-height: 167px;
+  padding: 28px 18px;
+  background: radial-gradient(ellipse at 0 50%, #e1e8fa, transparent 75%);
+}
+.tara-landing-moment-mark {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 65px;
+  height: 65px;
+  background: radial-gradient(circle at 30% 20%, white, #dce3fa);
+  border: 1px solid white;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 8px #ffffff75,
+    0 8px 24px #4758db15;
+}
+.tara-landing-moment p {
+  margin-block: 10px 2px;
+  font-size: 21px;
+  letter-spacing: -0.6px;
+}
+.tara-landing-moment div > span:last-child {
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+.tara-landing-principles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  padding: 64px;
+  margin-top: 105px;
+  color: #f7f9ff;
+  background:
+    radial-gradient(ellipse at 0 100%, #354570, transparent 70%), #1e2a42;
+  border-radius: 26px;
+}
+.tara-landing-principles .tara-landing-eyebrow {
+  color: #b6c5e5;
+}
+.tara-landing-principles-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 28px;
+  color: #bfcbff;
+  background: #ffffff0d;
+  border: 1px solid #ffffff1a;
+  border-radius: 12px;
+}
+.tara-landing-principles-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.tara-landing-principles h2 {
+  font-size: clamp(29px, 2.8vw, 40px);
+}
+.tara-landing-principles-intro > p:where(:last-child) {
+  max-width: 350px;
+  margin-top: 20px;
+  font-size: 13px;
+  color: #bfcae0;
+}
+.tara-landing-principle-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.tara-landing-principle-list article {
+  display: flex;
+  gap: 20px;
+  padding-block: 23px;
+  border-bottom: 1px solid #ffffff1a;
+}
+.tara-landing-principle-list article:first-child {
+  padding-top: 0;
+}
+.tara-landing-principle-list article:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.tara-landing-principle-list :where(article) > span {
+  padding-top: 2px;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  color: #9dafe1;
+}
+.tara-landing-principle-list h3 {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+.tara-landing-principle-list p {
+  font-size: 12px;
+  line-height: 1.85;
+  color: #bfcae0;
+}
+.tara-landing-faq {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 80px;
+  padding-bottom: 105px;
+}
+.tara-landing-faq > :where(div) > p:where(:last-child) {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--tara-muted);
+}
+.tara-landing-questions details {
+  border-bottom: 1px solid var(--landing-line);
+}
+.tara-landing-questions details:first-child {
+  border-top: 1px solid var(--landing-line);
+}
+.tara-landing-questions summary {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 22px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+.tara-landing-questions summary::-webkit-details-marker {
+  display: none;
+}
+.tara-landing-questions :where(summary) svg {
+  width: 16px;
+  height: 16px;
+  color: var(--tara-muted);
+  transition: transform 180ms ease;
+}
+.tara-landing-questions :where(details[open]) svg {
+  transform: rotate(45deg);
+}
+.tara-landing-questions :where(details) p {
+  padding: 0 28px 24px 0;
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--tara-muted);
+}
+.tara-landing-start {
+  position: relative;
+  display: flex;
+  gap: 60px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 64px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 100% 100%, #cdd7ff8c, transparent 65%),
+    var(--landing-soft);
+  border: 1px solid #e0e6f5;
+  border-radius: 26px;
+}
+.tara-landing-start > div:not(.tara-landing-start-mark) {
+  position: relative;
+  z-index: 1;
+}
+.tara-landing-start h2 {
+  font-size: clamp(32px, 3.6vw, 50px);
+}
+.tara-landing-start p:where(:last-child) {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--tara-muted);
+}
+.tara-landing-start-actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+.tara-landing-start-actions > span {
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+.tara-landing-start-actions > span a {
+  color: var(--tara-active);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tara-landing-start-mark {
+  position: absolute;
+  right: 160px;
+  bottom: -80px;
+  opacity: 0.045;
+  transform: scale(11);
+}
+.tara-landing-footer {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 58px 38px;
+}
+.tara-landing-footer .tara-landing-brand {
+  transform: scale(0.8);
+  transform-origin: left center;
+}
+.tara-landing-footer p {
+  margin-top: 7px;
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--tara-muted);
+}
+.tara-landing-footer nav {
+  display: flex;
+  gap: 24px;
+  font-size: 11px;
+  color: var(--tara-muted);
+}
+.tara-landing-footer > p {
+  text-align: right;
+}
+.tara-landing-skip {
+  position: fixed;
+  top: -80px;
+  left: 20px;
+  z-index: 10;
+  padding: 12px 18px;
+  background: white;
+  border-radius: 10px;
+}
+.tara-landing-skip:focus {
+  top: 16px;
+}
+
+@media (max-width: 1100px) {
+  .tara-landing-header,
+  .tara-landing main,
+  .tara-landing-footer {
+    width: calc(100% - 64px);
+  }
+  .tara-landing-header nav {
+    gap: 18px;
+  }
+  .tara-landing-hero {
+    gap: 32px;
+    padding-block: 44px 64px;
+  }
+  .tara-landing-hero h1 {
+    font-size: clamp(58px, 7.5vw, 78px);
+  }
+  .tara-landing-hero-actions {
+    gap: 12px;
+  }
+  .tara-landing-intro-strip {
+    gap: 15px;
+  }
+  .tara-landing-strip-line {
+    width: 16px;
+  }
+  .tara-landing-workflow li {
+    padding-inline: 17px;
+  }
+  .tara-landing-principles {
+    gap: 40px;
+    padding: 40px;
+  }
+  .tara-landing-faq {
+    gap: 40px;
+  }
+  .tara-landing-start {
+    gap: 32px;
+    padding: 44px;
+  }
+}
+@media (max-width: 800px) {
+  .tara-landing-header {
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-block: 25px;
+  }
+  .tara-landing-header nav {
+    justify-content: center;
+    order: 3;
+    width: 100%;
+  }
+  .tara-landing-header-actions {
+    margin-left: auto;
+  }
+  .tara-landing-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 35px;
+  }
+  .tara-landing-hero h1 {
+    max-width: 650px;
+    font-size: clamp(58px, 10vw, 80px);
+  }
+  .tara-landing-hero h1 br:nth-child(2) {
+    display: none;
+  }
+  .tara-landing-hero h1 span::before {
+    content: " ";
+  }
+  .tara-landing-lede {
+    max-width: 470px;
+  }
+  .tara-landing-hero-product {
+    padding-top: 0;
+  }
+  .tara-landing-intro-strip {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .tara-landing-intro-strip > p {
+    flex-basis: 100%;
+  }
+  .tara-landing-section {
+    padding-top: 72px;
+  }
+  .tara-landing-section-heading {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 30px;
+  }
+  .tara-landing-section-heading > p {
+    max-width: 460px;
+  }
+  .tara-landing-workflow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 25px;
+    border-bottom: 0;
+  }
+  .tara-landing-workflow li {
+    padding: 22px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--landing-line);
+  }
+  .tara-landing-teams {
+    grid-template-columns: 1fr;
+  }
+  .tara-landing-team {
+    padding: 34px;
+  }
+  .tara-landing-team h3 {
+    font-size: 34px;
+  }
+  .tara-landing-principles {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    margin-top: 72px;
+  }
+  .tara-landing-principles-intro > p:last-child {
+    max-width: 430px;
+  }
+  .tara-landing-faq {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-bottom: 72px;
+  }
+  .tara-landing-start {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tara-landing-start-actions {
+    align-items: flex-start;
+  }
+  .tara-landing-footer {
+    flex-wrap: wrap;
+    gap: 26px;
+  }
+  .tara-landing-footer > p {
+    width: 100%;
+    text-align: left;
+  }
+}
+@media (max-width: 480px) {
+  .tara-landing-header,
+  .tara-landing main,
+  .tara-landing-footer {
+    width: calc(100% - 36px);
+  }
+  .tara-landing-header {
+    gap: 20px 12px;
+  }
+  .tara-landing-brand > span:last-child {
+    font-size: 30px;
+  }
+  .tara-landing-brand .tara-assistant-mark {
+    width: 28px;
+  }
+  .tara-landing-header-actions {
+    gap: 12px;
+  }
+  .tara-landing-header-actions .tara-landing-button {
+    min-height: 40px;
+    padding-inline: 11px;
+  }
+  .tara-landing-header-actions .tara-landing-button svg {
+    display: none;
+  }
+  .tara-landing-header nav {
+    gap: 10px;
+    justify-content: space-between;
+    font-size: 11px;
+  }
+  .tara-landing-hero {
+    padding-top: 28px;
+  }
+  .tara-landing-hero h1 {
+    font-size: clamp(50px, 12vw, 58px);
+  }
+  .tara-landing-lede {
+    font-size: 14px;
+  }
+  .tara-landing-hero-actions {
+    gap: 14px;
+  }
+  .tara-landing-hero-actions .tara-landing-button {
+    padding-inline: 16px;
+  }
+  .tara-landing-intro-strip {
+    gap: 18px;
+  }
+  .tara-landing-intro-strip > div {
+    gap: 8px;
+    font-size: 10px;
+  }
+  .tara-landing-strip-line {
+    display: none;
+  }
+  .tara-landing-intro-strip > div:last-child {
+    flex-basis: 100%;
+  }
+  .tara-landing-workflow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .tara-landing-flow-top {
+    margin-bottom: 18px;
+  }
+  .tara-landing-team {
+    padding: 26px 22px;
+    border-radius: 20px;
+  }
+  .tara-landing-team h3 {
+    font-size: 30px;
+  }
+  .tara-landing-record {
+    padding: 15px;
+  }
+  .tara-landing-record > div {
+    flex-wrap: wrap;
+    font-size: 9px;
+  }
+  .tara-landing-moment {
+    gap: 17px;
+    padding-inline: 4px;
+  }
+  .tara-landing-moment-mark {
+    width: 50px;
+    height: 50px;
+  }
+  .tara-landing-moment p {
+    font-size: 18px;
+  }
+  .tara-landing-principles {
+    padding: 30px 24px;
+    border-radius: 20px;
+  }
+  .tara-landing-principle-list article {
+    gap: 14px;
+  }
+  .tara-landing-start {
+    padding: 34px 24px;
+    border-radius: 20px;
+  }
+  .tara-landing-footer nav {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tara-landing *,
+  .tara-landing *::before,
+  .tara-landing *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
