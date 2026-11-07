@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>TARa · WO-1042 live</title>
+    <meta
+      name="description"
+      content="TARa — a live-video work assistant grounded in the company SOP. Frontend prototype."
+    />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+    <link rel="stylesheet" href="assets/css/session.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23171914'/%3E%3Cpath d='M9 22V11l7 7 7-7v11' stroke='%23ffffff' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body class="page-live">
+    <div class="bg-fx" aria-hidden="true"></div>
+
+    <header class="livebar">
+      <a class="brand" href="index.html" aria-label="TARa home">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path
+              d="M9 22V11l7 7 7-7v11"
+              stroke="#ffffff"
+              stroke-width="2.8"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+        <span class="brand__name">TARa</span>
+      </a>
+
+      <div class="livebar__wo">
+        <span class="mono">WO-1042</span>
+        <span class="dim">Keychron K2 · E key switch</span>
+        <span class="tag tag--muted">SOP-KBD-01 v1.4</span>
+      </div>
+
+      <div class="livebar__right">
+        <span class="livebar__state"><i class="dot"></i><span id="agentState">Watching live</span></span>
+        <a class="livebar__queue" href="index.html">Queue</a>
+      </div>
+    </header>
+
+    <main class="live">
+      <!-- LIVE VIDEO ------------------------------------------------------>
+      <section class="stage" id="stage" aria-label="Live bench camera">
+        <div class="stage__media" id="stageMedia">
+          <canvas id="demoCanvas"></canvas>
+          <video id="liveVideo" autoplay playsinline muted hidden></video>
+          <div class="stage__scanline" aria-hidden="true"></div>
+          <div class="stage__corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+          <div class="stage__hud stage__hud--tl">
+            <span class="rec"><i></i> REC <span id="recTime">00:00</span></span>
+            <span class="stage__mode" id="modeChip">Simulated feed</span>
+          </div>
+
+          <div class="stage__hud stage__hud--tr">
+            <button class="stage__btn" id="camBtn" data-icon="camera">Use webcam</button>
+          </div>
+
+          <div class="stage__hud stage__hud--bl">
+            <span class="vision"><i class="vision__dot"></i><span id="visionLine">Initialising visual tracking…</span></span>
+          </div>
+
+          <div class="stage__hud stage__hud--br">
+            <span class="stage__step" id="stageStep">Step 1 · §1.2</span>
+          </div>
+
+          <div class="stage__scan" id="scanHud" hidden>
+            <span class="scanline"></span>
+            <span class="stage__scanlabel">Analysing live video…</span>
+          </div>
+
+          <div class="stage__saved" id="savedBadge" hidden></div>
+        </div>
+
+        <div class="stage__foot">
+          <div class="stage__thumb" id="lastFrame" hidden><img alt="Last frame saved to the record" /></div>
+          <div class="stage__footmain">
+            <b id="stageTitle">Verify keyboard &amp; intake</b>
+            <span id="stageSub">Hold the underside label in view</span>
+          </div>
+          <div class="stage__pulse" id="stagePulse" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT ------------------------------------------------------------>
+      <section class="chat" aria-label="TARa agent">
+        <header class="chat__head">
+          <span class="orb" id="orb" aria-hidden="true"><i></i></span>
+          <div class="chat__id">
+            <b>TARa</b>
+            <span>Grounded in SOP-KBD-01 v1.4 · hands-free</span>
+          </div>
+        </header>
+
+        <div class="chat__progress">
+          <div class="chat__track"><i id="progressBar"></i></div>
+          <span id="progressText">Step 1 of 5</span>
+          <span class="tag tag--muted" id="auditChip">0 events</span>
+        </div>
+
+        <div class="chat__scroll" id="chatScroll" role="region" aria-label="Live agent conversation">
+          <div class="chat__inner" id="chatInner"></div>
+        </div>
+
+        <div class="composer-wrap">
+          <div class="voicebar" id="voicebar" data-state="idle">
+            <span class="voicebar__wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span id="voiceState">Starting microphone…</span>
+            <span class="voicebar__hint">Say “show me the SOP” or “what does a keycap look like”</span>
+          </div>
+          <form class="composer" id="composer">
+            <input
+              class="composer__input"
+              id="composerInput"
+              type="text"
+              placeholder="Speak — or type here and press Enter"
+              autocomplete="off"
+              aria-label="Message TARa"
+            />
+          </form>
+          <p class="composer__note">
+            No buttons: the camera checks automatically, and you answer by voice. Typing stays as a fallback.
+            Simulated locally — video never leaves the browser.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <noscript>
+      <div style="padding: 24px; font-family: sans-serif; color: #fff">This prototype needs JavaScript enabled.</div>
+    </noscript>
+
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/core.js"></script>
+    <script src="assets/js/scene.js"></script>
+    <script src="assets/js/live-data.js"></script>
+    <script src="assets/js/session.js"></script>
+  </body>
+</html>
