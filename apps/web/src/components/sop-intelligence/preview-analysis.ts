@@ -46,7 +46,7 @@ const previewRules: PreviewRule[] = [
     pattern:
       /\b(serial|barcode|label|identif\w*|record\w*|document\w*|report\w*|catat\w*|lapor\w*|nomor|pindai\w*)\b/i,
     reason:
-      "The passage contains information that TARA may help read or capture. A person should confirm the extracted details against the original source.",
+      "The passage contains information that tara may help read or capture. A person should confirm the extracted details against the original source.",
   },
   {
     capabilities: ["Computer vision", "Visual checkpoint"],
@@ -54,7 +54,7 @@ const previewRules: PreviewRule[] = [
     pattern:
       /\b(visual\w*|visible|inspect\w*|damage\w*|debris|housing|flush|terlihat|inspeksi|kerusakan|kotoran)\b/i,
     reason:
-      "This passage describes a potentially observable condition. TARA may help check it with a clear camera view, with human review whenever evidence is insufficient.",
+      "This passage describes a potentially observable condition. tara may help check it with a clear camera view, with human review whenever evidence is insufficient.",
   },
   {
     capabilities: ["Guided checklist"],
@@ -62,7 +62,7 @@ const previewRules: PreviewRule[] = [
     pattern:
       /\b(check\w*|match\w*|compar\w*|confirm\w*|verif\w*|periksa\w*|cocok\w*|banding\w*|pastikan)\b/i,
     reason:
-      "TARA may guide this check and surface the relevant instruction. A person must confirm the result and decide whether the available evidence is adequate.",
+      "tara may guide this check and surface the relevant instruction. A person must confirm the result and decide whether the available evidence is adequate.",
   },
 ];
 

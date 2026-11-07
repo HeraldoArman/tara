@@ -6,7 +6,7 @@ from tara_server.settings import Settings
 
 def test_allowed_origins_normalize_and_deduplicate_exact_configured_origins():
     settings = Settings(
-        app_origin="HTTPS://TARA.HERALDOARMAN.COM:443/",
+        app_origin="HTTPS://tara.HERALDOARMAN.COM:443/",
         additional_app_origins=(
             " https://web-production-4f08e.up.railway.app/ ,"
             "https://tara.heraldoarman.com, http://localhost:3001/ ,,"

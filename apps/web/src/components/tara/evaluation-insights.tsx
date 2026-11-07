@@ -84,7 +84,10 @@ export function EvaluationEvidence({ data }: { data: Evaluation }) {
     evidence.map((frame) => [frame.id, `/reports/runs/${frame.runId}`])
   );
   return (
-    <section className="panel evaluation-saved-images">
+    <section
+      className="panel evaluation-saved-images"
+      id="evaluation-saved-images"
+    >
       <header className="panel-head">
         <div>
           <h2>Recent saved camera images</h2>

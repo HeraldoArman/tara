@@ -1,17 +1,11 @@
 "use client";
 import "./evaluation-dashboard.css";
-import {
-  Activity,
-  CheckCheck,
-  ClipboardCheck,
-  ScanLine,
-  ShieldAlert,
-} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { api, duration, errorMessage, humanize } from "@/lib/api";
 import type { Evaluation, Sop, TechnicianMetric } from "@/lib/contracts";
 import { EvaluationEvidence, EvaluationInsights } from "./evaluation-insights";
+import { EvaluationOverview } from "./evaluation-overview";
 export function EvaluationView({
   initialSummary,
   ownOnly = false,
@@ -59,48 +53,6 @@ export function EvaluationView({
   const stepRows = data.stepMetrics
     .filter((step) => step.attempts > 0 || step.held > 0)
     .sort((a, b) => b.held - a.held || b.attempts - a.attempts);
-  const percent = (value: unknown) =>
-    typeof value === "number"
-      ? `${(value <= 1 ? value * 100 : value).toFixed(1)}%`
-      : "—";
-  const metrics = [
-    {
-      hint: "All sessions in this view",
-      icon: ClipboardCheck,
-      label: "Sessions started",
-      value: data.runs,
-    },
-    {
-      hint: "Active and paused work",
-      icon: Activity,
-      label: "Open sessions",
-      value: data.active,
-    },
-    {
-      hint: `${data.partial} closed with unresolved work`,
-      icon: CheckCheck,
-      label: "Completed sessions",
-      value: data.completed,
-    },
-    {
-      hint: "Steps needing recovery or a retest",
-      icon: ShieldAlert,
-      label: "Held steps",
-      value: data.held ?? 0,
-    },
-    {
-      hint: `${data.acceptedEvidenceFrames ?? 0} accepted as visual evidence`,
-      icon: ScanLine,
-      label: "Saved camera images",
-      value: data.evidenceFrames ?? 0,
-    },
-    {
-      hint: `${data.firstPassCount ?? 0} of ${data.firstAttemptCount ?? 0} first attempts`,
-      icon: CheckCheck,
-      label: "First-pass steps",
-      value: percent(data.firstPassRate),
-    },
-  ];
   const tables = [
     {
       columns: [
@@ -203,16 +155,11 @@ export function EvaluationView({
           {error}
         </div>
       ) : null}
-      <div className="metrics-row evaluation-metrics">
-        {metrics.map(({ icon: Icon, label, value, hint }) => (
-          <div className="metric" key={label}>
-            <Icon size={19} />
-            <strong>{String(value)}</strong>
-            <span>{label}</span>
-            <small>{hint}</small>
-          </div>
-        ))}
-      </div>
+      <EvaluationOverview
+        data={data}
+        filtered={appliedQuery !== ""}
+        ownOnly={ownOnly}
+      />
       <EvaluationInsights data={data} />
       <div className="evaluation-grid">
         {tables.map((table) => (

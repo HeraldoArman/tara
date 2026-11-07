@@ -98,7 +98,7 @@ export function LiveCamera({
           <p>
             {startDescription ??
               (onStart
-                ? "Start your camera to share the work area with TARA."
+                ? "Start your camera to share the work area with tara."
                 : "No live video is available in this view.")}
           </p>
           {onStart ? (

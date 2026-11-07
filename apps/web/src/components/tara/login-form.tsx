@@ -135,7 +135,7 @@ export function LoginForm() {
       </p>
 
       <p className="tara-auth-alternate">
-        Bringing your team to TARA? <Link href="/register">Get started</Link>
+        Bringing your team to tara? <Link href="/register">Get started</Link>
       </p>
     </form>
   );

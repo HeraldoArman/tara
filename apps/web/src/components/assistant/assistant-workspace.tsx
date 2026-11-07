@@ -180,7 +180,7 @@ export function AssistantWorkspace() {
         Skip to current instruction
       </a>
       <header className="tara-workspace-header">
-        <Link aria-label="TARA home" className="tara-brand" href="/">
+        <Link aria-label="tara home" className="tara-brand" href="/">
           <AssistantMark />
           <span>
             tara<span className="tara-brand-period">.</span>
@@ -290,7 +290,7 @@ export function AssistantWorkspace() {
           </div>
         </section>
 
-        <aside aria-label="TARA assistant" className="tara-workspace-assistant">
+        <aside aria-label="tara assistant" className="tara-workspace-assistant">
           <AssistantStatus status={status} />
           {resting && !complete ? (
             <div className="tara-resting-note">

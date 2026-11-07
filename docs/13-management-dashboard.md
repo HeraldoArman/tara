@@ -1,7 +1,7 @@
 # Management dashboard frontend
 
-`/dashboard` presents the management view for understanding how often TARA enters
-Active, Warning, and Success during SOP execution. It follows the shared TARA
+`/dashboard` presents the management view for understanding how often tara enters
+Active, Warning, and Success during SOP execution. It follows the shared tara
 design system and is a **frontend preview with sample data**. It does not read
 organization telemetry or grant management permissions.
 

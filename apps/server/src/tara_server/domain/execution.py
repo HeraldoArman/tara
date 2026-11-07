@@ -756,7 +756,7 @@ async def record_issue(session: AsyncSession, actor: User, run_id: str, command:
 async def set_consultation(session: AsyncSession, actor: User, run_id: str, active: bool):
     run = await authorize_run(session, actor, run_id, mutate=True)
     if run.status != "active" and active:
-        raise DomainError("TRANSITION_REJECTED", "Resume the run before asking TARa.", 409)
+        raise DomainError("TRANSITION_REJECTED", "Resume the run before asking tara.", 409)
     if active:
         CONSULTATIONS.inc()
     mode = "consultation" if active else "silent"

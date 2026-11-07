@@ -34,7 +34,7 @@ export function AuthShell({
       </a>
 
       <header className="tara-auth-header">
-        <Link aria-label="TARA home" className="tara-auth-brand" href="/">
+        <Link aria-label="tara home" className="tara-auth-brand" href="/">
           <AssistantMark />
           <span>
             tara<span className="tara-auth-brand-period">.</span>
@@ -73,7 +73,7 @@ export function AuthShell({
             </h2>
             <p className="tara-auth-story-description">
               Connect what your procedures say with what happens on the floor.
-              TARA keeps your team guided, one step at a time.
+              tara keeps your team guided, one step at a time.
             </p>
           </div>
 
@@ -86,7 +86,7 @@ export function AuthShell({
               </span>
               <span className="tara-auth-orbit-dot" />
             </div>
-            <ol aria-label="How TARA connects your operations">
+            <ol aria-label="How tara connects your operations">
               {workflowSteps.map(({ icon: Icon, label, number }) => (
                 <li key={number}>
                   <span className="tara-auth-flow-number">{number}</span>

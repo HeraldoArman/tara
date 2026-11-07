@@ -272,7 +272,7 @@ export function RegistrationForm() {
           spellCheck={false}
         />
         <p className="tara-auth-note" id="register-username-hint">
-          You will use this to sign in to TARA.
+          You will use this to sign in to tara.
         </p>
         <FieldError error={errors.username} id="register-username-error" />
       </div>

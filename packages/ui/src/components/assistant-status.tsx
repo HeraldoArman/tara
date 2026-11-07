@@ -40,7 +40,7 @@ function AssistantStatus({ className, status }: AssistantStatusProps) {
       </span>
       <CardHeader>
         <p className="tara-eyebrow">
-          TARA IS <span className="tara-state-dot" />
+          tara IS <span className="tara-state-dot" />
         </p>
         <CardTitle>
           <h2 className="tara-status-title">{state.label}</h2>

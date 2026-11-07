@@ -135,14 +135,14 @@ export function RunDetails({
       {panel === "Session help" ? (
         <div className="problem-form">
           <p className="lede">
-            Start the bench camera to connect to TARa and share your work area.
+            Start the bench camera to connect to tara and share your work area.
             Camera and microphone access are requested when you start the
             session. Use Pause listening to turn the microphone off.
           </p>
           <p>
             Follow the current instruction. Visual checkpoints use camera
             evidence; confirmation and choice steps use your recorded response.
-            TARa stays quiet during correct work and shows corrections when a
+            tara stays quiet during correct work and shows corrections when a
             check needs attention.
           </p>
           <p>

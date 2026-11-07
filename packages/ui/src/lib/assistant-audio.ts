@@ -170,7 +170,7 @@ export function createAssistantAudioPlayer(): AssistantAudioPlayer {
       return;
     }
     try {
-      const message = new window.SpeechSynthesisUtterance("TARA is online");
+      const message = new window.SpeechSynthesisUtterance("tara is online");
       const voices = window.speechSynthesis.getVoices();
       const voice =
         voices.find(

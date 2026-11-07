@@ -113,16 +113,17 @@ function useAssetLabel(run: Run, session: RunSession, canOperate: boolean) {
       setMessage("");
       let persisted = false;
       try {
-        if (!(model.trim() && serial.trim())) {
-          throw new Error(
-            "Enter both the model and serial number before saving."
-          );
+        if (!model.trim()) {
+          throw new Error("Enter the model before saving.");
+        }
+        const identity: { model: string; serial?: string } = {
+          model: modelMissing ? model.trim() : run.workOrder.asset.model,
+        };
+        if (serialMissing && serial.trim()) {
+          identity.serial = serial.trim();
         }
         await api<Run>(`/runs/${encodeURIComponent(run.id)}/asset`, {
-          body: JSON.stringify({
-            model: modelMissing ? model.trim() : run.workOrder.asset.model,
-            serial: serialMissing ? serial.trim() : run.workOrder.asset.serial,
-          }),
+          body: JSON.stringify(identity),
           method: "PATCH",
         });
         persisted = true;
@@ -150,7 +151,6 @@ function useAssetLabel(run: Run, session: RunSession, canOperate: boolean) {
       registered,
       run.id,
       run.workOrder.asset.model,
-      run.workOrder.asset.serial,
       saving,
       serial,
       serialMissing,
@@ -229,14 +229,11 @@ export function RunAssetLabel({
 }) {
   const identity = useAssetLabel(run, session, canOperate);
   return (
-    <section
-      aria-label="Model and serial label"
-      className="tara-run-asset-label"
-    >
+    <section aria-label="Model label" className="tara-run-asset-label">
       <div className="tara-run-label-heading">
         <h2>
           <ScanText aria-hidden="true" />
-          Model and serial label
+          Model label
         </h2>
         <Button
           disabled={!identity.canRead}
@@ -251,8 +248,8 @@ export function RunAssetLabel({
         </Button>
       </div>
       <p>
-        Bring the printed model and serial label close to the camera. Keep it
-        steady and fill the frame.
+        Bring the printed model label close to the camera. Keep it steady and
+        fill the frame. A serial number is optional.
       </p>
       <p>
         Reading a label does not verify the current step. Review the text before
@@ -277,7 +274,7 @@ export function RunAssetLabel({
               />
             </div>
             <div>
-              <label htmlFor="run-asset-serial">Serial number</label>
+              <label htmlFor="run-asset-serial">Serial number (optional)</label>
               <input
                 disabled={
                   identity.reading || identity.saving || identity.registered
@@ -286,14 +283,13 @@ export function RunAssetLabel({
                 maxLength={200}
                 onChange={identity.changeSerial}
                 readOnly={!identity.serialMissing}
-                required
                 value={identity.serial}
               />
             </div>
           </div>
           <p>
-            Confirm the missing details against the label. Existing identity
-            details stay unchanged.
+            Confirm the model against the label. Add a serial number only if one
+            is available. Existing identity details stay unchanged.
           </p>
           <Button
             disabled={

@@ -370,7 +370,7 @@ export function PhoneCamera() {
           <h1>Your phone. Your work area.</h1>
           <p>
             Share this camera with your laptop session. Keep the laptop open for
-            TARA’s voice and work instructions.
+            tara’s voice and work instructions.
           </p>
         </section>
       )}

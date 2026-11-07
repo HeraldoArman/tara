@@ -103,7 +103,7 @@ export async function WorkQueuePage({ user }: { readonly user: User }) {
             <span className="eyebrow">A QUIETER WAY TO WORK</span>
             <h3>Good work needs no interruption.</h3>
             <p>
-              TARa stays silent during correct execution. Ask for help whenever
+              tara stays silent during correct execution. Ask for help whenever
               you need it.
             </p>
           </div>

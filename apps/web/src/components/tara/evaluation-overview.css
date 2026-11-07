@@ -1,0 +1,184 @@
+.evaluation-overview {
+  margin-bottom: 28px;
+}
+.evaluation-overview-heading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.evaluation-overview-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--tara-text);
+  letter-spacing: -0.3px;
+}
+.evaluation-overview-heading p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--tara-muted);
+}
+.evaluation-overview-scope {
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--tara-muted);
+  white-space: nowrap;
+  border: 1px solid var(--tara-line);
+  border-radius: 100px;
+}
+.evaluation-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.evaluation-overview-card {
+  --overview-accent: #4d70ad;
+  --overview-tint: #f0f5fc;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 250px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #e2e9f3;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px #21375a05;
+}
+.evaluation-overview-card[data-tone="attention"] {
+  --overview-accent: #9a6b26;
+  --overview-tint: #fff7e9;
+}
+.evaluation-overview-card-heading {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+.evaluation-overview-card-heading h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #5a6f8d;
+}
+.evaluation-overview-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--overview-accent);
+  background: var(--overview-tint);
+  border-radius: 10px;
+}
+.evaluation-overview-badge {
+  padding: 4px 6px;
+  font-size: 11px;
+  color: var(--overview-accent);
+  background: var(--overview-tint);
+  border-radius: 6px;
+}
+.evaluation-overview-value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: baseline;
+  margin: 23px 0 10px;
+}
+.evaluation-overview-value strong {
+  font-size: 42px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  color: #243b5a;
+  letter-spacing: -1.5px;
+}
+.evaluation-overview-value span,
+.evaluation-overview-description,
+.evaluation-overview-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--tara-muted);
+}
+.evaluation-overview-breakdown,
+.evaluation-overview-card-footer {
+  padding-top: 20px;
+  margin-top: auto;
+}
+.evaluation-overview-breakdown {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+.evaluation-overview-breakdown > span {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--tara-muted);
+}
+.evaluation-overview-breakdown strong {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #435b7b;
+}
+.evaluation-overview-card-footer a {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--overview-accent);
+}
+.evaluation-overview-card-footer a:hover {
+  text-decoration: underline;
+}
+.evaluation-overview-card-footer a:focus-visible {
+  outline: 2px solid var(--overview-accent);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+.evaluation-overview-progress {
+  width: 100%;
+  height: 6px;
+  margin: auto 0 10px;
+  overflow: hidden;
+  accent-color: var(--overview-accent);
+  background: #edf2f8;
+  border: 0;
+  border-radius: 10px;
+}
+.evaluation-overview-progress::-webkit-progress-bar {
+  background: #edf2f8;
+  border-radius: 10px;
+}
+.evaluation-overview-progress::-webkit-progress-value {
+  background: var(--overview-accent);
+  border-radius: 10px;
+}
+.evaluation-overview-progress::-moz-progress-bar {
+  background: var(--overview-accent);
+}
+@media (max-width: 1000px) {
+  .evaluation-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 540px) {
+  .evaluation-overview-heading {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .evaluation-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .evaluation-overview-card {
+    min-height: 230px;
+  }
+}

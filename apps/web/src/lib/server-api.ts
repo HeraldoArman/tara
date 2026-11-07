@@ -29,7 +29,7 @@ export async function serverApi<T>(
     );
   } catch (cause) {
     throw new ApiError(
-      "TARa cannot reach the application server. Start the API or check its connection.",
+      "tara cannot reach the application server. Start the API or check its connection.",
       { cause, code: "PROVIDER_UNAVAILABLE", status: 503 }
     );
   }

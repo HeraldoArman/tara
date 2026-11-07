@@ -240,7 +240,7 @@ export function LandingPreview() {
           <div className="tara-landing-preview-orb">
             <AssistantMark />
             <div>
-              <span>TARA IS</span>
+              <span>tara IS</span>
               <strong>{current.label}</strong>
             </div>
           </div>

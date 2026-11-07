@@ -31,7 +31,7 @@ def step_capability(step: dict, *, resolved: bool) -> dict:
     elif kind in {"attestation", "choice"}:
         category = "human-performed"
         capabilities = ["Guided checklist", "Technician confirmation"]
-        reason = "The saved procedure requires the technician to provide an explicit response. TARa can explain the instruction, but the person's response is not visual verification."
+        reason = "The saved procedure requires the technician to provide an explicit response. tara can explain the instruction, but the person's response is not visual verification."
     else:
         category = "human-performed"
         capabilities = ["Human review"]

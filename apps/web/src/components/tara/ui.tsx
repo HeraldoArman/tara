@@ -14,14 +14,14 @@ import { AccountMenu } from "./account-menu";
 
 export function Wordmark() {
   return (
-    <Link aria-label="TARa work queue" className="wordmark" href="/">
+    <Link aria-label="tara work queue" className="wordmark" href="/">
       <span aria-hidden="true" className="tara-mark">
         <i />
         <i />
         <i />
         <i />
       </span>
-      TARa<span className="wordmark-dot">.</span>
+      tara<span className="wordmark-dot">.</span>
     </Link>
   );
 }
@@ -70,7 +70,7 @@ export function AppShell({
           <ShieldCheck size={14} />
           Approved work. A clear record.
         </span>
-        <span>TARa · Field operations</span>
+        <span>tara · Field operations</span>
       </footer>
     </>
   );

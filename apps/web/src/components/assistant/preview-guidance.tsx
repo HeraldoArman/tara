@@ -64,7 +64,7 @@ function getGuidanceContent(
   }
   return {
     description: replied
-      ? `Stay on this step: ${currentStep.description} In a connected session, TARA will use the current SOP and evidence to answer your question.`
+      ? `Stay on this step: ${currentStep.description} In a connected session, tara will use the current SOP and evidence to answer your question.`
       : currentStep.guidanceDescription,
     hint:
       cameraSource === "webcam"
@@ -141,7 +141,7 @@ export function PreviewGuidance({
               variant="ghost"
             >
               <MessageCircle data-icon="inline-start" />
-              {consultation ? "Return to silent mode" : "Ask TARA"}
+              {consultation ? "Return to silent mode" : "Ask tara"}
             </Button>
             <span>{consultation ? "Text preview active" : "Silent mode"}</span>
           </div>
@@ -152,7 +152,7 @@ export function PreviewGuidance({
             statusMessage={
               consultation
                 ? "Sample replies · voice is not connected"
-                : "Activate Ask TARA to type"
+                : "Activate Ask tara to type"
             }
           />
           {replied && !stepSucceeded && !correction ? (

@@ -166,7 +166,7 @@ async function runSmoke() {
     });
     await expect(confirm).toBeEnabled({ timeout });
     await expect(
-      page.getByRole("textbox", { name: "Reply to TARA" })
+      page.getByRole("textbox", { name: "Reply to tara" })
     ).toBeEnabled({ timeout });
     await expect
       .poll(
@@ -251,7 +251,7 @@ async function runSmoke() {
     );
     stage = "explicit typed consultation";
     const beforeConsultation = await inspectFixture(runId);
-    const composer = page.getByRole("textbox", { name: "Reply to TARA" });
+    const composer = page.getByRole("textbox", { name: "Reply to tara" });
     await expect(composer).toBeEnabled({ timeout });
     await composer.fill(
       "Using the approved SOP context, why must the keycap be removed before inspecting the switch? Please answer briefly."

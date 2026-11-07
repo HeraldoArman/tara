@@ -167,7 +167,7 @@ export function PairPhoneCamera({
         </Button>
       </div>
       <p>
-        Keep TARA and your microphone on this laptop. Your phone supplies the
+        Keep tara and your microphone on this laptop. Your phone supplies the
         work-area video.
       </p>
       {open || pairing ? (

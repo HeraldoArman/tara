@@ -42,32 +42,43 @@ async def register_asset(
             409,
         )
     model = command.model.strip()
-    serial = command.serial.strip()
-    if not model or not serial or missing_identifier(model) or missing_identifier(serial):
+    serial = command.serial.strip() if command.serial is not None else None
+    if not model or missing_identifier(model):
         raise DomainError(
             "VALIDATION_FAILED",
-            "Enter and confirm the actual model and serial from the device.",
+            "Enter and confirm the actual model from the device.",
+            422,
+        )
+    if serial is not None and (not serial or missing_identifier(serial)):
+        raise DomainError(
+            "VALIDATION_FAILED",
+            "Enter the actual serial from the device, or leave it omitted if unavailable.",
             422,
         )
     if (not missing_model and model != work.model) or (
-        not missing_serial and serial != work.serial
+        serial is not None and not missing_serial and serial != work.serial
     ):
         raise DomainError(
             "TRANSITION_REJECTED",
             "Keep existing device identifiers unchanged. Only missing details can be registered.",
             409,
         )
+    registered = {}
     if missing_model:
         work.model = model
-    if missing_serial:
+        registered["model"] = model
+    if missing_serial and serial is not None:
         work.serial = serial
+        registered["serial"] = serial
+    if not registered:
+        return await get_run_snapshot(session, actor, run.id)
     run.version += 1
     audit(
         session,
         actor,
         run,
         "run.asset_registered",
-        {"model": work.model, "serial": work.serial, "source": "technician_confirmation"},
+        {**registered, "source": "technician_confirmation"},
     )
     await session.flush()
     return await get_run_snapshot(session, actor, run.id)

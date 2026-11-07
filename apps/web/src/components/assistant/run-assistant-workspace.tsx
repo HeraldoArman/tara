@@ -258,7 +258,7 @@ function LiveMediaControls({
         disabled={!(canOperate && connected && open)}
         onClick={session.enableAudio}
         size="sm"
-        title="Enable TARa replies on your speaker"
+        title="Enable tara replies on your speaker"
         variant="ghost"
       >
         <Volume2 aria-hidden="true" />
@@ -406,7 +406,7 @@ function RunConsultation({
       />
       {session.transcript ? (
         <div className="tara-live-answer" role="status">
-          <span>TARA</span>
+          <span>tara</span>
           <p>{session.transcript}</p>
         </div>
       ) : null}
@@ -576,7 +576,7 @@ export function RunAssistantWorkspace({
         Skip to current instruction
       </a>
       <header className="tara-workspace-header">
-        <Link aria-label="TARA work queue" className="tara-brand" href="/">
+        <Link aria-label="tara work queue" className="tara-brand" href="/">
           <AssistantMark />
           <span>
             tara<span className="tara-brand-period">.</span>
@@ -643,7 +643,7 @@ export function RunAssistantWorkspace({
             running={run.status === "active"}
             startDescription={
               usingPhone
-                ? "Open the paired phone page and tap Start phone camera. Keep the microphone and TARA on this laptop."
+                ? "Open the paired phone page and tap Start phone camera. Keep the microphone and tara on this laptop."
                 : undefined
             }
             startDisabled={!(canOperate && view.active) || Boolean(busy)}
@@ -681,7 +681,7 @@ export function RunAssistantWorkspace({
             </TaskStep>
           </div>
         </section>
-        <aside aria-label="TARA assistant" className="tara-workspace-assistant">
+        <aside aria-label="tara assistant" className="tara-workspace-assistant">
           <AssistantStatus status={status} />
           <RunGuidance
             canOperate={canOperate}

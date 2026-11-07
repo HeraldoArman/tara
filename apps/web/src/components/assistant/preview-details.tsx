@@ -142,7 +142,7 @@ export function PreviewDetails({
       ref={dialogRef}
     >
       <div className="tara-preview-dialog-heading">
-        <span className="tara-workspace-eyebrow">TARA / COMPONENT PREVIEW</span>
+        <span className="tara-workspace-eyebrow">tara / COMPONENT PREVIEW</span>
         <Button
           aria-label="Close details"
           onClick={onClose}
@@ -195,11 +195,11 @@ export function PreviewDetails({
             progress.
           </p>
           <p>
-            State changes have short sound cues. Waking from Sleep says “TARA is
+            State changes have short sound cues. Waking from Sleep says “tara is
             online.” Use the speaker control to mute or enable assistant audio.
           </p>
           <p>
-            Choose Ask TARA to try the text composer. Replies are local sample
+            Choose Ask tara to try the text composer. Replies are local sample
             guidance; voice and AI verification are not connected.
           </p>
           <p>

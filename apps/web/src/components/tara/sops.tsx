@@ -104,7 +104,7 @@ export function SopImport() {
           <ShieldCheck size={17} />A draft first. Always.
         </h3>
         <p>
-          TARa extracts source sections and creates a structured procedure.
+          tara extracts source sections and creates a structured procedure.
           Review instructions, references, criteria and failure behavior before
           publishing.
         </p>

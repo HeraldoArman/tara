@@ -109,7 +109,7 @@ from tara_server.storage import get_storage
 from tara_server.telemetry import API_DURATION, API_REQUESTS
 
 settings = get_settings()
-app = FastAPI(title="TARa execution API", version="1.0.0")
+app = FastAPI(title="tara execution API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,

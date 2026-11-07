@@ -20,7 +20,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       </a>
       <aside className="dash-sidebar">
         <Link
-          aria-label="TARA management overview"
+          aria-label="tara management overview"
           className="dash-brand"
           href="/dashboard"
         >
@@ -88,7 +88,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </header>
         {children}
         <footer className="dash-footer">
-          <span>TARA · Your work, in focus.</span>
+          <span>tara · Your work, in focus.</span>
           <span>Sample activity. No live operational data.</span>
         </footer>
       </main>

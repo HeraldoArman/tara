@@ -13,7 +13,7 @@ export const sampleAnalysis: SopAnalysis = {
         heading: "1.1 Identify the device",
         id: "identify",
         page: null,
-        text: "Read the model and serial number on the underside of the keyboard. Match both identifiers to the assigned work order before beginning service.",
+        text: "Read the model on the underside of the keyboard. Match the model to the assigned work order and record the affected key as E before beginning service.",
       },
       {
         heading: "1.2 Prepare the work area",
@@ -67,7 +67,7 @@ export const sampleAnalysis: SopAnalysis = {
       category: "ai-assisted",
       id: "identify",
       reason:
-        "TARA can read the device label and help compare its identifiers with the work order. The technician confirms the match before starting.",
+        "tara can read the device label and help compare its model with the work order. The technician confirms the match before starting.",
       sectionId: "identify",
       title: "Match the device to the work order",
     },
@@ -85,7 +85,7 @@ export const sampleAnalysis: SopAnalysis = {
       category: "ai-assisted",
       id: "tools",
       reason:
-        "TARA can help identify visible tools and guide the parts check. The technician still confirms switch compatibility against the specification.",
+        "tara can help identify visible tools and guide the parts check. The technician still confirms switch compatibility against the specification.",
       sectionId: "tools",
       title: "Check the required tools and parts",
     },
@@ -103,7 +103,7 @@ export const sampleAnalysis: SopAnalysis = {
       category: "ai-verified",
       id: "inspect",
       reason:
-        "The exposed housing provides an observable checkpoint. TARA can help check for visible damage or debris when the camera view is clear.",
+        "The exposed housing provides an observable checkpoint. tara can help check for visible damage or debris when the camera view is clear.",
       sectionId: "inspect",
       title: "Inspect the exposed switch",
     },
@@ -112,7 +112,7 @@ export const sampleAnalysis: SopAnalysis = {
       category: "ai-assisted",
       id: "install",
       reason:
-        "The technician installs the switch. TARA can guide alignment and help check that the housing appears flush, while seating force remains a human judgment.",
+        "The technician installs the switch. tara can guide alignment and help check that the housing appears flush, while seating force remains a human judgment.",
       sectionId: "install",
       title: "Guide installation and check alignment",
     },
@@ -121,7 +121,7 @@ export const sampleAnalysis: SopAnalysis = {
       category: "ai-assisted",
       id: "test",
       reason:
-        "TARA can help capture the visible test result and prepare the service record. The technician performs the key presses and confirms the result.",
+        "tara can help capture the visible test result and prepare the service record. The technician performs the key presses and confirms the result.",
       sectionId: "test",
       title: "Capture the functional test result",
     },

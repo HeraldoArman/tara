@@ -658,7 +658,7 @@ class WorkerRuntime:
                     "VALIDATION_FAILED", "Enter a question of up to 2000 characters.", 422
                 )
             if not self.session:
-                raise DomainError("PROVIDER_UNAVAILABLE", "Reconnect before asking TARa.", 503)
+                raise DomainError("PROVIDER_UNAVAILABLE", "Reconnect before asking tara.", 503)
             await self.bridge.transcript("user", text, "consultation", {"source": "typed"})
             handle = self.session.generate_reply(user_input=text)
             self.spawn(self.watch_reply(handle))
@@ -941,7 +941,7 @@ async def accept_job(request: JobRequest):
     try:
         metadata = json.loads(request.job.metadata)
         run_id = str(metadata["runId"])
-        await request.accept(identity=f"tara-agent-{run_id}", name="TARa")
+        await request.accept(identity=f"tara-agent-{run_id}", name="tara")
     except (KeyError, TypeError, ValueError):
         await request.reject()
 

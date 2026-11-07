@@ -9,8 +9,8 @@ import { currentUser, serverApi } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   description:
-    "Explore SOP documents and discover opportunities for AI assistance with TARA.",
-  title: "SOP Intelligence · TARA",
+    "Explore SOP documents and discover opportunities for AI assistance with tara.",
+  title: "SOP Intelligence · tara",
 };
 
 export default async function SopIntelligencePage({

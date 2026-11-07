@@ -17,8 +17,8 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
     ],
-    name: "TARa · Field assistant",
-    short_name: "TARa",
+    name: "tara · Field assistant",
+    short_name: "tara",
     start_url: "/",
     theme_color: "#3869ed",
   };

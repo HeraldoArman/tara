@@ -1248,7 +1248,7 @@ export interface components {
             /** Model */
             model: string;
             /** Serial */
-            serial: string;
+            serial?: string | null;
         };
         /** RunProgressResponse */
         RunProgressResponse: {

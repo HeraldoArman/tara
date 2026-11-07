@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   description:
     "SOP-grounded field work, backed by evidence. Your work, in focus.",
-  title: { default: "TARa · Your work, in focus", template: "%s · TARa" },
+  title: { default: "tara · Your work, in focus", template: "%s · tara" },
 };
 
 export default function RootLayout({
