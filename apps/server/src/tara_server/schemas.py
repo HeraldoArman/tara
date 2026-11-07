@@ -285,6 +285,51 @@ class SOPVersionResponse(PublicModel):
     source: dict | None
 
 
+class SopIntelligenceSection(PublicModel):
+    id: str
+    heading: str
+    page: int | None
+    text: str
+
+
+class SopIntelligenceDocument(PublicModel):
+    id: str
+    name: str
+    title: str
+    format: str
+    origin: Literal["server"] = "server"
+    sourceKind: Literal["source-document", "procedure-definition"]
+    pageCount: int | None
+    size: int | None = None
+    sections: list[SopIntelligenceSection]
+
+
+class SopIntelligenceOpportunity(PublicModel):
+    id: str
+    sectionId: str
+    title: str
+    category: Literal["ai-assisted", "ai-verified", "human-performed", "human-approval"]
+    capabilities: list[str]
+    reason: str
+
+
+class SopIntelligenceVersion(PublicModel):
+    id: str
+    sopId: str
+    key: str
+    title: str
+    version: str
+    versionNumber: int
+    status: str
+
+
+class SopIntelligenceResponse(PublicModel):
+    analysisMode: Literal["server-definition"] = "server-definition"
+    version: SopIntelligenceVersion
+    document: SopIntelligenceDocument
+    opportunities: list[SopIntelligenceOpportunity]
+
+
 class SOPListResponse(PublicModel):
     items: list[dict]
 

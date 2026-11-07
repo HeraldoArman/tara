@@ -55,6 +55,8 @@ from tara_server.domain.reports import (
     report_json,
     review_report,
 )
+from tara_server.domain.sop_intelligence import intelligence
+from tara_server.domain.sop_sessions import start_sop_session
 from tara_server.domain.sops import (
     authorized_version,
     create_draft,
@@ -76,6 +78,7 @@ from tara_server.schemas import (
     ReportResponse,
     Review,
     RunResponse,
+    SopIntelligenceResponse,
     SOPListResponse,
     SOPVersionResponse,
     UserResponse,
@@ -533,6 +536,24 @@ async def sop_version(
     row = matches[0]
     await authorized_version(session, actor, row.id)
     return await version_json(session, row)
+
+
+@app.get("/api/v1/sop-versions/{version_id}/intelligence", response_model=SopIntelligenceResponse)
+async def sop_intelligence(
+    version_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await intelligence(session, actor, version_id)
+
+
+@app.post("/api/v1/sop-versions/{version_id}/runs", response_model=RunResponse)
+async def start_selected_sop(
+    version_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await start_sop_session(session, actor, version_id)
 
 
 @app.post("/api/v1/sops/imports", response_model=SOPVersionResponse)

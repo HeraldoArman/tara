@@ -277,6 +277,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sop-versions/{version_id}/intelligence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sop Intelligence */
+        get: operations["sop_intelligence_api_v1_sop_versions__version_id__intelligence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sop-versions/{version_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Selected Sop */
+        post: operations["start_selected_sop_api_v1_sop_versions__version_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sops/imports": {
         parameters: {
             query?: never;
@@ -933,6 +967,103 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** SopIntelligenceDocument */
+        SopIntelligenceDocument: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Title */
+            title: string;
+            /** Format */
+            format: string;
+            /**
+             * Origin
+             * @default server
+             * @constant
+             */
+            origin: "server";
+            /**
+             * Sourcekind
+             * @enum {string}
+             */
+            sourceKind: "source-document" | "procedure-definition";
+            /** Pagecount */
+            pageCount: number | null;
+            /** Size */
+            size?: number | null;
+            /** Sections */
+            sections: components["schemas"]["SopIntelligenceSection"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /** SopIntelligenceOpportunity */
+        SopIntelligenceOpportunity: {
+            /** Id */
+            id: string;
+            /** Sectionid */
+            sectionId: string;
+            /** Title */
+            title: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "ai-assisted" | "ai-verified" | "human-performed" | "human-approval";
+            /** Capabilities */
+            capabilities: string[];
+            /** Reason */
+            reason: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** SopIntelligenceResponse */
+        SopIntelligenceResponse: {
+            /**
+             * Analysismode
+             * @default server-definition
+             * @constant
+             */
+            analysisMode: "server-definition";
+            version: components["schemas"]["SopIntelligenceVersion"];
+            document: components["schemas"]["SopIntelligenceDocument"];
+            /** Opportunities */
+            opportunities: components["schemas"]["SopIntelligenceOpportunity"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /** SopIntelligenceSection */
+        SopIntelligenceSection: {
+            /** Id */
+            id: string;
+            /** Heading */
+            heading: string;
+            /** Page */
+            page: number | null;
+            /** Text */
+            text: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** SopIntelligenceVersion */
+        SopIntelligenceVersion: {
+            /** Id */
+            id: string;
+            /** Sopid */
+            sopId: string;
+            /** Key */
+            key: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
+            /** Versionnumber */
+            versionNumber: number;
+            /** Status */
+            status: string;
+        } & {
+            [key: string]: unknown;
+        };
         /** Source */
         Source: {
             /** Heading */
@@ -1568,6 +1699,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SOPVersionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sop_intelligence_api_v1_sop_versions__version_id__intelligence_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SopIntelligenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_selected_sop_api_v1_sop_versions__version_id__runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunResponse"];
                 };
             };
             /** @description Validation Error */

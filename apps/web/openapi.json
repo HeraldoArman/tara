@@ -812,6 +812,116 @@
         }
       }
     },
+    "/api/v1/sop-versions/{version_id}/intelligence": {
+      "get": {
+        "summary": "Sop Intelligence",
+        "operationId": "sop_intelligence_api_v1_sop_versions__version_id__intelligence_get",
+        "parameters": [
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "tara_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tara Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SopIntelligenceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sop-versions/{version_id}/runs": {
+      "post": {
+        "summary": "Start Selected Sop",
+        "operationId": "start_selected_sop_api_v1_sop_versions__version_id__runs_post",
+        "parameters": [
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "tara_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tara Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sops/imports": {
       "post": {
         "summary": "Sop Import",
@@ -2799,6 +2909,240 @@
           "source"
         ],
         "title": "SOPVersionResponse"
+      },
+      "SopIntelligenceDocument": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format"
+          },
+          "origin": {
+            "type": "string",
+            "const": "server",
+            "title": "Origin",
+            "default": "server"
+          },
+          "sourceKind": {
+            "type": "string",
+            "enum": [
+              "source-document",
+              "procedure-definition"
+            ],
+            "title": "Sourcekind"
+          },
+          "pageCount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pagecount"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SopIntelligenceSection"
+            },
+            "type": "array",
+            "title": "Sections"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "title",
+          "format",
+          "sourceKind",
+          "pageCount",
+          "sections"
+        ],
+        "title": "SopIntelligenceDocument"
+      },
+      "SopIntelligenceOpportunity": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "sectionId": {
+            "type": "string",
+            "title": "Sectionid"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "ai-assisted",
+              "ai-verified",
+              "human-performed",
+              "human-approval"
+            ],
+            "title": "Category"
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "sectionId",
+          "title",
+          "category",
+          "capabilities",
+          "reason"
+        ],
+        "title": "SopIntelligenceOpportunity"
+      },
+      "SopIntelligenceResponse": {
+        "properties": {
+          "analysisMode": {
+            "type": "string",
+            "const": "server-definition",
+            "title": "Analysismode",
+            "default": "server-definition"
+          },
+          "version": {
+            "$ref": "#/components/schemas/SopIntelligenceVersion"
+          },
+          "document": {
+            "$ref": "#/components/schemas/SopIntelligenceDocument"
+          },
+          "opportunities": {
+            "items": {
+              "$ref": "#/components/schemas/SopIntelligenceOpportunity"
+            },
+            "type": "array",
+            "title": "Opportunities"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "version",
+          "document",
+          "opportunities"
+        ],
+        "title": "SopIntelligenceResponse"
+      },
+      "SopIntelligenceSection": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "heading": {
+            "type": "string",
+            "title": "Heading"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "heading",
+          "page",
+          "text"
+        ],
+        "title": "SopIntelligenceSection"
+      },
+      "SopIntelligenceVersion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "sopId": {
+            "type": "string",
+            "title": "Sopid"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "title": "Versionnumber"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "sopId",
+          "key",
+          "title",
+          "version",
+          "versionNumber",
+          "status"
+        ],
+        "title": "SopIntelligenceVersion"
       },
       "Source": {
         "properties": {

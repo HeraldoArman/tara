@@ -3,6 +3,8 @@ import io
 import logging
 import re
 from datetime import UTC, datetime
+from xml.etree import ElementTree
+from zipfile import BadZipFile, ZipFile
 
 import httpx
 from pydantic import ValidationError
@@ -71,6 +73,81 @@ def check_source_length(length: int, maximum: int) -> None:
         )
 
 
+def extract_docx_sections(content: bytes) -> list[dict]:
+    settings = get_settings()
+    try:
+        with ZipFile(io.BytesIO(content)) as archive:
+            entries = archive.infolist()
+            if (
+                len(entries) > 1000
+                or sum(entry.file_size for entry in entries) > 50 * 1024 * 1024
+                or any(entry.flag_bits & 1 for entry in entries)
+                or "[Content_Types].xml" not in archive.namelist()
+            ):
+                raise ValueError("Unsupported DOCX archive")
+            with archive.open("word/document.xml") as document:
+                xml = document.read(10 * 1024 * 1024 + 1)
+            if (
+                len(xml) > 10 * 1024 * 1024
+                or b"<!DOCTYPE" in xml.upper()
+                or b"<!ENTITY" in xml.upper()
+            ):
+                raise ValueError("Unsupported DOCX XML")
+        root = ElementTree.fromstring(xml)
+    except (BadZipFile, KeyError, OSError, RuntimeError, ValueError, ElementTree.ParseError):
+        raise DomainError(
+            "VALIDATION_FAILED",
+            "Upload a valid, unencrypted DOCX document within the processing limits.",
+            422,
+        ) from None
+    namespace = root.tag.partition("}")[0].removeprefix("{")
+    if (
+        namespace
+        not in {
+            "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+            "http://purl.oclc.org/ooxml/wordprocessingml/main",
+        }
+        or root.tag != f"{{{namespace}}}document"
+    ):
+        raise DomainError("VALIDATION_FAILED", "This ZIP file is not a Word DOCX document.", 422)
+    prefix = f"{{{namespace}}}"
+    sections = []
+    current_heading = "Source document"
+    paragraphs: list[str] = []
+    total_characters = 0
+    for paragraph in root.iter(prefix + "p"):
+        text = "".join(
+            node.text or ""
+            if node.tag == prefix + "t"
+            else "\t"
+            if node.tag == prefix + "tab"
+            else "\n"
+            if node.tag in {prefix + "br", prefix + "cr"}
+            else ""
+            for node in paragraph.iter()
+        ).strip()
+        if not text:
+            continue
+        total_characters += len(text) + 2
+        check_source_length(total_characters, settings.max_source_characters)
+        style = paragraph.find(f"{prefix}pPr/{prefix}pStyle")
+        is_heading = style is not None and style.get(prefix + "val", "").lower().startswith(
+            "heading"
+        )
+        if is_heading:
+            if paragraphs:
+                sections.append(
+                    {"heading": current_heading, "page": None, "text": "\n\n".join(paragraphs)}
+                )
+            current_heading = text
+            paragraphs = []
+        else:
+            paragraphs.append(text)
+    if paragraphs:
+        sections.append({"heading": current_heading, "page": None, "text": "\n\n".join(paragraphs)})
+    return sections
+
+
 def extract_pdf_sections(content: bytes) -> list[dict]:
     settings = get_settings()
     if not content.startswith(b"%PDF-"):
@@ -130,6 +207,8 @@ def extract_sections(filename: str, content: bytes) -> list[dict]:
         )
     if suffix == "pdf":
         sections = extract_pdf_sections(content)
+    elif suffix == "docx":
+        sections = extract_docx_sections(content)
     elif suffix in {"md", "txt"}:
         try:
             source = content.decode("utf-8")
@@ -160,7 +239,9 @@ def extract_sections(filename: str, content: bytes) -> list[dict]:
                 )
     else:
         raise DomainError(
-            "VALIDATION_FAILED", "Supported source files are Markdown, TXT and text-based PDF.", 422
+            "VALIDATION_FAILED",
+            "Supported source files are Markdown, TXT, DOCX and text-based PDF.",
+            422,
         )
     check_source_length(sum(len(s["text"]) for s in sections), settings.max_source_characters)
     if not any(s["text"].strip() for s in sections):
