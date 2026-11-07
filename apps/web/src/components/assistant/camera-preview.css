@@ -1,0 +1,309 @@
+.tara-camera {
+  --camera-accent: #7d8eff;
+  position: relative;
+  min-height: 330px;
+  aspect-ratio: 1.98;
+  margin: 0;
+  overflow: hidden;
+  color: #e6ecf5;
+  background: #11171e;
+  border: 1px solid #2c323b;
+  border-radius: 20px;
+  isolation: isolate;
+}
+
+.tara-camera[data-status="warning"] {
+  --camera-accent: #fb7987;
+}
+
+.tara-camera[data-status="success"] {
+  --camera-accent: #58c7a7;
+}
+
+.tara-camera[data-status="sleep"] {
+  --camera-accent: #8997bc;
+}
+
+.tara-camera__scene,
+.tara-camera__keyboard,
+.tara-camera__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tara-camera__scene {
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 33% 26%, #c2b29324, transparent 57%),
+    radial-gradient(ellipse at 74% 72%, #7596b510, transparent 60%),
+    linear-gradient(145deg, #242b31, #111920 60%, #080e14);
+}
+
+.tara-camera__scene::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    repeating-linear-gradient(
+      0deg,
+      #ffffff03 0,
+      #ffffff03 1px,
+      transparent 1px,
+      transparent 4px
+    ),
+    radial-gradient(ellipse at 48% 46%, transparent 25%, #02060b88 100%),
+    linear-gradient(
+      0deg,
+      #060a10bb,
+      transparent 30%,
+      transparent 75%,
+      #060a1022
+    );
+}
+
+.tara-camera__keyboard {
+  overflow: visible;
+}
+
+.tara-camera__video {
+  object-fit: cover;
+}
+
+.tara-camera__work-area {
+  fill: none;
+  stroke: #bac5d540;
+  stroke-width: 1;
+}
+
+.tara-camera__work-area text {
+  font: 600 8px var(--font-geist-mono, monospace);
+  letter-spacing: 2.2px;
+  fill: #c3ccdb85;
+  stroke: none;
+}
+
+.tara-camera__cable {
+  fill: none;
+  stroke: #0c131a;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.tara-camera__case {
+  filter: drop-shadow(0 12px 12px #0007);
+  stroke: #c5d5e41b;
+  stroke-width: 1.5;
+}
+
+.tara-camera__key-base {
+  fill: #141b23;
+}
+
+.tara-camera__key-face {
+  stroke: #a8b9ca27;
+  stroke-width: 1;
+}
+
+.tara-camera__key text {
+  font-family: var(--font-geist-mono, monospace);
+  font-weight: 500;
+  dominant-baseline: middle;
+  text-anchor: middle;
+  fill: #d5e0e9d9;
+}
+
+.tara-camera__key--highlighted .tara-camera__key-face {
+  filter: drop-shadow(0 0 4px #ffc26f55);
+  stroke: #f2bb64;
+  stroke-width: 3;
+}
+
+.tara-camera__key--highlighted text {
+  fill: #ffe1a7;
+}
+
+.tara-camera__screws {
+  font: 7px var(--font-geist-mono, monospace);
+  fill: #c3d3e03b;
+}
+
+.tara-camera__puller {
+  fill: #202932;
+  stroke: #b1c0cb33;
+  stroke-width: 1.5;
+}
+
+.tara-camera__puller-grip {
+  fill: #101820;
+  stroke: none;
+}
+
+.tara-camera__spare-switch {
+  fill: #46556170;
+  stroke: none;
+}
+
+.tara-camera__spare-switch path {
+  stroke: #cfdee29c;
+  stroke-width: 3;
+}
+
+.tara-camera__heading {
+  position: absolute;
+  top: 28px;
+  left: 26px;
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  font-size: 11px;
+}
+
+.tara-camera__live-label {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+}
+
+.tara-camera__live-label::after {
+  position: absolute;
+  right: 0;
+  bottom: -17px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: #dce6f18f;
+}
+
+.tara-camera__live-label > span {
+  width: 5px;
+  height: 5px;
+  background: #d3e2ff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #9db5f7;
+}
+
+.tara-camera__source {
+  padding-left: 13px;
+  color: #d0d9e6;
+  border-left: 1px solid #cbd5e230;
+}
+
+.tara-camera__timer {
+  position: absolute;
+  top: 26px;
+  right: 26px;
+  font: 500 11px var(--font-geist-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  color: #ccd6e4;
+  letter-spacing: 0.5px;
+}
+
+.tara-camera__bottom {
+  position: absolute;
+  right: 22px;
+  bottom: 20px;
+  left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tara-camera__observation {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #d6e0ee;
+}
+
+.tara-camera__observation > span {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  background: var(--camera-accent);
+  border-radius: 50%;
+}
+
+.tara-camera__toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.tara-camera__controls {
+  min-width: 0;
+}
+
+.tara-camera__step {
+  flex-shrink: 0;
+  padding-bottom: 9px;
+  font: 500 10px var(--font-geist-mono, monospace);
+  color: #d6dfed;
+}
+
+@media (max-width: 640px) {
+  .tara-camera {
+    min-height: 350px;
+    border-radius: 16px;
+  }
+
+  .tara-camera__heading {
+    top: 21px;
+    left: 17px;
+    gap: 9px;
+    font-size: 9px;
+  }
+
+  .tara-camera__live-label {
+    gap: 5px;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+
+  .tara-camera__source {
+    max-width: 145px;
+    padding-left: 9px;
+  }
+
+  .tara-camera__timer {
+    top: 21px;
+    right: 17px;
+    font-size: 9px;
+  }
+
+  .tara-camera__keyboard {
+    transform: translateY(-12px) scale(1.16);
+  }
+
+  .tara-camera__bottom {
+    right: 14px;
+    bottom: 16px;
+    left: 14px;
+    gap: 13px;
+  }
+
+  .tara-camera__toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .tara-camera__observation {
+    font-size: 10px;
+  }
+
+  .tara-camera__step {
+    padding-bottom: 0;
+    font-size: 9px;
+  }
+}

@@ -129,3 +129,15 @@ There is deliberately no self-service user administration screen.
 Production requires isolated credentials/data, secure cookies, tested database
 and evidence recovery, actual provider evaluation and measured latency budgets.
 Railway buckets alone do not establish immutable evidence or automatic backups.
+
+## Real-time assistant components
+
+Start the web app with `bun run dev:web` and open
+[the assistant preview](http://localhost:3001/assistant) to explore the shared
+status, guidance, controls, verification badge and task-step components. Demo and
+Product layouts share the same presentation state and use a simulated keyboard
+or local webcam preview. This route does not connect to AI or submit execution
+records; the application execution workspace lives separately at `/runs/[id]`.
+
+See the parent workspace's `docs/12-assistant-components.md` for imports, ownership,
+preview behavior and integration boundaries.

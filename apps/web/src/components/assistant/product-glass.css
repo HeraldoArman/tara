@@ -1,0 +1,227 @@
+/* Product surfaces let the live scene remain visible through a thin tinted lens. */
+.tara-workspace[data-mode="product"] {
+  --tara-ink: #f6f8ff;
+  --tara-muted: #e3ebf7;
+  --tara-border: #e0eaff38;
+  --tara-surface: #13213966;
+  --tara-active: #c6d0ff;
+  --tara-sleep: #bccae3;
+  --tara-warning: #ffb5bd;
+  --tara-success: #99f0cf;
+  --tara-glow: #586dff;
+  --tara-accent-soft: color-mix(in srgb, var(--tara-accent) 14%, transparent);
+  --muted: #e0ebff14;
+  --secondary: #e0ebff14;
+  --secondary-foreground: var(--tara-ink);
+  --primary-foreground: #101a2d;
+  --tara-glass-fill: #101b304d;
+  color-scheme: dark;
+  background:
+    radial-gradient(ellipse at 0% 0%, #283862, transparent 65%), #101722;
+}
+
+.tara-workspace[data-mode="product"][data-state="sleep"] {
+  --tara-glow: #6f8cbf;
+}
+
+.tara-workspace[data-mode="product"][data-state="warning"] {
+  --tara-glow: #f44f73;
+}
+
+.tara-workspace[data-mode="product"][data-state="success"] {
+  --tara-glow: #20d6a1;
+}
+
+.tara-workspace[data-mode="product"] :where([data-state], .tara-mode-control) {
+  --tara-accent-soft: color-mix(in srgb, var(--tara-accent) 14%, transparent);
+}
+
+.tara-workspace[data-mode="product"]
+  :is(
+    .tara-status-card,
+    .tara-guidance-card,
+    .tara-workspace-current,
+    .tara-segmented-control,
+    .tara-media-controls,
+    .tara-resting-note,
+    .tara-preview-dialog
+  ),
+.tara-workspace[data-mode="product"] .tara-workspace-help[data-slot="button"] {
+  color: var(--tara-ink);
+  background:
+    linear-gradient(135deg, #ebf4ff14, #ebf4ff03 42%, #ebf4ff0b),
+    var(--tara-glass-fill);
+  border: 1px solid #eff6ff40;
+  box-shadow:
+    inset 0 1px 0 #ffffff5c,
+    inset 1px 0 0 #ffffff14,
+    inset 0 -1px 0 #ffffff0d,
+    0 12px 40px #02091a26;
+  backdrop-filter: blur(5px) saturate(145%) brightness(0.45);
+  transition:
+    border-color 350ms ease,
+    box-shadow 350ms ease;
+}
+
+.tara-workspace[data-mode="product"]
+  :is(.tara-status-card, .tara-guidance-card) {
+  border-color: color-mix(in srgb, var(--tara-accent) 35%, #ffffff24);
+}
+
+.tara-workspace[data-mode="product"]
+  :is(.tara-guidance-card, .tara-status-card, .tara-workspace-current) {
+  text-shadow: 0 1px 3px #020a1c80;
+}
+
+.tara-workspace[data-mode="product"] .tara-resting-note {
+  border-radius: 20px;
+}
+
+.tara-workspace[data-mode="product"] .tara-status-orb {
+  background:
+    radial-gradient(circle at 28% 18%, #ffffff66, #ffffff08 58%),
+    color-mix(in srgb, var(--tara-accent) 18%, transparent);
+  border-color: #f4f8ff80;
+  box-shadow:
+    inset 0 1px 4px #ffffff59,
+    0 0 28px color-mix(in srgb, var(--tara-glow) 30%, transparent);
+}
+
+.tara-workspace[data-mode="product"] .tara-status-orb::before {
+  border-color: color-mix(in srgb, var(--tara-accent) 30%, transparent);
+}
+
+.tara-workspace[data-mode="product"]
+  :is(.tara-guidance-hint, .tara-task-step-icon, .tara-verification-badge) {
+  color: var(--tara-ink);
+  background: color-mix(in srgb, var(--tara-accent) 9%, transparent);
+  border-color: #e5efff30;
+  box-shadow: inset 0 1px 0 #ffffff0f;
+}
+
+.tara-workspace[data-mode="product"] .tara-guidance-hint {
+  border-left-color: var(--tara-accent);
+}
+
+.tara-workspace[data-mode="product"] .tara-task-step-icon {
+  color: var(--tara-accent);
+}
+
+.tara-workspace[data-mode="product"]
+  .tara-reply-composer
+  [data-slot="input-group"] {
+  background: #09142845;
+  border-color: #edf4ff42;
+  box-shadow: inset 0 1px 0 #ffffff17;
+}
+
+.tara-workspace[data-mode="product"]
+  .tara-reply-composer
+  [data-slot="input-group-control"] {
+  background: transparent;
+}
+
+.tara-workspace[data-mode="product"] .tara-reply-composer [data-slot="button"] {
+  color: var(--tara-ink);
+  background: color-mix(in srgb, var(--tara-accent) 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tara-accent) 48%, transparent);
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+
+.tara-workspace[data-mode="product"]
+  :is(.tara-media-controls, .tara-resting-note)
+  [data-slot="button"] {
+  color: var(--tara-ink);
+  background: transparent;
+}
+
+.tara-workspace[data-mode="product"]
+  :is(.tara-media-controls, .tara-resting-note)
+  [data-slot="button"]:hover {
+  background: #ffffff14;
+}
+
+.tara-workspace[data-mode="product"]
+  .tara-segmented-control
+  :where(input:checked)
+  + span,
+.tara-workspace[data-mode="product"] .tara-success-trigger[data-active="true"] {
+  color: var(--tara-accent);
+  background: color-mix(in srgb, var(--tara-accent) 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 #ffffff2e,
+    inset 0 0 0 1px #ffffff1c;
+}
+
+.tara-workspace[data-mode="product"] .tara-success-trigger {
+  color: var(--tara-success);
+  background: transparent;
+  border-color: #99f0cf45;
+}
+
+.tara-workspace[data-mode="product"] .tara-success-trigger:hover {
+  background: #99f0cf18;
+}
+
+.tara-workspace[data-mode="product"] .tara-control-divider {
+  background: #dce7ff38;
+}
+
+.tara-workspace[data-mode="product"] .tara-workspace-footer {
+  color: #d8e5fa;
+  text-shadow: 0 1px 4px #000000;
+}
+
+.tara-workspace[data-mode="product"] .tara-camera {
+  box-shadow: none;
+}
+
+.tara-workspace[data-mode="product"] .tara-camera::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(
+      ellipse at 0% 0%,
+      color-mix(in srgb, var(--tara-glow) 44%, transparent),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 100% 100%,
+      color-mix(in srgb, var(--tara-glow) 38%, transparent),
+      transparent 46%
+    );
+  border: 1px solid color-mix(in srgb, var(--tara-glow) 65%, transparent);
+  border-radius: inherit;
+  box-shadow: inset 0 0 95px 18px
+    color-mix(in srgb, var(--tara-glow) 30%, transparent);
+  opacity: 0.7;
+}
+
+.tara-workspace[data-mode="product"]
+  :is(.tara-camera__heading, .tara-camera__timer, .tara-camera__bottom) {
+  z-index: 2;
+}
+
+.tara-workspace[data-mode="product"] .tara-preview-dialog {
+  --tara-glass-fill: #0b172bc4;
+}
+
+.tara-workspace[data-mode="product"] .tara-preview-dialog::backdrop {
+  background: #020b182e;
+  backdrop-filter: blur(3px);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .tara-workspace[data-mode="product"] {
+    --tara-glass-fill: #101b30ed;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tara-workspace[data-mode="product"] * {
+    transition: none;
+  }
+}

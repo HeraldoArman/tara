@@ -1,0 +1,735 @@
+.tara-workspace {
+  position: relative;
+  min-height: 100svh;
+  padding: 34px clamp(24px, 3.5vw, 72px) 20px;
+  font-family: var(--font-geist-sans), sans-serif;
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      color-mix(in srgb, var(--tara-accent) 32%, transparent),
+      transparent 56%
+    ),
+    radial-gradient(
+      ellipse at 0% 100%,
+      color-mix(in srgb, var(--tara-accent) 25%, transparent),
+      transparent 52%
+    ),
+    var(--tara-canvas);
+  isolation: isolate;
+}
+
+.tara-workspace-header {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.tara-brand {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  color: var(--tara-ink);
+  text-decoration: none;
+}
+.tara-brand > span:last-child {
+  font-size: 35px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.tara-brand .tara-assistant-mark {
+  color: var(--tara-active);
+}
+.tara-brand-period {
+  color: var(--tara-active);
+}
+.tara-brand-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 25px;
+  font-size: 11px;
+  font-weight: 500;
+  border-left: 1px solid var(--tara-border);
+}
+.tara-workspace-eyebrow {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--tara-muted);
+  letter-spacing: 1.8px;
+}
+.tara-workspace-modes {
+  margin-left: auto;
+}
+.tara-workspace-help[data-slot="button"] {
+  width: 34px;
+  height: 34px;
+  color: var(--tara-muted);
+  background: var(--tara-surface);
+  border-radius: 50%;
+}
+.tara-workspace-intro {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 60px 0 34px;
+}
+.tara-workspace-intro :where(.tara-workspace-eyebrow) span {
+  margin: 0 16px;
+  color: #adb8ce;
+}
+.tara-workspace-intro h1 {
+  margin: 12px 0 0;
+  font-size: clamp(30px, 2.65vw, 48px);
+  font-weight: 450;
+  line-height: 1.2;
+  letter-spacing: -1.9px;
+}
+.tara-workspace-asset {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 11px;
+}
+.tara-workspace-asset > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tara-workspace-asset strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.tara-workspace-asset span {
+  color: var(--tara-muted);
+}
+.tara-asset-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: #ffffff80;
+  border: 1px solid var(--tara-border);
+  border-radius: 13px;
+}
+.tara-asset-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.tara-workspace-asset > p {
+  padding-left: 20px;
+  margin: 0 0 0 9px;
+  font:
+    10px / 1.7 var(--font-geist-mono),
+    monospace;
+  color: var(--tara-muted);
+  border-left: 1px solid var(--tara-border);
+}
+.tara-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 25.5%);
+  gap: 26px;
+  align-items: start;
+}
+.tara-camera-card {
+  min-width: 0;
+  padding: 8px;
+  background: #ffffffc9;
+  border: 1px solid #ffffff;
+  border-radius: 26px;
+  box-shadow:
+    0 14px 45px #31457505,
+    0 0 0 1px #e7ebf440;
+}
+.tara-camera-card .tara-camera {
+  width: 100%;
+  min-height: 430px;
+  aspect-ratio: 1.83;
+}
+.tara-workspace-current {
+  padding: 10px 12px;
+  outline-offset: 4px;
+}
+.tara-workspace-current .tara-task-step {
+  flex-wrap: wrap;
+}
+.tara-source-button {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--tara-muted);
+  cursor: pointer;
+}
+.tara-source-button svg {
+  width: 12px;
+  height: 12px;
+}
+.tara-source-button:hover {
+  color: var(--tara-accent);
+}
+.tara-workspace-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+.tara-consultation-control {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px -8px 0;
+}
+.tara-consultation-control > span {
+  padding-right: 8px;
+  font-size: 10px;
+  color: var(--tara-muted);
+}
+.tara-consultation-control [data-slot="button"] {
+  color: var(--tara-accent);
+  border-radius: 8px;
+}
+.tara-reply-notice {
+  display: block;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--tara-muted);
+}
+.tara-restart-preview[data-slot="button"],
+.tara-return-to-step[data-slot="button"] {
+  margin-top: 18px;
+  border-radius: 10px;
+}
+.tara-return-to-step[data-slot="button"] {
+  margin-bottom: 8px;
+}
+.tara-workspace-current[data-correction="true"] .tara-task-step-icon {
+  color: var(--tara-warning);
+  background: color-mix(in srgb, var(--tara-warning) 10%, transparent);
+}
+.tara-resting-note {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  padding: 22px;
+  font-size: 12px;
+  color: var(--tara-muted);
+}
+.tara-resting-note [data-slot="button"] {
+  border-radius: 9px;
+}
+.tara-workspace-footer {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 26px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--tara-muted);
+}
+.tara-workspace-footer > span,
+.tara-workspace-footer > button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.tara-workspace-footer svg {
+  width: 12px;
+  height: 12px;
+}
+.tara-workspace-footer button {
+  cursor: pointer;
+}
+.tara-workspace-footer button:hover {
+  color: var(--tara-accent);
+}
+.tara-workspace-footer button > span {
+  padding-left: 9px;
+  margin-left: 3px;
+  border-left: 1px solid var(--tara-border);
+}
+.tara-camera-error {
+  max-width: 440px;
+  padding: 9px 12px;
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #ffdee2;
+  background: #321c29f2;
+  border: 1px solid #fb79874a;
+  border-radius: 8px;
+}
+.tara-skip-link {
+  position: fixed;
+  top: -100px;
+  left: 24px;
+  z-index: 20;
+  padding: 12px 18px;
+  color: var(--tara-ink);
+  background: var(--tara-surface);
+  border-radius: 8px;
+}
+.tara-skip-link:focus {
+  top: 12px;
+}
+.tara-workspace :is(a, button):focus-visible {
+  outline: 2px solid var(--tara-accent);
+  outline-offset: 4px;
+}
+
+/* Product view shares the same components and state; only their composition changes. */
+.tara-workspace[data-mode="product"] {
+  display: flex;
+  flex-direction: column;
+  min-height: max(900px, 100svh);
+  padding: 28px;
+  background: #111923;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-header {
+  position: relative;
+  z-index: 2;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+  padding-right: 390px;
+}
+.tara-workspace[data-mode="product"] .tara-brand {
+  color: #fff;
+}
+.tara-workspace[data-mode="product"] .tara-brand-caption {
+  display: none;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-intro {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+.tara-workspace[data-mode="product"] .tara-workspace-modes {
+  margin-left: 16px;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-states {
+  flex-basis: 100%;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-help {
+  position: absolute;
+  top: 8px;
+  right: 400px;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-grid {
+  display: contents;
+}
+.tara-workspace[data-mode="product"] .tara-camera-card {
+  position: absolute;
+  inset: 4px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+}
+.tara-workspace[data-mode="product"] .tara-camera {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  aspect-ratio: auto;
+  border-radius: 12px;
+  box-shadow: inset 0 0 110px
+    color-mix(in srgb, var(--tara-accent) 16%, transparent);
+}
+.tara-workspace[data-mode="product"] .tara-camera__scene {
+  z-index: 0;
+}
+.tara-workspace[data-mode="product"] .tara-camera__keyboard {
+  width: 100%;
+}
+.tara-workspace[data-mode="product"] .tara-camera__heading {
+  top: 170px;
+  left: 28px;
+}
+.tara-workspace[data-mode="product"] .tara-camera__timer {
+  top: 170px;
+  right: 418px;
+}
+.tara-workspace[data-mode="product"] .tara-camera__bottom {
+  right: 418px;
+  bottom: 175px;
+  left: 28px;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-current {
+  position: absolute;
+  right: 420px;
+  bottom: 53px;
+  left: 28px;
+  max-width: 560px;
+  padding: 0 14px;
+  background: #f8faffed;
+  border: 1px solid #ffffffb3;
+  border-radius: 17px;
+  backdrop-filter: blur(20px);
+}
+.tara-workspace[data-mode="product"] .tara-workspace-current .tara-task-step {
+  gap: 12px;
+}
+.tara-workspace[data-mode="product"]
+  .tara-workspace-current
+  .tara-source-button {
+  display: inline-flex;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-assistant {
+  position: relative;
+  z-index: 1;
+  gap: 34px;
+  align-self: flex-end;
+  width: 355px;
+  margin-top: -130px;
+}
+.tara-workspace[data-mode="product"] .tara-status-card,
+.tara-workspace[data-mode="product"] .tara-guidance-card {
+  background: #f8faffed;
+  backdrop-filter: blur(22px);
+}
+.tara-workspace[data-mode="product"] .tara-status-card {
+  min-height: 118px;
+}
+.tara-workspace[data-mode="product"] .tara-resting-note {
+  color: #d7dfeb;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-footer {
+  position: relative;
+  padding-top: 28px;
+  margin-top: auto;
+  color: #c2ccdd;
+}
+.tara-workspace[data-mode="product"] .tara-workspace-footer > span:first-child {
+  display: none;
+}
+
+.tara-preview-dialog {
+  width: min(580px, calc(100% - 32px));
+  max-height: calc(100svh - 48px);
+  padding: 28px;
+  margin: auto;
+  overflow: auto;
+  color: var(--tara-ink);
+  background: var(--tara-surface);
+  border: 1px solid var(--tara-border);
+  border-radius: 24px;
+  box-shadow: 0 30px 120px #12223b33;
+}
+.tara-preview-dialog::backdrop {
+  background: #111b38a6;
+  backdrop-filter: blur(7px);
+}
+.tara-preview-dialog-heading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.tara-preview-dialog-heading [data-slot="button"] {
+  border-radius: 50%;
+}
+.tara-preview-dialog h2 {
+  margin: 24px 0 12px;
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+.tara-preview-dialog p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--tara-muted);
+}
+.tara-sop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 22px 0;
+  list-style: none;
+}
+.tara-sop-list li {
+  display: flex;
+  gap: 14px;
+  align-items: start;
+  padding: 13px;
+  border-radius: 12px;
+}
+.tara-sop-list li[aria-current="step"] {
+  background: var(--tara-accent-soft);
+}
+.tara-sop-number {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  font:
+    11px var(--font-geist-mono),
+    monospace;
+  color: var(--tara-accent);
+  border: 1px solid var(--tara-border);
+  border-radius: 8px;
+}
+.tara-sop-list h3 {
+  margin: 0 0 3px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tara-sop-number svg {
+  width: 14px;
+  height: 14px;
+}
+.tara-sop-list li[data-completed="true"] .tara-sop-number {
+  color: var(--tara-success);
+  background: color-mix(in srgb, var(--tara-success) 9%, transparent);
+  border-color: color-mix(in srgb, var(--tara-success) 25%, transparent);
+}
+.tara-sop-list p {
+  font-size: 12px;
+}
+.tara-preview-dialog .tara-detail-note {
+  padding-top: 16px;
+  font-size: 11px;
+  border-top: 1px solid var(--tara-border);
+}
+.tara-record-empty,
+.tara-help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 28px;
+}
+.tara-record-empty > svg {
+  width: 38px;
+  height: 38px;
+  padding: 9px;
+  color: var(--tara-muted);
+  border: 1px solid var(--tara-border);
+  border-radius: 12px;
+}
+.tara-record-empty h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+@media (min-width: 1800px) {
+  .tara-workspace {
+    padding-top: 44px;
+  }
+  .tara-workspace-intro {
+    margin-top: 76px;
+    margin-bottom: 42px;
+  }
+  .tara-workspace-grid {
+    gap: 32px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .tara-workspace-header {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .tara-brand-caption {
+    display: none;
+  }
+  .tara-workspace-grid {
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 18px;
+  }
+  .tara-camera-card .tara-camera {
+    min-height: 490px;
+  }
+  .tara-workspace-intro {
+    margin-top: 40px;
+  }
+  .tara-workspace-footer {
+    flex-wrap: wrap;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-header {
+    padding-right: 375px;
+  }
+}
+
+@media (max-width: 900px) {
+  .tara-workspace {
+    padding: 24px 20px;
+  }
+  .tara-workspace-header {
+    gap: 14px;
+  }
+  .tara-workspace-states {
+    order: 5;
+    width: 100%;
+  }
+  .tara-workspace-help {
+    margin-left: auto;
+  }
+  .tara-workspace-modes {
+    margin-left: auto;
+  }
+  .tara-workspace-intro {
+    align-items: start;
+    margin: 36px 0 24px;
+  }
+  .tara-workspace-asset {
+    font-size: 10px;
+  }
+  .tara-workspace-asset > p {
+    display: none;
+  }
+  .tara-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+  .tara-camera-card .tara-camera {
+    min-height: 350px;
+    aspect-ratio: 1.85;
+  }
+  .tara-workspace-assistant {
+    display: grid;
+    grid-template-columns: minmax(200px, 0.8fr) minmax(0, 1.4fr);
+    align-items: start;
+  }
+  .tara-workspace-footer .tara-preview-label {
+    justify-content: center;
+    order: 3;
+    width: 100%;
+  }
+  .tara-workspace[data-mode="product"] {
+    min-height: 100svh;
+    padding: 24px 20px;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-header {
+    padding-right: 0;
+    margin-bottom: 24px;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-help {
+    position: static;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-modes {
+    margin-left: auto;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-assistant {
+    gap: 18px;
+    order: -1;
+    width: 100%;
+    margin-top: 0;
+  }
+  .tara-workspace[data-mode="product"] .tara-camera-card {
+    position: relative;
+    inset: auto;
+    width: 100%;
+  }
+  .tara-workspace[data-mode="product"] .tara-camera {
+    height: 350px;
+    min-height: 350px;
+  }
+  .tara-workspace[data-mode="product"] .tara-camera__keyboard {
+    width: 100%;
+  }
+  .tara-workspace[data-mode="product"] .tara-camera__heading {
+    top: 24px;
+    left: 20px;
+  }
+  .tara-workspace[data-mode="product"] .tara-camera__timer {
+    top: 24px;
+    right: 20px;
+  }
+  .tara-workspace[data-mode="product"] .tara-camera__bottom {
+    right: 20px;
+    bottom: 20px;
+    left: 20px;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-current {
+    position: relative;
+    inset: auto;
+    max-width: none;
+    margin-top: 12px;
+  }
+  .tara-workspace[data-mode="product"]
+    .tara-workspace-current
+    .tara-source-button {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 580px) {
+  .tara-workspace {
+    padding: 20px 14px;
+  }
+  .tara-brand > span:last-child {
+    font-size: 30px;
+  }
+  .tara-brand-caption {
+    display: none;
+  }
+  .tara-workspace-intro {
+    flex-direction: column;
+    gap: 22px;
+  }
+  .tara-workspace-intro h1 {
+    font-size: 32px;
+  }
+  .tara-workspace-asset {
+    gap: 10px;
+  }
+  .tara-asset-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+  .tara-camera-card {
+    padding: 5px;
+    border-radius: 21px;
+  }
+  .tara-workspace-assistant {
+    display: flex;
+    align-items: stretch;
+  }
+  .tara-workspace-current {
+    padding: 8px;
+  }
+  .tara-workspace-current .tara-task-step {
+    gap: 10px;
+  }
+  .tara-workspace-current .tara-task-step-copy {
+    flex-basis: calc(100% - 60px);
+  }
+  .tara-workspace-current .tara-verification-badge {
+    margin-left: 50px;
+  }
+  .tara-source-button {
+    margin-left: 50px;
+  }
+  .tara-workspace-footer {
+    font-size: 9px;
+  }
+  .tara-workspace-footer > span:first-child {
+    max-width: 145px;
+  }
+  .tara-workspace[data-mode="product"] {
+    padding: 20px 14px;
+  }
+  .tara-workspace[data-mode="product"] .tara-workspace-header {
+    gap: 12px;
+  }
+}
