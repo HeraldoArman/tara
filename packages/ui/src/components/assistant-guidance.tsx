@@ -38,6 +38,7 @@ import {
 interface AssistantGuidanceProps {
   children?: ReactNode;
   className?: string;
+  completedSteps?: number;
   description: string;
   eyebrow?: string;
   hint?: string;
@@ -52,6 +53,7 @@ interface AssistantGuidanceProps {
 function AssistantGuidance({
   children,
   className,
+  completedSteps,
   description,
   eyebrow,
   hint,
@@ -65,7 +67,10 @@ function AssistantGuidance({
   const titleId = useId();
   const isWarning = status === "warning";
   const GuidanceIcon = isWarning ? TriangleAlertIcon : SparklesIcon;
-  const progress = Math.min(Math.max(step - 1, 0), Math.max(totalSteps, 1));
+  const progress = Math.min(
+    Math.max(completedSteps ?? step - 1, 0),
+    Math.max(totalSteps, 1)
+  );
 
   return (
     <Card
@@ -103,7 +108,11 @@ function AssistantGuidance({
       </CardContent>
       <CardFooter>
         <progress
-          aria-label="Steps before the current step"
+          aria-label={
+            completedSteps === undefined
+              ? "Steps before the current step"
+              : "Completed steps"
+          }
           className="tara-step-progress"
           max={Math.max(totalSteps, 1)}
           value={progress}

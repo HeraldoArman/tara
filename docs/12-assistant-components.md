@@ -15,6 +15,7 @@ at `/runs/[id]` are separate application routes; this preview does not replace t
 | `packages/ui/src/components/task-step.tsx` | Compact current instruction with optional verification status and trailing content |
 | `packages/ui/src/components/verification-badge.tsx` | Explicit execution-result labels, independent of visual state |
 | `packages/ui/src/lib/assistant.ts` | Presentation types and default labels; not API DTOs |
+| `packages/ui/src/hooks/use-assistant-audio.ts` | Optional transition sounds, mute control, and audio cleanup |
 | `packages/ui/src/styles/assistant.css` | Scoped design tokens and component appearance |
 | `apps/web/src/components/assistant/` | Preview composition, fixtures, details dialog, keyboard scene, and local camera lifecycle |
 
@@ -52,19 +53,25 @@ above the camera. Both appearances are scoped to the assistant preview.
 | Component | Main props |
 | --- | --- |
 | `AssistantStatus` | `status` |
-| `AssistantGuidance` | `status`, `step`, `totalSteps`, `title`, `description`, `source`, optional `hint`, `eyebrow`, `onViewSop`, and `children` |
+| `AssistantGuidance` | `status`, `step`, `totalSteps`, `title`, `description`, `source`, optional `completedSteps`, `hint`, `eyebrow`, `onViewSop`, and `children` |
 | `ReplyComposer` | `onSubmit`, optional `disabled`, `pending`, `placeholder`, `statusMessage` |
 | `AssistantModeControl` | `value: "demo" \| "product"`, `onValueChange` |
-| `AssistantStateControl` | `value: "auto" \| AssistantState`, `onValueChange` |
+| `AssistantStateControl` | `value: "auto" \| AssistantState`, `onValueChange`, optional `successDisabled` |
 | `MediaControls` | `source`, `onSourceChange`, `paused`, `onPausedChange`, optional `sourceBusy`, `audioEnabled`, `onAudioEnabledChange` |
-| `TaskStep` | `title`, `description`, optional `verificationStatus`, `children` |
+| `TaskStep` | `title`, `description`, optional `verificationStatus`, `verificationLabel`, `children` |
 | `VerificationBadge` | `status`, optional `label` |
 
 `ReplyComposer` trims whitespace, rejects empty submissions, supports pending/disabled
 states, and clears a submitted draft. The owning application handles delivery, errors,
 and retry policy. The audio control is absent unless its callback is supplied.
 
-`AssistantGuidance` shows the current position in an SOP, not a count of verified steps.
+`AssistantGuidance` shows the current position in an SOP. Its optional `completedSteps`
+prop supplies an explicit completed count for the progress bar, including full progress
+after the last step. Without it, the bar defaults to the steps preceding the current one.
+The owning application supplies the count; the component does not verify or advance steps.
+`AssistantStateControl` accepts optional `successDisabled` to prevent repeat completion
+while feedback is pending or after the workflow has finished. `TaskStep` accepts
+`verificationLabel` to distinguish a simulated result from an authoritative live result.
 `VerificationBadge` accepts `pending`, `in_progress`, `verified`, `not_evidenced`,
 `contradicted`, `needs_verification`, `blocked`, or `requires_approval`.
 Missing evidence is visually distinct from a contradicted requirement.
@@ -77,17 +84,45 @@ Missing evidence is visually distinct from a contradicted requirement.
   remains readable. State-colored light strengthens the workspace edges without covering
   the center of the camera.
 - **Appearance selector:** selects Sleep, Active, or Warning. Auto restores Active.
-  Success is a momentary button: it shows green for three seconds, then returns to Active.
-  Pressing it again restarts the interval. Selecting another state or pausing cancels the
-  return timer; switching layouts preserves it. No appearance control changes the
-  verification result or generates audit events. The shared control emits `"success"`
-  through its existing `onValueChange` callback; the owning application controls timing.
+  These choices do not complete steps. The shared control emits `"success"` through its
+  existing `onValueChange` callback; the owning application controls timing and progress.
+- **Corrective instruction:** Warning temporarily replaces the bottom SOP instruction
+  and contextual guidance with a correction for the current step. For example, the
+  inspection correction says “Put your hands away.” and asks for a keycap puller.
+  Corrections are sample instructions, not claims that the preview detected an error.
+  They do not add an SOP step, change its number, or complete it. Return to current step,
+  Active, and Auto restore the original instruction. Success is disabled while a
+  correction is showing, including when paused, so dismissing a correction cannot
+  accidentally complete the SOP step. Pause retains the correction in the bottom
+  instruction until Resume, Active, or Auto restores the original step. If Warning arrives
+  during an already accepted Success pulse, that completion still advances exactly once;
+  the correction then applies to the next active step. The terminal completion view is
+  never replaced by a correction.
+- **Success and progress:** this local preview starts on step 2, with step 1 supplied as
+  completed demo context. With no correction active, Success completes the current
+  preview step and shows green feedback for 0.7 seconds, then advances the bottom
+  instruction, guidance, source, camera step label, and SOP highlight together.
+  Repeated clicks during feedback cannot
+  skip steps. The appearance returns to Active unless another state or Pause was chosen
+  during the feedback; accepted completion still advances exactly once. Switching
+  layouts or muting audio preserves progress. After the last step, the preview shows
+  completion and full progress rather than a nonexistent next step. Success is disabled
+  until the preview is restarted. Clearing a correction does not create a step completion
+  in the session record. These transitions are simulated, not server verification.
 - **Sleep/Pause:** hides the consultation panel but retains the current instruction,
   verification label, and source access. The local video and elapsed-view timer continue.
+- **State audio:** Sleep → Active says “TARA is online” with a wake chime. Success uses
+  a short positive chime; Warning uses urgent pulses; Warning → Active plays a calming
+  descending sound. Sleep and the return from Success have their own soft cues. Sounds
+  start with state-control interactions, never on initial page load or a layout change.
+  The speaker button mutes them and stops current playback. The reusable audio hook is
+  optional; it does not send commands or change verification. Voice availability depends
+  on the browser, with a chime fallback. Live assistant speech is still separate.
 - **Ask TARA:** explicitly enables the text composer. The local response is labeled sample
   guidance and never advances a step. Return to silent mode disables further text turns.
-- **SOP:** opens a clearly labeled sample procedure. **Session record:** explains the empty
-  record; UI interactions are not misrepresented as execution events.
+- **SOP:** opens a clearly labeled sample procedure with the current step and completed
+  checkmarks. **Session record:** lists local preview completions, distinguishing seeded
+  demo context from steps completed with Success. It does not claim to be a server audit.
 - **Webcam:** requests video only after a click, keeps frames in the browser, and stops
   tracks when returning to simulation, leaving the page, or receiving a disconnect.
   Denied permissions and missing devices leave the simulated feed usable.
@@ -118,9 +153,11 @@ and authoritative run transitions.
 
 Integrating these shared components into that workspace remains separate work. Keep its
 existing session, evidence and audit behavior when replacing presentation elements.
-The UI must not implement a second local verification engine or turn a typed confirmation
-into a verified visual result. A verified checkpoint and a completed workflow remain
-separate outcomes. Voice, live AI and evidence persistence are not features of `/assistant`.
+The local Success flow is a demonstration fixture, not a verification engine for live
+runs. In the connected workspace, server events must drive completed counts and step
+transitions; a typed confirmation must not become a verified visual result. A verified
+checkpoint and a completed workflow remain separate outcomes. Voice, live AI and
+evidence persistence are not features of `/assistant`.
 
 ## Local checks
 
@@ -134,5 +171,14 @@ bun run dev:web
 ```
 
 At `/assistant`, check all four states, both layouts, Pause/Resume, Ask TARA and text
-submission, SOP/record dialogs, camera denial, and a narrow viewport. Confirm that the
-verification badge remains unchanged after every appearance or consultation action.
+submission, SOP/record dialogs, camera denial, and a narrow viewport. Confirm that
+Success advances exactly once after 0.7 seconds, including when clicked repeatedly or
+followed by Pause or another appearance choice. Check that every step consumer stays
+in sync, the final step reaches full completion without a step 6, and a restart clears
+pending feedback and local progress. Appearance and consultation actions alone must
+not complete steps. Trigger Warning on each step and confirm the correction temporarily
+replaces the instruction without changing the SOP position or completed count. Active,
+Auto, and Return to current step must restore that same step. Success must remain
+disabled during a correction, including while paused. Also check Warning during
+accepted Success feedback: the completed step advances once, and the next step shows
+its own correction. Warning after terminal completion must retain the completed view.

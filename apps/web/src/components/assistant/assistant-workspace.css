@@ -198,6 +198,18 @@
   line-height: 1.6;
   color: var(--tara-muted);
 }
+.tara-restart-preview[data-slot="button"],
+.tara-return-to-step[data-slot="button"] {
+  margin-top: 18px;
+  border-radius: 10px;
+}
+.tara-return-to-step[data-slot="button"] {
+  margin-bottom: 8px;
+}
+.tara-workspace-current[data-correction="true"] .tara-task-step-icon {
+  color: var(--tara-warning);
+  background: color-mix(in srgb, var(--tara-warning) 10%, transparent);
+}
 .tara-resting-note {
   display: flex;
   flex-direction: column;
@@ -474,6 +486,15 @@
   margin: 0 0 3px;
   font-size: 13px;
   font-weight: 600;
+}
+.tara-sop-number svg {
+  width: 14px;
+  height: 14px;
+}
+.tara-sop-list li[data-completed="true"] .tara-sop-number {
+  color: var(--tara-success);
+  background: color-mix(in srgb, var(--tara-success) 9%, transparent);
+  border-color: color-mix(in srgb, var(--tara-success) 25%, transparent);
 }
 .tara-sop-list p {
   font-size: 12px;

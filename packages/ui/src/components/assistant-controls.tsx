@@ -75,6 +75,7 @@ function AssistantModeControl({
 interface AssistantStateControlProps {
   className?: string;
   onValueChange: (value: AssistantStateSelection) => void;
+  successDisabled?: boolean;
   value: AssistantStateSelection;
 }
 
@@ -83,6 +84,7 @@ const stateSelections = ["auto", "sleep", "active", "warning"] as const;
 function AssistantStateControl({
   className,
   onValueChange,
+  successDisabled = false,
   value,
 }: AssistantStateControlProps) {
   const name = useId();
@@ -133,8 +135,9 @@ function AssistantStateControl({
         className="tara-success-trigger"
         data-active={value === "success"}
         data-state="success"
+        disabled={successDisabled}
         onClick={previewSuccess}
-        title="Preview Success, then return to Active"
+        title="Trigger success feedback"
         type="button"
         variant="ghost"
       >
@@ -210,7 +213,7 @@ function MediaControls({
       {onAudioEnabledChange ? (
         <Button
           aria-label={
-            audioEnabled ? "Mute voice replies" : "Enable voice replies"
+            audioEnabled ? "Mute assistant audio" : "Enable assistant audio"
           }
           aria-pressed={audioEnabled}
           onClick={handleAudioChange}
