@@ -35,35 +35,3 @@ from this repository; fork PRs never receive the token. The current OAuth CLI
 session can plan/apply resources but cannot create project tokens (`Not Authorized`).
 Do not substitute the broader personal OAuth credential to bypass that boundary.
 The ordinary application CI still typechecks this definition without credentials.
-
-## Application CD
-
-`.github/workflows/deploy.yml` deploys application changes pushed to `main`,
-independently of the Checks workflow. It also supports **Run workflow** on `main`.
-Application or deployment-script changes deploy all three services. This keeps
-production consistent if GitHub replaces a queued run with a newer main push.
-Documentation-only pushes do not enter the deployment queue. Deployments run one at a time, and API migrations and readiness
-must succeed before the worker and web are deployed. Every deployment is polled
-by its returned ID until Railway reports `SUCCESS`; a queued build is insufficient.
-
-Configure these GitHub Actions repository settings once:
-
-- Variables `RAILWAY_PROJECT_ID` and `RAILWAY_PRODUCTION_ENVIRONMENT_ID` select the
-  project and its production environment.
-- Secret `RAILWAY_PRODUCTION_TOKEN` must contain a Railway **project token scoped
-  to production**. Create it in the project's Settings / Tokens, then add it at
-  `https://github.com/HeraldoArman/tara/settings/secrets/actions`.
-
-The project/environment variables are configured. Deployment remains blocked
-until the production token is supplied: the current Railway OAuth session can
-deploy but cannot create project tokens. The workflow reports the missing secret
-before installing the CLI or uploading code. Never use a personal OAuth token as
-a substitute.
-
-Railway's native GitHub connection currently rejects this repository with
-`User does not have access to the repo`; source repo/branch values in the
-infrastructure definition alone do not activate push deployments. The GitHub
-Actions workflow uploads the checkout directly and does not need that connection.
-Use one CD mechanism if native GitHub autodeploy is enabled later to avoid
-duplicate releases. The infrastructure-plan workflow remains separate and does
-not deploy application code.

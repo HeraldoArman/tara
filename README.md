@@ -130,12 +130,6 @@ proxy. Migrations run once in API pre-deploy. Runtime secrets are never web Dock
 build arguments. See the parent workspace's `docs/deployment.md` and the
 [Railway configuration](.railway/README.md).
 
-Production CD is defined in `.github/workflows/deploy.yml`: pushes to `main`
-deploy all three web/API/worker services and wait for Railway `SUCCESS`.
-It requires the production-scoped `RAILWAY_PRODUCTION_TOKEN` repository secret;
-see the [CD setup](.railway/README.md#application-cd). Deployment does not wait for
-the separate Checks workflow.
-
 Owners create and assign work from **Create job** in the work queue or
 **Create job from this SOP** on a published procedure. Select a published version
 and an active technician (or yourself); the assigned account then sees
