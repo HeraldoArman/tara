@@ -134,9 +134,11 @@ Owners create and assign work from **Create job** in the work queue or
 **Create job from this SOP** on a published procedure. Select a published version
 and an active technician (or yourself); the assigned account then sees
 **Start video session** in its queue. **Start bench camera** connects the assistant
-and publishes the camera to LiveKit in one action. Microphone access starts only
-after **Ask TARA**; text consultation remains available if microphone access is
-denied. Technician accounts cannot create or reassign jobs.
+and publishes the camera to LiveKit in one action, then enables voice listening.
+Use **Pause listening** or **Resume listening** to control the microphone, and
+**Enable speaker** to restore audio replies. Text consultation remains available
+if microphone access is denied. Correct work stays quiet; recorded mistakes can
+trigger a spoken correction. Technician accounts cannot create or reassign jobs.
 
 Use the controlled administrative CLI, documented in the parent workspace's
 `docs/admin-operations.md`, to provision organization users or bulk-import work

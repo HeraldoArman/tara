@@ -2,6 +2,7 @@
 import {
   createLocalVideoTrack,
   type LocalVideoTrack,
+  RemoteAudioTrack,
   Room,
   RoomEvent,
   Track,
@@ -24,6 +25,7 @@ export function useRunSession(initialRun: Run) {
   const [microphone, setMicrophone] = useState(false);
   const [muted, setMuted] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [audioReady, setAudioReady] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [checking, setChecking] = useState(false);
   const [presentation, setPresentation] = useState<Record<
@@ -35,6 +37,7 @@ export function useRunSession(initialRun: Run) {
   const cameraTrack = useRef<LocalVideoTrack | null>(null);
   const video = useRef<HTMLVideoElement | null>(null);
   const audioElements = useRef<HTMLMediaElement[]>([]);
+  const audioTracks = useRef(new Map<string, RemoteAudioTrack>());
   const muteRef = useRef(false);
   const audioBlockedRef = useRef<boolean>(false);
   const mounted = useRef<boolean>(true);
@@ -43,6 +46,7 @@ export function useRunSession(initialRun: Run) {
   const cameraGeneration = useRef(0);
   const connecting = useRef<Promise<Room | null> | null>(null);
   const startingCamera = useRef<Promise<boolean> | null>(null);
+  const startingSession = useRef<Promise<boolean> | null>(null);
   const activeAction = useRef<symbol | null>(null);
   const updateAudioBlocked = useCallback((blocked: boolean) => {
     audioBlockedRef.current = blocked;
@@ -50,12 +54,92 @@ export function useRunSession(initialRun: Run) {
       setAudioBlocked(blocked);
     }
   }, []);
+  const applyMuted = useCallback((value: boolean) => {
+    muteRef.current = value;
+    if (mounted.current) {
+      setMuted(value);
+    }
+    for (const element of audioElements.current) {
+      element.muted = value;
+    }
+  }, []);
+  const attachAudio = useCallback(
+    (active: Room, track: RemoteAudioTrack) => {
+      if (!mounted.current || room.current !== active) {
+        return;
+      }
+      const key = track.sid ?? track.mediaStreamTrack.id;
+      track.setVolume(1);
+      const previous = audioTracks.current.get(key);
+      if (previous === track && track.attachedElements.length > 0) {
+        for (const element of track.attachedElements) {
+          element.volume = 1;
+          element.muted = muteRef.current;
+          if (!element.isConnected) {
+            document.body.append(element);
+          }
+        }
+        return;
+      }
+      if (previous) {
+        const detached = previous.detach();
+        for (const element of detached) {
+          element.remove();
+        }
+        audioElements.current = audioElements.current.filter(
+          (element) => !detached.includes(element)
+        );
+      }
+      const element = track.attach();
+      element.volume = 1;
+      element.muted = muteRef.current;
+      audioTracks.current.set(key, track);
+      audioElements.current.push(element);
+      document.body.append(element);
+      setAudioReady(audioTracks.current.size);
+      element.play().catch(() => {
+        if (
+          mounted.current &&
+          room.current === active &&
+          audioTracks.current.get(key) === track
+        ) {
+          updateAudioBlocked(true);
+          setError(
+            "Audio playback is blocked. Select Enable speaker to hear replies."
+          );
+        }
+      });
+    },
+    [updateAudioBlocked]
+  );
+  const reconcileAudio = useCallback(
+    (active: Room) => {
+      if (!mounted.current || room.current !== active) {
+        return;
+      }
+      const participant = active.remoteParticipants.get(worker.current);
+      if (!participant) {
+        return;
+      }
+      for (const publication of participant.audioTrackPublications.values()) {
+        if (!publication.isSubscribed) {
+          publication.setSubscribed(true);
+        }
+        publication.setEnabled(true);
+        if (publication.track instanceof RemoteAudioTrack) {
+          attachAudio(active, publication.track);
+        }
+      }
+    },
+    [attachAudio]
+  );
   const unlockAudio = useCallback(async (): Promise<void> => {
     const active = room.current;
     if (!active || muteRef.current) {
       return;
     }
     try {
+      reconcileAudio(active);
       // Start synchronously within the click/submit gesture, before any RPC awaits.
       await active.startAudio();
       if (room.current === active) {
@@ -65,7 +149,7 @@ export function useRunSession(initialRun: Run) {
       if (mounted.current && room.current === active) {
         updateAudioBlocked(true);
         setError(
-          "Audio playback is blocked. Select Enable assistant audio to hear replies."
+          "Audio playback is blocked. Select Enable speaker to hear replies."
         );
       }
     } finally {
@@ -76,7 +160,7 @@ export function useRunSession(initialRun: Run) {
         }
       }
     }
-  }, [updateAudioBlocked]);
+  }, [reconcileAudio, updateAudioBlocked]);
   const updateConnection = useCallback((value: string) => {
     connectionRef.current = value;
     if (mounted.current) {
@@ -112,11 +196,13 @@ export function useRunSession(initialRun: Run) {
           element.remove();
         }
         audioElements.current = [];
+        audioTracks.current.clear();
         updateAudioBlocked(false);
         updateConnection("disconnected");
         if (mounted.current) {
           setMicrophone(false);
           setChecking(false);
+          setAudioReady(0);
         }
         target?.localParticipant
           .getTrackPublication(Track.Source.Microphone)
@@ -192,6 +278,9 @@ export function useRunSession(initialRun: Run) {
         );
       }
       const value = parseWorkerResponse(response);
+      if (typeof value.muted === "boolean") {
+        applyMuted(value.muted);
+      }
       const candidate = (value.snapshot ?? value.run ?? value) as Run;
       if (candidate.id && Array.isArray(candidate.steps)) {
         apply(candidate);
@@ -203,7 +292,7 @@ export function useRunSession(initialRun: Run) {
       }
       return value;
     },
-    [apply, refresh, unlockAudio]
+    [apply, applyMuted, refresh, unlockAudio]
   );
   const connect = useCallback((): Promise<Room | null> => {
     if (!mounted.current) {
@@ -263,20 +352,34 @@ export function useRunSession(initialRun: Run) {
             if (
               ownsRoom() &&
               participant.identity === credentials.workerIdentity &&
-              track.kind === Track.Kind.Audio
+              track instanceof RemoteAudioTrack
             ) {
-              const element = track.attach();
-              element.muted = muteRef.current;
-              audioElements.current.push(element);
-              document.body.append(element);
-              element.play().catch(() => {
-                if (ownsRoom()) {
-                  updateAudioBlocked(true);
-                  setError(
-                    "Audio playback is blocked. Select Enable assistant audio to hear replies."
-                  );
-                }
-              });
+              attachAudio(active, track);
+            }
+          }
+        );
+        active.on(RoomEvent.TrackPublished, (publication, participant) => {
+          if (
+            ownsRoom() &&
+            participant.identity === credentials.workerIdentity &&
+            publication.kind === Track.Kind.Audio
+          ) {
+            publication.setSubscribed(true);
+            publication.setEnabled(true);
+            reconcileAudio(active);
+          }
+        });
+        active.on(
+          RoomEvent.TrackSubscriptionFailed,
+          (trackSid, participant) => {
+            if (
+              ownsRoom() &&
+              participant.identity === credentials.workerIdentity &&
+              participant.audioTrackPublications.has(trackSid)
+            ) {
+              setError(
+                "The assistant audio stream could not be received. Select Enable speaker or reconnect the video session."
+              );
             }
           }
         );
@@ -285,12 +388,17 @@ export function useRunSession(initialRun: Run) {
             return;
           }
           const detached = track.detach();
+          const key = track.sid ?? track.mediaStreamTrack.id;
+          if (audioTracks.current.get(key) === track) {
+            audioTracks.current.delete(key);
+          }
           for (const element of detached) {
             element.remove();
           }
           audioElements.current = audioElements.current.filter(
             (element) => !detached.includes(element)
           );
+          setAudioReady(audioTracks.current.size);
         });
         active.on(
           RoomEvent.DataReceived,
@@ -308,6 +416,7 @@ export function useRunSession(initialRun: Run) {
               fatal: () => {
                 releaseRoom(active).catch(showRoomError);
               },
+              muted: applyMuted,
               present: setPresentation,
               reload: () => {
                 reload().catch(showRoomError);
@@ -355,6 +464,7 @@ export function useRunSession(initialRun: Run) {
           )
             .then((restored) => {
               if (restored) {
+                reconcileAudio(active);
                 updateConnection("connected");
               }
             })
@@ -385,6 +495,21 @@ export function useRunSession(initialRun: Run) {
           return null;
         }
         apply(snapshot);
+        reconcileAudio(active);
+        const audioState = parseWorkerResponse(
+          await active.localParticipant.performRpc({
+            destinationIdentity: credentials.workerIdentity,
+            method: "assistant.mute",
+            payload: JSON.stringify({ muted: muteRef.current }),
+            responseTimeout: 15_000,
+          })
+        );
+        if (!ownsRoom()) {
+          return null;
+        }
+        if (typeof audioState.muted === "boolean") {
+          applyMuted(audioState.muted);
+        }
         updateConnection("connected");
         return active;
       } catch (e) {
@@ -402,7 +527,16 @@ export function useRunSession(initialRun: Run) {
     });
     connecting.current = pending;
     return pending;
-  }, [apply, releaseRoom, stopCamera, updateAudioBlocked, updateConnection]);
+  }, [
+    apply,
+    applyMuted,
+    attachAudio,
+    reconcileAudio,
+    releaseRoom,
+    stopCamera,
+    updateAudioBlocked,
+    updateConnection,
+  ]);
   const startCamera = useCallback((): Promise<boolean> => {
     if (startingCamera.current) {
       return startingCamera.current.then(() => cameraTrack.current !== null);
@@ -552,7 +686,7 @@ export function useRunSession(initialRun: Run) {
   const consultation = useCallback(async () => {
     const active = room.current;
     if (!active || connectionRef.current !== "connected") {
-      setError("Connect the assistant before activating Ask TARA.");
+      setError("Connect the assistant before enabling voice listening.");
       return;
     }
     if (current.current.interactionMode === "consultation") {
@@ -582,19 +716,48 @@ export function useRunSession(initialRun: Run) {
       }
     }
   }, [action, deactivateConsultation, unlockAudio]);
+  const enableAudio = useCallback(async (): Promise<void> => {
+    applyMuted(false);
+    setError("");
+    // Resume playback in the original gesture, even if the worker's mute state was stale.
+    const playback = unlockAudio();
+    await action("assistant.mute", { muted: false });
+    await playback;
+  }, [action, applyMuted, unlockAudio]);
   const toggleMute = useCallback(async () => {
-    const next = audioBlockedRef.current ? false : !muteRef.current;
-    muteRef.current = next;
-    setMuted(next);
-    for (const element of audioElements.current) {
-      element.muted = next;
+    if (audioBlockedRef.current || muteRef.current) {
+      await enableAudio();
+      return;
     }
-    const playback = next ? null : unlockAudio();
-    await action("assistant.mute", { muted: next });
-    if (playback) {
-      await playback;
+    applyMuted(true);
+    await action("assistant.mute", { muted: true });
+  }, [action, applyMuted, enableAudio]);
+  const startSession = useCallback((): Promise<boolean> => {
+    if (startingSession.current) {
+      return startingSession.current;
     }
-  }, [action, unlockAudio]);
+    const start = async () => {
+      const started = await startCamera();
+      if (!started || !mounted.current || current.current.status !== "active") {
+        return started;
+      }
+      await enableAudio();
+      if (
+        mounted.current &&
+        current.current.interactionMode !== "consultation"
+      ) {
+        await consultation();
+      }
+      return true;
+    };
+    const pending = start().finally(() => {
+      if (startingSession.current === pending) {
+        startingSession.current = null;
+      }
+    });
+    startingSession.current = pending;
+    return pending;
+  }, [consultation, enableAudio, startCamera]);
   useEffect(() => {
     apply(initialRun);
   }, [apply, initialRun]);
@@ -605,6 +768,7 @@ export function useRunSession(initialRun: Run) {
       connectionGeneration.current += 1;
       connecting.current = null;
       startingCamera.current = null;
+      startingSession.current = null;
       activeAction.current = null;
       releaseRoom(room.current).catch(() => undefined);
     };
@@ -612,6 +776,7 @@ export function useRunSession(initialRun: Run) {
   return {
     action,
     audioBlocked,
+    audioReady,
     busy,
     camera,
     cameraBusy,
@@ -621,12 +786,14 @@ export function useRunSession(initialRun: Run) {
     connection,
     consultation,
     error,
+    enableAudio,
     microphone,
     muted,
     presentation,
     refresh,
     run,
     startCamera,
+    startSession,
     stopCamera,
     toggleCamera,
     toggleMute,
@@ -696,6 +863,7 @@ interface WorkerEventHandlers {
   checking: (active: boolean) => void;
   error: (message: string) => void;
   fatal: () => void;
+  muted: (value: boolean) => void;
   present: (payload: Record<string, unknown>) => void;
   reload: () => void;
   snapshot: (payload: Record<string, unknown>) => void;
@@ -725,6 +893,9 @@ function receiveWorkerEvent(
         handlers.snapshot(payload);
         return;
       case "agent.state":
+        if (typeof payload.muted === "boolean") {
+          handlers.muted(payload.muted);
+        }
         if (payload.mode === "silent") {
           // State events have no run version. Reload instead of overwriting a newer activation.
           handlers.reload();

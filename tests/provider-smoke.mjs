@@ -167,11 +167,13 @@ async function runSmoke() {
     await expect(confirm).toBeEnabled({ timeout });
     await expect(
       page.getByRole("textbox", { name: "Reply to TARA" })
-    ).toBeDisabled();
-    check(
-      await page.evaluate(() => window.__taraProviderSmoke.audioRequests === 0),
-      "The microphone was requested before explicit consultation."
-    );
+    ).toBeEnabled({ timeout });
+    await expect
+      .poll(
+        () => page.evaluate(() => window.__taraProviderSmoke.audioRequests),
+        { timeout }
+      )
+      .toBeGreaterThan(0);
     let records = await inspectFixture(runId);
     check(
       records.outputCount === 0 && records.assistantTurnCount === 0,
@@ -188,8 +190,8 @@ async function runSmoke() {
       "A correct attestation produced unsolicited agent output."
     );
     check(
-      await page.evaluate(() => window.__taraProviderSmoke.audioRequests === 0),
-      "Silent execution requested the microphone."
+      await page.evaluate(() => window.__taraProviderSmoke.audioRequests > 0),
+      "Starting the video session did not enable voice listening."
     );
     stage = "one synthetic-camera rejection with exact evidence bytes";
     await expect
@@ -249,7 +251,6 @@ async function runSmoke() {
     );
     stage = "explicit typed consultation";
     const beforeConsultation = await inspectFixture(runId);
-    await page.getByRole("button", { exact: true, name: "Ask TARA" }).click();
     const composer = page.getByRole("textbox", { name: "Reply to TARA" });
     await expect(composer).toBeEnabled({ timeout });
     await composer.fill(
@@ -279,9 +280,7 @@ async function runSmoke() {
     await composer.fill(
       "Use inspect_camera to look at the current camera frame and briefly describe what is visible. This is a question only; do not verify, retry or advance any procedure step."
     );
-    await page
-      .getByRole("button", { exact: true, name: "Send message" })
-      .click();
+    await page.getByRole("button", { exact: true, name: "Send reply" }).click();
     await expect
       .poll(async () => (await inspectFixture(runId)).cameraQuestions, {
         timeout,
@@ -308,9 +307,7 @@ async function runSmoke() {
     await composer.fill(
       "Use search_web for public official LiveKit Python OpenAI Realtime documentation. Show the source links; do not change any SOP step."
     );
-    await page
-      .getByRole("button", { exact: true, name: "Send message" })
-      .click();
+    await page.getByRole("button", { exact: true, name: "Send reply" }).click();
     await expect
       .poll(async () => (await inspectFixture(runId)).webSearches, { timeout })
       .toBeGreaterThan(beforeWeb.webSearches);
@@ -320,7 +317,7 @@ async function runSmoke() {
     await page.keyboard.press("Escape");
     stage = "return to silent and stop microphone";
     await page
-      .getByRole("button", { exact: true, name: "Return to silent mode" })
+      .getByRole("button", { exact: true, name: "Pause listening" })
       .click();
     await expect(composer).toBeDisabled({ timeout });
     await expect

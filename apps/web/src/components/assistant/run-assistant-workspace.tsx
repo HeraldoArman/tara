@@ -189,6 +189,16 @@ function LiveMediaControls({
         {paused ? "Resume" : "Pause"}
       </Button>
       <Button
+        disabled={!(canOperate && connected && open)}
+        onClick={session.enableAudio}
+        size="sm"
+        title="Enable TARa replies on your speaker"
+        variant="ghost"
+      >
+        <Volume2 aria-hidden="true" />
+        Enable speaker
+      </Button>
+      <Button
         aria-label={
           audioUnavailable ? "Enable assistant audio" : "Mute assistant audio"
         }
@@ -288,11 +298,23 @@ function RunConsultation({
   const consulting =
     connected && active && session.run.interactionMode === "consultation";
   const canAct = canOperate && connected && active && !session.busy;
-  let composerStatus = "Activate Ask TARA to type";
+  let composerStatus = connected
+    ? "Resume listening to speak or type"
+    : "Start the video session to speak or type";
   if (consulting) {
     composerStatus = session.microphone
       ? "Microphone on · you can speak or type"
       : "Microphone unavailable · type your question";
+  }
+  let speakerStatus = "Waiting for assistant audio";
+  if (session.audioReady > 0) {
+    speakerStatus = "Speaker connected";
+  }
+  if (session.audioBlocked) {
+    speakerStatus = "Enable speaker to hear replies";
+  }
+  if (session.muted) {
+    speakerStatus = "Speaker muted";
   }
   return (
     <>
@@ -303,9 +325,9 @@ function RunConsultation({
           variant="ghost"
         >
           <MessageCircle aria-hidden="true" />
-          {consulting ? "Return to silent mode" : "Ask TARA"}
+          {consulting ? "Pause listening" : "Resume listening"}
         </Button>
-        <span>{consulting ? "Consultation" : "Silent mode"}</span>
+        <span>{consulting ? "Listening" : "Listening paused"}</span>
       </div>
       <ReplyComposer
         disabled={!(canAct && consulting)}
@@ -330,6 +352,12 @@ function RunConsultation({
         )}
         {session.microphone ? "Microphone on" : "Microphone off"}
       </p>
+      {connected ? (
+        <p className="tara-live-microphone" role="status">
+          <Volume2 aria-hidden="true" />
+          {speakerStatus}
+        </p>
+      ) : null}
     </>
   );
 }
@@ -358,7 +386,7 @@ function RunGuidance({
       hint={
         paused
           ? "Your procedure is paused. Resume when you are ready."
-          : "Correct work stays quiet. Ask TARA whenever you need help."
+          : "Correct work stays quiet. Speak whenever you need help."
       }
       onViewSop={onViewSop}
       source={view.source}
@@ -468,7 +496,7 @@ export function RunAssistantWorkspace({
     }
   };
   const startCamera =
-    canOperate && view.active ? session.startCamera : undefined;
+    canOperate && view.active ? session.startSession : undefined;
   return (
     <main
       className="tara-assistant tara-workspace tara-live-workspace"
@@ -603,7 +631,7 @@ export function RunAssistantWorkspace({
           {!connected && canOperate && view.active ? (
             <Button
               disabled={session.cameraBusy || connection === "connecting"}
-              onClick={session.startCamera}
+              onClick={session.startSession}
               variant="outline"
             >
               Reconnect video session

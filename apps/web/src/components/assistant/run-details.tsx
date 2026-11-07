@@ -136,7 +136,8 @@ export function RunDetails({
         <div className="problem-form">
           <p className="lede">
             Start the bench camera to connect to TARa and share your work area.
-            Microphone access is requested only when you choose Ask TARA.
+            Camera and microphone access are requested when you start the
+            session. Use Pause listening to turn the microphone off.
           </p>
           <p>
             Follow the current instruction. Visual checkpoints use camera

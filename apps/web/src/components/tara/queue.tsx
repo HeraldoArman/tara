@@ -319,8 +319,9 @@ export function Readiness({ publishedCount }: { publishedCount?: number }) {
         ))}
       </div>
       <p className="readiness-note">
-        Microphone access is requested only when you activate Ask TARa. Realtime
-        availability is checked on connection.
+        Camera and microphone access are requested when you start a session. You
+        can pause listening at any time. Realtime availability is checked on
+        connection.
       </p>
     </section>
   );

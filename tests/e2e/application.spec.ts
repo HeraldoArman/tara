@@ -122,7 +122,7 @@ test("workspace stays silent when the realtime provider is unavailable", async (
     page.getByLabel("Reply to TARA", { exact: true })
   ).toBeDisabled();
   await expect(
-    page.getByRole("button", { exact: true, name: "Ask TARA" })
+    page.getByRole("button", { exact: true, name: "Resume listening" })
   ).toBeDisabled();
   await expect(page.getByText("Microphone off", { exact: true })).toBeVisible();
   await expect(page.locator("audio")).toHaveCount(0);
