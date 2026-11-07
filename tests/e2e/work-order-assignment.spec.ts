@@ -103,9 +103,11 @@ test("owner assigns a published SOP job that its technician can start", async ({
   expect((await runResponse.json()).workOrderId).toBe(created.id);
   await expect(page).toHaveURL(runPath);
   await expect(
-    page.getByRole("button", { exact: true, name: "Connect assistant" })
+    page.getByRole("button", { exact: true, name: "Start bench camera" })
   ).toBeEnabled();
-  await expect(page.getByLabel("Message TARa", { exact: true })).toBeDisabled();
+  await expect(
+    page.getByLabel("Reply to TARA", { exact: true })
+  ).toBeDisabled();
 });
 
 test("technician cannot create assignments through the page or direct API", async ({
