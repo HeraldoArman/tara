@@ -190,6 +190,13 @@ async def evaluation(
         query = query.where(Run.technician_id == actor.id)
     runs = (await session.scalars(query)).all()
     run_ids = [run.id for run in runs]
+    technician_ids = {run.technician_id for run in runs}
+    technicians = (
+        await session.scalars(
+            select(User).where(User.org_id == actor.org_id, User.id.in_(technician_ids))
+        )
+    ).all()
+    technician_names = {user.id: user.name for user in technicians}
     attempts = (
         await session.scalars(select(StepAttempt).where(StepAttempt.run_id.in_(run_ids)))
     ).all()
@@ -205,6 +212,42 @@ async def evaluation(
     outputs = (
         await session.scalars(select(AgentOutput).where(AgentOutput.run_id.in_(run_ids)))
     ).all()
+    measured_at = now()
+
+    def active_seconds(run: Run) -> int:
+        seconds = run.active_seconds
+        if run.status == "active" and run.resumed_at:
+            seconds += max(
+                0, int((measured_at - run.resumed_at.replace(tzinfo=UTC)).total_seconds())
+            )
+        return seconds
+
+    technician_metrics = []
+    for technician_id in sorted(technician_ids):
+        technician_runs = [run for run in runs if run.technician_id == technician_id]
+        technician_run_ids = {run.id for run in technician_runs}
+        technician_attempts = [a for a in attempts if a.run_id in technician_run_ids]
+        initial_attempts = [a for a in technician_attempts if a.number == 1]
+        technician_metrics.append(
+            {
+                "technicianId": technician_id,
+                "technicianName": technician_names.get(technician_id, "Unavailable technician"),
+                "runs": len(technician_runs),
+                "completed": sum(run.status == "complete" for run in technician_runs),
+                "partial": sum(run.status == "partial" for run in technician_runs),
+                "active": sum(run.status in {"active", "paused"} for run in technician_runs),
+                "attempts": len(technician_attempts),
+                "attemptedSteps": len(initial_attempts),
+                "firstPassRate": (
+                    sum(a.outcome in {"passed", "attested"} for a in initial_attempts)
+                    / len(initial_attempts)
+                    if initial_attempts
+                    else None
+                ),
+                "retakes": sum(a.number > 1 for a in technician_attempts),
+                "activeSeconds": sum(active_seconds(run) for run in technician_runs),
+            }
+        )
     first = [attempt for attempt in attempts if attempt.number == 1]
     first_pass = sum(a.outcome in {"passed", "attested"} for a in first)
     criterion_failures: dict[str, int] = {}
@@ -250,7 +293,10 @@ async def evaluation(
             {"criterionId": key, "count": count} for key, count in criterion_failures.items()
         ],
         "stepMetrics": step_metrics,
-        "activeSeconds": sum(r.active_seconds for r in runs),
+        "technicianMetrics": technician_metrics,
+        "technicianMetricsScope": "Technicians with runs matching the current authorization and filters.",
+        "firstPassRateScope": "First recorded attempt per run step, including unfinished runs.",
+        "activeSeconds": sum(active_seconds(run) for run in runs),
         "toolFailureRate": sum(t.status == "failed" for t in tools) / len(tools) if tools else None,
         "latency": [
             {"id": t.id, "tool": t.name, "durationMs": t.duration_ms, "status": t.status}

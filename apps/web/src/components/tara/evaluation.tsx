@@ -7,8 +7,8 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useState } from "react";
-import { api, errorMessage, humanize } from "@/lib/api";
-import type { Evaluation } from "@/lib/contracts";
+import { api, duration, errorMessage, humanize } from "@/lib/api";
+import type { Evaluation, TechnicianMetric } from "@/lib/contracts";
 export function EvaluationView({
   initialSummary,
   ownOnly = false,
@@ -144,7 +144,11 @@ export function EvaluationView({
                 <p>{table.description}</p>
               </div>
             </header>
-            <MetricTable value={data[table.key]} />
+            {table.key === "technicianMetrics" ? (
+              <TechnicianOutcomes metrics={data.technicianMetrics ?? []} />
+            ) : (
+              <MetricTable value={data[table.key]} />
+            )}
           </section>
         ))}
       </div>
@@ -153,6 +157,51 @@ export function EvaluationView({
         measures. These values come from recorded execution data.
       </p>
     </>
+  );
+}
+function TechnicianOutcomes({ metrics }: { metrics: TechnicianMetric[] }) {
+  if (!metrics.length) {
+    return <p className="inline-empty">No matching technician run history.</p>;
+  }
+  return (
+    <div className="table-scroll">
+      <table aria-label="Technician outcomes">
+        <thead>
+          <tr>
+            <th>Technician</th>
+            <th>Runs</th>
+            <th>Complete</th>
+            <th>Partial</th>
+            <th>Active</th>
+            <th>Attempts</th>
+            <th>Steps attempted</th>
+            <th>First-pass success</th>
+            <th>Retakes</th>
+            <th>Active time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {metrics.map((metric) => (
+            <tr key={metric.technicianId}>
+              <td>{metric.technicianName}</td>
+              <td>{metric.runs}</td>
+              <td>{metric.completed}</td>
+              <td>{metric.partial}</td>
+              <td>{metric.active}</td>
+              <td>{metric.attempts}</td>
+              <td>{metric.attemptedSteps}</td>
+              <td>
+                {metric.firstPassRate === null
+                  ? "—"
+                  : `${(metric.firstPassRate * 100).toFixed(1)}%`}
+              </td>
+              <td>{metric.retakes}</td>
+              <td>{duration(metric.activeSeconds)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 function MetricTable({ value }: { value: unknown }) {

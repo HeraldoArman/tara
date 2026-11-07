@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import type { ReferenceMedia, SopVersion } from "@/lib/contracts";
+import { objectRecord, referenceStepsForDraft } from "@/lib/draft-preview";
 
 export function ReferenceMediaCards({ items }: { items: ReferenceMedia[] }) {
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -76,14 +77,16 @@ export function SopReferenceUpload({
   onAttached: (saved: SopVersion) => void;
   disabled: boolean;
 }) {
-  const [stepId, setStepId] = useState(version.definition.steps[0]?.id ?? "");
+  const steps = referenceStepsForDraft(version.definition);
+  const [stepId, setStepId] = useState(steps?.[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const selected = version.definition.steps.find((step) => step.id === stepId);
+  const selected = steps?.find((step) => step.id === stepId) ?? steps?.[0];
   const source = selected?.sources[0];
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!source) {
+    const rawDefinition = objectRecord(version.definition);
+    if (!(source && steps && selected && rawDefinition)) {
       return;
     }
     setBusy(true);
@@ -91,7 +94,7 @@ export function SopReferenceUpload({
     try {
       const form = new FormData(event.currentTarget);
       form.set("heading", source.heading);
-      if (source.page) {
+      if (source.page !== undefined && source.page !== null) {
         form.set("page", String(source.page));
       }
       const media = await api<ReferenceMedia>(
@@ -99,13 +102,14 @@ export function SopReferenceUpload({
         { body: form, method: "POST" }
       );
       const definition = {
-        ...version.definition,
-        steps: version.definition.steps.map((step) =>
-          step.id === stepId
+        ...rawDefinition,
+        steps: steps.map((step) =>
+          step.id === selected.id
             ? {
                 ...step,
                 referenceMediaIds: [
-                  ...new Set([...(step.referenceMediaIds ?? []), media.id]),
+                  ...(step.referenceMediaIds ?? []),
+                  media.id,
                 ],
               }
             : step
@@ -122,6 +126,17 @@ export function SopReferenceUpload({
       setBusy(false);
     }
   };
+  if (!steps) {
+    return (
+      <div className="reference-upload">
+        <h3>Reference image attachment unavailable</h3>
+        <p>
+          Correct the step IDs, titles, source citations and reference lists
+          before attaching an image. Your draft remains editable below.
+        </p>
+      </div>
+    );
+  }
   return (
     <form className="reference-upload" onSubmit={submit}>
       <h3>
@@ -137,9 +152,9 @@ export function SopReferenceUpload({
         disabled={disabled || busy}
         id="reference-step"
         onChange={(event) => setStepId(event.target.value)}
-        value={stepId}
+        value={selected?.id ?? ""}
       >
-        {version.definition.steps.map((step) => (
+        {steps.map((step) => (
           <option key={step.id} value={step.id}>
             {step.title}
           </option>

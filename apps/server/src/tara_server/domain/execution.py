@@ -2,6 +2,7 @@ import hashlib
 import json
 from datetime import UTC, datetime
 
+from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +20,7 @@ from tara_server.db.models import (
     SOPMedia,
     SOPVersion,
     StepAttempt,
+    ToolCall,
     User,
     WorkOrder,
     now,
@@ -34,6 +36,7 @@ from tara_server.schemas import (
     IssueCommand,
     ResponseCommand,
     VisualAssessment,
+    normalize_sop_definition,
 )
 from tara_server.settings import get_settings
 from tara_server.telemetry import ALERTS, ATTEMPTS, CONSULTATIONS, IDEMPOTENT_REPLAYS, instrument
@@ -43,6 +46,29 @@ SUCCESS = {"ai_verified", "attested", "complete", "skipped"}
 
 def iso(value: datetime | None):
     return value.replace(tzinfo=value.tzinfo or UTC).isoformat() if value else None
+
+
+def published_definition(version: SOPVersion) -> dict:
+    try:
+        return normalize_sop_definition(version.definition)
+    except ValidationError:
+        raise DomainError(
+            "VALIDATION_FAILED",
+            "This published SOP is invalid. Ask an SOP manager to publish a corrected version.",
+            409,
+        ) from None
+
+
+def tool_call_json(call: ToolCall) -> dict:
+    return {
+        "id": call.id,
+        "name": call.name,
+        "durationMs": call.duration_ms,
+        "status": call.status,
+        "arguments": call.sanitized_arguments,
+        "result": call.result,
+        "createdAt": iso(call.created_at),
+    }
 
 
 def work_order_json(work: WorkOrder, run_id: str | None = None) -> dict:
@@ -154,7 +180,8 @@ async def get_run_snapshot(session: AsyncSession, actor: User, run_id: str) -> d
             select(RunStep).where(RunStep.run_id == run.id).order_by(RunStep.display_order)
         )
     ).all()
-    definitions = {step["id"]: step for step in version.definition["steps"]}
+    definition = published_definition(version)
+    definitions = {step["id"]: step for step in definition["steps"]}
     attempts = (
         await session.scalars(
             select(StepAttempt).where(StepAttempt.run_id == run.id).order_by(StepAttempt.created_at)
@@ -191,7 +218,14 @@ async def get_run_snapshot(session: AsyncSession, actor: User, run_id: str) -> d
         "currentStepId": run.current_step_id,
         "currentAttemptId": current_attempts[-1].id if current_attempts else None,
         "workOrder": work_order_json(work, run.id),
-        "sop": {"id": sop.id, "key": sop.key, "title": sop.title, "version": version.version},
+        "sop": {
+            "id": sop.id,
+            "key": sop.key,
+            "title": sop.title,
+            "version": definition["version"],
+            "scope": definition["scope"],
+            "prerequisites": definition["prerequisites"],
+        },
         "steps": [
             {
                 **definitions[step.step_id],
@@ -296,21 +330,22 @@ async def create_run(session: AsyncSession, actor: User, work_id: str) -> dict:
     version = await session.get(SOPVersion, work.sop_version_id)
     if not version or version.org_id != actor.org_id or version.status != "published":
         raise DomainError("VALIDATION_FAILED", "This work order requires a published SOP.", 409)
+    definition = published_definition(version)
     run = Run(
         id=uid(),
         org_id=actor.org_id,
         work_order_id=work.id,
         technician_id=actor.id,
         sop_version_id=version.id,
-        current_step_id=version.definition["steps"][0]["id"],
+        current_step_id=definition["steps"][0]["id"],
     )
     session.add(run)
     await session.flush()
-    for i, definition in enumerate(version.definition["steps"]):
+    for i, step_definition in enumerate(definition["steps"]):
         session.add(
             RunStep(
                 run_id=run.id,
-                step_id=definition["id"],
+                step_id=step_definition["id"],
                 display_order=i,
                 status="current" if i == 0 else "locked",
             )
@@ -408,7 +443,9 @@ async def current_step(session: AsyncSession, run: Run):
     if not step:
         raise DomainError("TRANSITION_REJECTED", "All steps are finished. Close the run.", 409)
     version = await required(session, SOPVersion, run.sop_version_id)
-    definition = next(item for item in version.definition["steps"] if item["id"] == step.step_id)
+    definition = next(
+        item for item in published_definition(version)["steps"] if item["id"] == step.step_id
+    )
     return step, definition
 
 
@@ -766,11 +803,22 @@ async def finish(session: AsyncSession, actor: User, run_id: str, command: Finis
             select(AuditEvent).where(AuditEvent.run_id == run.id).order_by(AuditEvent.created_at)
         )
     ).all()
+    calls = (
+        await session.scalars(
+            select(ToolCall)
+            .where(ToolCall.run_id == run.id)
+            .order_by(ToolCall.created_at, ToolCall.id)
+        )
+    ).all()
     snapshot.update(
         {
             "outcome": command.outcome,
             "reason": command.reason,
             "auditEvents": [audit_json(e) for e in events],
+            "toolCalls": [tool_call_json(call) for call in calls],
+            "toolHistoryScope": (
+                "Calls recorded before this report snapshot; the in-flight close call is excluded."
+            ),
         }
     )
     previous = await session.scalar(

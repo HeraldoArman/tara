@@ -26,16 +26,19 @@ const databaseUrl = process.env.TARA_SMOKE_DATABASE_URL;
 const fixtureInspector = `
 import asyncio, json, sys
 from sqlalchemy import select
-from tara_server.db.models import AgentOutput, TranscriptTurn
+from tara_server.db.models import AgentOutput, TranscriptTurn, ToolCall
 from tara_server.db.session import session_factory
 async def main():
     async with session_factory() as session:
         outputs = (await session.scalars(select(AgentOutput).where(AgentOutput.run_id == sys.argv[1]))).all()
         turns = (await session.scalars(select(TranscriptTurn).where(TranscriptTurn.run_id == sys.argv[1]))).all()
+        calls = (await session.scalars(select(ToolCall).where(ToolCall.run_id == sys.argv[1]))).all()
         print(json.dumps({
             "outputCount": len(outputs),
             "assistantTurnCount": sum(t.role == "assistant" for t in turns),
             "consultationOutputs": sum(o.mode == "consultation" for o in outputs),
+            "cameraQuestions": sum(c.name == "inspect_camera" and c.status == "completed" for c in calls),
+            "webSearches": sum(c.name == "search_web" and c.status == "completed" for c in calls),
         }))
 asyncio.run(main())
 `;
@@ -275,6 +278,51 @@ async function runSmoke() {
       groundedTerms,
       { timeout }
     );
+    stage = "read-only camera question through the actual model tool";
+    const beforeCameraQuestion = await snapshot();
+    const beforeCameraRecords = await inspectFixture(runId);
+    await composer.fill(
+      "Use inspect_camera to look at the current camera frame and briefly describe what is visible. This is a question only; do not verify, retry or advance any procedure step."
+    );
+    await page
+      .getByRole("button", { exact: true, name: "Send message" })
+      .click();
+    await expect
+      .poll(async () => (await inspectFixture(runId)).cameraQuestions, {
+        timeout,
+      })
+      .toBeGreaterThan(beforeCameraRecords.cameraQuestions);
+    await expect
+      .poll(async () => (await inspectFixture(runId)).consultationOutputs, {
+        timeout,
+      })
+      .toBeGreaterThan(beforeCameraRecords.consultationOutputs);
+    const afterCameraQuestion = await snapshot();
+    check(
+      afterCameraQuestion.version === beforeCameraQuestion.version &&
+        afterCameraQuestion.currentStepId ===
+          beforeCameraQuestion.currentStepId &&
+        afterCameraQuestion.steps[1].attempts.length ===
+          beforeCameraQuestion.steps[1].attempts.length &&
+        afterCameraQuestion.evidence.length ===
+          beforeCameraQuestion.evidence.length,
+      "A read-only camera question changed execution state or verification evidence."
+    );
+    stage = "real cited public web references through the actual model tool";
+    const beforeWeb = await inspectFixture(runId);
+    await composer.fill(
+      "Use search_web for public official LiveKit Python OpenAI Realtime documentation. Show the source links; do not change any SOP step."
+    );
+    await page
+      .getByRole("button", { exact: true, name: "Send message" })
+      .click();
+    await expect
+      .poll(async () => (await inspectFixture(runId)).webSearches, { timeout })
+      .toBeGreaterThan(beforeWeb.webSearches);
+    await expect(
+      page.locator('.tool-result a[href^="https://"]').first()
+    ).toBeVisible({ timeout });
+    await page.keyboard.press("Escape");
     stage = "return to silent and stop microphone";
     await page
       .getByRole("button", { exact: true, name: "Return to silent mode" })
@@ -301,7 +349,7 @@ async function runSmoke() {
       "Consultation mode changes were not audited."
     );
     process.stdout.write(
-      `${JSON.stringify({ checks: ["silent join", "silent correct attestation", "real-provider synthetic-frame rejection", "evidence SHA-256 linkage", "typed consultation", "microphone stops on silent"], evidenceId: evidence.id, runId, scope: "Synthetic camera plumbing smoke; no vision accuracy claim.", status: "passed" })}\n`
+      `${JSON.stringify({ checks: ["silent join", "silent correct attestation", "real-provider synthetic-frame rejection", "evidence SHA-256 linkage", "typed consultation", "read-only camera question", "real cited web search", "microphone stops on silent"], evidenceId: evidence.id, runId, scope: "Synthetic camera plumbing smoke; no vision accuracy claim.", status: "passed" })}\n`
     );
   } catch (error) {
     process.stderr.write(

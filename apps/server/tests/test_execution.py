@@ -288,3 +288,142 @@ async def test_open_deviation_after_final_step_blocks_full_close(workshop):
         )
     assert error.value.code == "TRANSITION_REJECTED"
     assert "deviations" in error.value.message
+
+
+async def test_report_freezes_recorded_tool_history_and_excludes_later_close_log(workshop):
+    from tara_server.db.models import ToolCall
+
+    session, users, snapshot = await started(workshop)
+    search = ToolCall(
+        run_id=snapshot["id"],
+        name="search_sop",
+        duration_ms=12,
+        status="completed",
+        sanitized_arguments={"panel": "sop"},
+        result={"status": "completed"},
+    )
+    session.add(search)
+    await session.flush()
+    partial = await execution.finish(
+        session,
+        users["technician"],
+        snapshot["id"],
+        command(snapshot, FinishCommand, outcome="partial", reason="Waiting for an approved part."),
+    )
+    before = await report_json(session, users["supervisor"], partial["reportId"])
+    assert [call["id"] for call in before["toolCalls"]] == [search.id]
+    assert before["snapshot"]["toolCalls"] == before["toolCalls"]
+    assert before["toolCalls"][0]["arguments"] == {"panel": "sop"}
+    assert before["toolCalls"][0]["durationMs"] == 12
+    assert "in-flight close call is excluded" in before["toolHistoryScope"]
+    session.add(
+        ToolCall(
+            run_id=snapshot["id"],
+            name="run.finish",
+            duration_ms=20,
+            status="completed",
+            sanitized_arguments={"outcome": "partial"},
+            result={"status": "completed"},
+        )
+    )
+    await session.flush()
+    after = await report_json(session, users["supervisor"], partial["reportId"])
+    assert after["toolCalls"] == before["toolCalls"]
+    assert after["snapshot"] == before["snapshot"]
+    assert after["digest"] == before["digest"]
+
+
+async def test_technician_metrics_use_real_names_attempts_and_authorized_filtered_runs(workshop):
+    from datetime import timedelta
+
+    from tara_server.db.models import User, WorkOrder, uid
+    from tara_server.domain.reports import evaluation
+
+    session, users, work = workshop
+    technician = users["technician"]
+    snapshot = await execution.create_run(session, technician, work.id)
+    snapshot = await execution.respond(
+        session,
+        technician,
+        snapshot["id"],
+        command(snapshot, ResponseCommand, response="not-confirmed"),
+    )
+    snapshot = await execution.respond(
+        session,
+        technician,
+        snapshot["id"],
+        command(snapshot, ResponseCommand, response="confirmed"),
+    )
+    run = await session.get(Run, snapshot["id"])
+    run.active_seconds = 10
+    run.resumed_at = now() - timedelta(seconds=60)
+    snapshot = await execution.finish(
+        session,
+        technician,
+        snapshot["id"],
+        command(snapshot, FinishCommand, outcome="partial", reason="Approved part unavailable."),
+    )
+    second = User(
+        id=uid(),
+        org_id=technician.org_id,
+        username="second-technician",
+        name="Second Technician",
+        role="technician",
+        active=True,
+        password_hash="unused",
+    )
+    session.add(second)
+    await session.flush()
+    second_work = WorkOrder(
+        org_id=technician.org_id,
+        reference="SECOND-001",
+        title="Second assigned inspection",
+        model=work.model,
+        serial="SECOND-ASSET",
+        issue="Test fixture inspection",
+        assigned_to=second.id,
+        sop_version_id=work.sop_version_id,
+    )
+    session.add(second_work)
+    await session.flush()
+    other = await execution.create_run(session, second, second_work.id)
+    while other["currentStepId"]:
+        step = next(s for s in other["steps"] if s["id"] == other["currentStepId"])
+        verification = step["verification"]
+        if verification["kind"] == "visual":
+            other = await visual(session, second, other)
+        else:
+            response = (
+                verification["passOptions"][0]
+                if verification["kind"] == "choice"
+                else verification["acceptedResponse"]
+            )
+            other = await execution.respond(
+                session, second, other["id"], command(other, ResponseCommand, response=response)
+            )
+    await execution.finish(
+        session, second, other["id"], command(other, FinishCommand, outcome="complete")
+    )
+    owner_summary = await evaluation(session, users["owner"])
+    metrics = {row["technicianId"]: row for row in owner_summary["technicianMetrics"]}
+    assert set(metrics) == {technician.id, second.id}
+    assert metrics[technician.id]["technicianName"] == technician.name
+    assert metrics[technician.id]["partial"] == 1
+    assert metrics[technician.id]["attempts"] == 2
+    assert metrics[technician.id]["attemptedSteps"] == 1
+    assert metrics[technician.id]["retakes"] == 1
+    assert metrics[technician.id]["firstPassRate"] == 0
+    assert metrics[technician.id]["activeSeconds"] >= 70
+    assert metrics[second.id]["technicianName"] == "Second Technician"
+    assert metrics[second.id]["completed"] == 1
+    assert metrics[second.id]["attempts"] == len(other["steps"])
+    assert metrics[second.id]["firstPassRate"] == 1
+    assert metrics[second.id]["retakes"] == 0
+    own_summary = await evaluation(session, technician)
+    assert [row["technicianId"] for row in own_summary["technicianMetrics"]] == [technician.id]
+    filtered = await evaluation(session, users["owner"], technician_id=second.id)
+    assert filtered["runs"] == 1
+    assert [row["technicianId"] for row in filtered["technicianMetrics"]] == [second.id]
+    unmatched = await evaluation(session, users["owner"], sop_id=uid())
+    assert unmatched["runs"] == 0
+    assert unmatched["technicianMetrics"] == []

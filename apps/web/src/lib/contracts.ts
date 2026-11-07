@@ -62,9 +62,30 @@ export interface AuditEvent {
   stepId?: string;
   type?: string;
 }
+export interface ToolCall {
+  arguments: Record<string, unknown>;
+  createdAt: string;
+  durationMs: number;
+  id: string;
+  name: string;
+  result: Record<string, unknown>;
+  status: string;
+}
+export interface ActivityPage {
+  hasMore: boolean;
+  items: AuditEvent[];
+  limit: number;
+  nextOffset: number | null;
+  offset: number;
+  toolCalls: ToolCall[];
+}
+export type SopSummary = PublicSchema<"SOPSummaryResponse"> & {
+  scope: string;
+  prerequisites: string[];
+};
 export type Run = Omit<
   PublicSchema<"RunResponse">,
-  "steps" | "deviations" | "escalations" | "alerts"
+  "steps" | "deviations" | "escalations" | "alerts" | "sop"
 > & {
   alerts: Alert[];
   steps: RunStep[];
@@ -72,6 +93,7 @@ export type Run = Omit<
   escalations: Issue[];
   reportId?: string | null;
   media?: ReferenceMedia[];
+  sop: SopSummary;
 };
 export type SopVersion = Omit<
   PublicSchema<"SOPVersionResponse">,
@@ -108,14 +130,27 @@ export interface Review {
 }
 export type Report = Omit<
   PublicSchema<"ReportResponse">,
-  "steps" | "deviations" | "escalations" | "auditEvents" | "reviews"
+  | "steps"
+  | "deviations"
+  | "escalations"
+  | "auditEvents"
+  | "reviews"
+  | "sop"
+  | "toolCalls"
 > & {
   steps: RunStep[];
   deviations: Issue[];
   escalations: Issue[];
   auditEvents: AuditEvent[];
   reviews: Review[];
-  snapshot?: Partial<Run> & { auditEvents?: AuditEvent[] };
+  sop: SopSummary;
+  toolCalls?: ToolCall[];
+  toolHistoryScope?: string;
+  snapshot?: Partial<Run> & {
+    auditEvents?: AuditEvent[];
+    toolCalls?: ToolCall[];
+    toolHistoryScope?: string;
+  };
 };
 export interface Part {
   currency?: string;
@@ -128,7 +163,22 @@ export interface Part {
   sku: string;
   stock?: number;
 }
-export type Evaluation = Schemas["EvaluationResponse"];
+export interface TechnicianMetric {
+  active: number;
+  activeSeconds: number;
+  attemptedSteps: number;
+  attempts: number;
+  completed: number;
+  firstPassRate: number | null;
+  partial: number;
+  retakes: number;
+  runs: number;
+  technicianId: string;
+  technicianName: string;
+}
+export type Evaluation = Schemas["EvaluationResponse"] & {
+  technicianMetrics: TechnicianMetric[];
+};
 export interface List<T> {
   items: T[];
 }

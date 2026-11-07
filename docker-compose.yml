@@ -52,7 +52,7 @@ services:
     environment:
       <<: *server-environment
       SOP_OPENAI_API_KEY: ${SOP_OPENAI_API_KEY:-}
-      SOP_MODEL: ${SOP_MODEL:-gpt-4.1}
+      SOP_MODEL: ${SOP_MODEL:-gpt-6.1-sol}
       DEMO_PASSWORD: ${DEMO_PASSWORD:-}
     ports:
       - "127.0.0.1:8000:8000"
@@ -81,7 +81,9 @@ services:
       SERVICE_ROLE: worker
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       REALTIME_MODEL: ${REALTIME_MODEL:-gpt-realtime-2.1}
-      VISION_MODEL: ${VISION_MODEL:-gpt-4.1}
+      VISION_MODEL: ${VISION_MODEL:-gpt-6.1-terra}
+      WEB_SEARCH_PROVIDER: ${WEB_SEARCH_PROVIDER:-openai}
+      WEB_SEARCH_MODEL: ${WEB_SEARCH_MODEL:-gpt-6-luna}
       WEB_SEARCH_API_KEY: ${WEB_SEARCH_API_KEY:-}
     depends_on:
       api:

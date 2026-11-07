@@ -11,8 +11,11 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { api, errorMessage } from "@/lib/api";
+import { ApiError, api, errorMessage } from "@/lib/api";
 import type { SopVersion } from "@/lib/contracts";
+import { objectRecord } from "@/lib/draft-preview";
+import { sopVersionPath } from "@/lib/sop-version-route";
+import { ProcedureRequirements } from "./procedure-requirements";
 import { ReferenceMediaCards, SopReferenceUpload } from "./reference-media";
 import { SourceDocument, ToolResults } from "./tool-results";
 import { Status } from "./ui";
@@ -20,24 +23,54 @@ import { Status } from "./ui";
 export function SopImport() {
   const router = useRouter();
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"" | "upload" | "retry">("");
   const [filename, setFilename] = useState("");
+  const [documentId, setDocumentId] = useState<string | null>(null);
+  const showFailure = (cause: unknown, fallbackId: string | null = null) => {
+    setError(errorMessage(cause));
+    const retainedId =
+      cause instanceof ApiError ? cause.details.documentId : null;
+    setDocumentId(
+      typeof retainedId === "string" && retainedId ? retainedId : fallbackId
+    );
+  };
+  const openDraft = (result: SopVersion) => {
+    router.push(sopVersionPath(result));
+  };
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setBusy(true);
+    setBusy("upload");
     setError("");
     try {
-      const result = await api<SopVersion>("/sops/imports", {
-        body: new FormData(event.currentTarget),
-        method: "POST",
-      });
-      router.push(
-        `/sops/${result.sopId ?? result.id}/versions/${result.version}`
+      openDraft(
+        await api<SopVersion>("/sops/imports", {
+          body: new FormData(event.currentTarget),
+          method: "POST",
+        })
       );
-    } catch (e) {
-      setError(errorMessage(e));
+    } catch (cause) {
+      showFailure(cause);
     } finally {
-      setBusy(false);
+      setBusy("");
+    }
+  };
+  const retry = async () => {
+    if (!documentId) {
+      return;
+    }
+    setBusy("retry");
+    setError("");
+    try {
+      openDraft(
+        await api<SopVersion>(
+          `/sops/imports/${encodeURIComponent(documentId)}/retry`,
+          { method: "POST" }
+        )
+      );
+    } catch (cause) {
+      showFailure(cause, documentId);
+    } finally {
+      setBusy("");
     }
   };
   return (
@@ -54,9 +87,14 @@ export function SopImport() {
         </span>
         <input
           accept=".md,.markdown,.txt,.pdf,text/plain,text/markdown,application/pdf"
+          disabled={!!busy}
           id="source-file"
           name="file"
-          onChange={(event) => setFilename(event.target.files?.[0]?.name ?? "")}
+          onChange={(event) => {
+            setFilename(event.target.files?.[0]?.name ?? "");
+            setDocumentId(null);
+            setError("");
+          }}
           required
           type="file"
         />
@@ -79,18 +117,45 @@ export function SopImport() {
             {error}
           </div>
         ) : null}
-        <button
-          className="button primary"
-          disabled={busy || !filename}
-          type="submit"
-        >
-          {busy ? (
-            <LoaderCircle className="spin" size={16} />
-          ) : (
-            <BookOpen size={16} />
-          )}{" "}
-          {busy ? "Extracting and creating draft…" : "Generate SOP draft"}
-        </button>
+        {documentId ? (
+          <div className="retained-source">
+            <p role="status">
+              Your source is saved. Retry draft generation without uploading the
+              document again.
+            </p>
+            <button
+              className="button primary"
+              disabled={!!busy}
+              onClick={retry}
+              type="button"
+            >
+              {busy === "retry" ? (
+                <LoaderCircle className="spin" size={16} />
+              ) : (
+                <BookOpen size={16} />
+              )}{" "}
+              {busy === "retry"
+                ? "Retrying draft generation…"
+                : "Retry draft generation"}
+            </button>
+            <p className="subtle-note">
+              Choose a different document to start another import.
+            </p>
+          </div>
+        ) : (
+          <button
+            className="button primary"
+            disabled={!!busy || !filename}
+            type="submit"
+          >
+            {busy ? (
+              <LoaderCircle className="spin" size={16} />
+            ) : (
+              <BookOpen size={16} />
+            )}{" "}
+            {busy ? "Extracting and creating draft…" : "Generate SOP draft"}
+          </button>
+        )}
       </div>
     </form>
   );
@@ -117,52 +182,60 @@ export function SopEditor({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<unknown>(null);
   const editable = canEdit && version.status === "draft";
+  const preview = objectRecord(version.definition);
+  const saveDraft = async () => {
+    const parsed: unknown = JSON.parse(definition);
+    const saved = await api<SopVersion>(`/sop-versions/${version.id}`, {
+      body: JSON.stringify({ definition: parsed }),
+      method: "PATCH",
+    });
+    setVersion(saved);
+    setDefinition(JSON.stringify(saved.definition, null, 2));
+    setErrors(saved.validationErrors ?? []);
+    return saved;
+  };
   const action = async (kind: string) => {
     setBusy(kind);
     setError("");
     setMessage("");
     try {
+      const saved = await saveDraft();
       if (kind === "save") {
-        const parsed: unknown = JSON.parse(definition);
-        const saved = await api<SopVersion>(`/sop-versions/${version.id}`, {
-          body: JSON.stringify({ definition: parsed }),
-          method: "PATCH",
-        });
-        setVersion(saved);
+        router.replace(sopVersionPath(saved));
         setMessage(
           "Draft saved. Validate all citations and transitions before publication."
         );
-      } else {
-        {
-          const parsed: unknown = JSON.parse(definition);
-          const saved = await api<SopVersion>(`/sop-versions/${version.id}`, {
-            body: JSON.stringify({ definition: parsed }),
-            method: "PATCH",
-          });
-          setVersion(saved);
-        }
-        const result = await api<Record<string, unknown>>(
-          `/sop-versions/${version.id}/${kind}`,
+        return;
+      }
+      if (kind === "publish") {
+        const published = await api<SopVersion>(
+          `/sop-versions/${saved.id}/publish`,
           { method: "POST" }
         );
-        const validation = result.errors ?? result.validationErrors;
-        setErrors(Array.isArray(validation) ? validation : []);
-        if (kind === "publish") {
-          setVersion({ ...version, status: "published" });
-          setMessage(
-            "Published. This version is immutable and available to new runs."
-          );
-          router.refresh();
-        } else {
-          setMessage(
-            Array.isArray(validation) && validation.length
-              ? "Review the validation results below."
-              : "Schema and business validation passed."
-          );
-        }
+        setVersion(published);
+        setDefinition(JSON.stringify(published.definition, null, 2));
+        setErrors(published.validationErrors ?? []);
+        router.replace(sopVersionPath(published));
+        setMessage(
+          "Published. This version is immutable and available to new runs."
+        );
+        router.refresh();
+        return;
       }
-    } catch (e) {
-      setError(errorMessage(e));
+      const result = await api<{
+        errors?: unknown[];
+        validationErrors?: unknown[];
+      }>(`/sop-versions/${saved.id}/validate`, { method: "POST" });
+      const validation = result.errors ?? result.validationErrors ?? [];
+      setErrors(validation);
+      router.replace(sopVersionPath(saved));
+      setMessage(
+        validation.length
+          ? "Review the validation results below."
+          : "Schema and business validation passed."
+      );
+    } catch (cause) {
+      setError(errorMessage(cause));
     } finally {
       setBusy("");
     }
@@ -199,6 +272,10 @@ export function SopEditor({
         </header>
         <div className="panel-body">
           <SourceDocument source={version.source} />
+          <ProcedureRequirements
+            prerequisites={preview?.prerequisites}
+            scope={preview?.scope}
+          />
           <ReferenceMediaCards items={version.media ?? []} />
           {editable ? (
             <SopReferenceUpload
@@ -208,6 +285,7 @@ export function SopEditor({
               onAttached={(saved) => {
                 setVersion(saved);
                 setDefinition(JSON.stringify(saved.definition, null, 2));
+                setErrors(saved.validationErrors ?? []);
               }}
               version={version}
             />

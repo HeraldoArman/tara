@@ -11,6 +11,7 @@ import {
 import { errorMessage } from "@/lib/api";
 import type { List, Sop, User } from "@/lib/contracts";
 import { currentUser, serverApi } from "@/lib/server-api";
+import { sopVersionPath } from "@/lib/sop-version-route";
 export default async function SopsPage() {
   let data: { user: User; sops: List<Sop> };
   try {
@@ -50,7 +51,7 @@ export default async function SopsPage() {
                 <div className="sop-versions">
                   {sop.versions.map((version) => (
                     <Link
-                      href={`/sops/${sop.id}/versions/${version.version}`}
+                      href={sopVersionPath({ ...version, sopId: sop.id })}
                       key={version.id}
                     >
                       <span>Version {version.version}</span>

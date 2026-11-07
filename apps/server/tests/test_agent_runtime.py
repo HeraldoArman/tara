@@ -1,17 +1,106 @@
 import asyncio
 import io
 import json
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from livekit.agents import ToolError
 from PIL import Image
 
 from tara_server.agent.bridge import DomainBridge
-from tara_server.agent.worker import WorkerRuntime
+from tara_server.agent.vision import CapturedFrame
+from tara_server.agent.worker import WorkerRuntime, build_tools
 from tara_server.domain import execution
 from tara_server.errors import DomainError
 from tara_server.schemas import Command, ResponseCommand, VisualAssessment
+
+
+def tools_by_name(value):
+    return {tool.info.name: tool for tool in build_tools(value)}
+
+
+@pytest.mark.asyncio
+async def test_model_tool_preserves_safe_domain_recovery(runtime):
+    value, _ = runtime
+    value.policy.activate()
+    value.bridge.snapshot.side_effect = DomainError(
+        "FORBIDDEN", "This run is no longer assigned to you.", 403
+    )
+    with pytest.raises(ToolError, match="FORBIDDEN: This run is no longer assigned to you"):
+        await tools_by_name(value)["get_run_context"]()
+
+
+@pytest.mark.asyncio
+async def test_camera_question_is_consultation_only_and_has_no_execution_side_effect(runtime):
+    value, _ = runtime
+    value.capture = AsyncMock(return_value=CapturedFrame(b"one-fresh-frame", datetime.now(UTC)))
+    value.verifier.describe = AsyncMock(
+        return_value={
+            "answer": "A test card is visible.",
+            "limitations": [],
+            "model": "test-vision",
+            "responseId": "observation-1",
+        }
+    )
+    tool = tools_by_name(value)["inspect_camera"]
+    with pytest.raises(ToolError, match="CONSULTATION_REQUIRED"):
+        await tool(question="What is visible?")
+    value.capture.assert_not_awaited()
+    value.policy.activate()
+    result = await tool(question="What is visible?")
+    assert result["purpose"] == "consultation_only"
+    assert result["stepVerified"] is False
+    assert result["answer"] == "A test card is visible."
+    value.verifier.describe.assert_awaited_once()
+    value.bridge.execute.assert_not_awaited()
+    assert value.bridge.audit.await_args.args[0] == "consultation.camera_inspected"
+
+
+@pytest.mark.asyncio
+async def test_silent_mode_can_cancel_a_running_camera_question(runtime):
+    value, handlers = runtime
+    value.policy.activate()
+    entered, release = asyncio.Event(), asyncio.Event()
+    value.capture = AsyncMock(return_value=CapturedFrame(b"one-frame", datetime.now(UTC)))
+
+    async def describe(*_args):
+        entered.set()
+        await release.wait()
+        return {
+            "answer": "This answer is now stale.",
+            "limitations": [],
+            "model": "test",
+            "responseId": "question-2",
+        }
+
+    value.verifier.describe = describe
+    pending = asyncio.create_task(
+        tools_by_name(value)["inspect_camera"](question="What is visible?")
+    )
+    await entered.wait()
+    response = json.loads(await handlers["assistant.deactivate"](invocation({})))
+    assert "error" not in response
+    value.session.interrupt.assert_called_once()
+    release.set()
+    with pytest.raises(ToolError, match="CONSULTATION_REQUIRED"):
+        await pending
+    value.bridge.audit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_model_tool_validation_failure_does_not_expose_payload(runtime):
+    value, _ = runtime
+    value.policy.activate()
+    context = SimpleNamespace(
+        disallow_interruptions=Mock(), function_call=SimpleNamespace(call_id="test-call")
+    )
+    with pytest.raises(ToolError, match="VALIDATION_FAILED: Check the current step"):
+        await tools_by_name(value)["submit_step_response"](
+            context=context, expected_step_id="next-step", response=""
+        )
+    value.bridge.execute.assert_not_awaited()
 
 
 @pytest.fixture

@@ -1953,6 +1953,14 @@
             },
             "type": "array",
             "title": "Latency"
+          },
+          "technicianMetrics": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Technicianmetrics"
           }
         },
         "additionalProperties": true,
@@ -2198,6 +2206,25 @@
             },
             "type": "array",
             "title": "Auditevents"
+          },
+          "toolCalls": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Toolcalls"
+          },
+          "toolHistoryScope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toolhistoryscope"
           },
           "reviews": {
             "items": {
@@ -2531,6 +2558,18 @@
           "version": {
             "type": "string",
             "title": "Version"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "prerequisites": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Prerequisites"
           }
         },
         "additionalProperties": true,

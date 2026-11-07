@@ -5,6 +5,7 @@ import contextlib
 import json
 import logging
 from datetime import UTC, datetime
+from functools import wraps
 from uuid import uuid4
 
 import httpx
@@ -16,6 +17,7 @@ from livekit.agents import (
     JobContext,
     JobRequest,
     RunContext,
+    ToolError,
     cli,
     function_tool,
     room_io,
@@ -27,6 +29,7 @@ from pydantic import BaseModel, ValidationError
 
 from tara_server.agent.bridge import DomainBridge
 from tara_server.agent.policy import SYSTEM_INSTRUCTIONS, SpeechPolicy
+from tara_server.agent.search import search_references
 from tara_server.agent.vision import CapturedFrame, StillImageVerifier, encode_frame
 from tara_server.errors import DomainError
 from tara_server.schemas import (
@@ -39,6 +42,23 @@ from tara_server.schemas import (
 from tara_server.settings import get_settings
 
 logger = logging.getLogger("tara.worker")
+
+
+def model_tool(function):
+    """Preserve safe domain recovery messages at the LiveKit model-tool boundary."""
+
+    @wraps(function)
+    async def guarded(*args, **kwargs):
+        try:
+            return await function(*args, **kwargs)
+        except DomainError as error:
+            raise ToolError(f"{error.code}: {error.message}") from None
+        except (ValidationError, ValueError, TypeError):
+            raise ToolError(
+                "VALIDATION_FAILED: Check the current step and use its permitted inputs."
+            ) from None
+
+    return function_tool(guarded)
 
 
 def instructions_for(snapshot: dict) -> str:
@@ -416,6 +436,62 @@ class WorkerRuntime:
             )
         return await self.apply(result, from_model_tool=from_model_tool)
 
+    async def inspect_camera(self, question: str) -> dict:
+        """Answer one visual question without creating an attempt or verification."""
+        self.policy.require_consultation()
+        if not isinstance(question, str) or not question.strip() or len(question) > 2000:
+            raise DomainError(
+                "VALIDATION_FAILED", "Ask a visual question of up to 2000 characters.", 422
+            )
+        if self.lock.locked():
+            raise DomainError(
+                "CHECK_IN_PROGRESS", "Wait for the current camera action to finish.", 409
+            )
+        try:
+            async with self.lock:
+                snapshot = await self.bridge.snapshot()
+                frame = await self.capture()
+                current_step: dict = next(
+                    (step for step in snapshot["steps"] if step["id"] == snapshot["currentStepId"]),
+                    {},
+                )
+                result = await self.verifier.describe(
+                    frame,
+                    question,
+                    {
+                        "sop": snapshot.get("sop", {}),
+                        "currentStep": {
+                            key: current_step.get(key)
+                            for key in ("title", "instruction", "verification")
+                        },
+                    },
+                )
+                self.policy.require_consultation()
+                latest = await self.bridge.snapshot()
+                if latest["version"] != snapshot["version"]:
+                    raise DomainError(
+                        "STALE_RUN", "The run changed. Ask again using the current step.", 409
+                    )
+                await self.bridge.audit(
+                    "consultation.camera_inspected",
+                    {
+                        "frameSha256": frame.sha256,
+                        "capturedAt": frame.captured_at.isoformat(),
+                        "model": result["model"],
+                        "responseId": result["responseId"],
+                    },
+                )
+                return {
+                    **result,
+                    "frameSha256": frame.sha256,
+                    "capturedAt": frame.captured_at.isoformat(),
+                    "purpose": "consultation_only",
+                    "stepVerified": False,
+                }
+        finally:
+            # Reconsider an initial check postponed by this bounded read-only request.
+            self.spawn(self.automatic_check())
+
     async def dispatch(self, method: str, payload: dict, *, from_model_tool: bool = False) -> dict:
         if not self.ready and method != "assistant.deactivate":
             raise DomainError(
@@ -503,16 +579,25 @@ class WorkerRuntime:
                         if not isinstance(payload, dict):
                             raise ValueError("Expected an object")
                         # One short mutation or visual request per run, never an unbounded queue.
-                        if self.lock.locked():
+                        if method_name in {
+                            "assistant.activate",
+                            "assistant.deactivate",
+                            "assistant.mute",
+                        }:
+                            result = await self.bridge.logged_tool(
+                                method_name, payload, lambda: self.dispatch(method_name, payload)
+                            )
+                        elif self.lock.locked():
                             raise DomainError(
                                 "CHECK_IN_PROGRESS", "Wait for the current action to finish.", 409
                             )
-                        async with self.lock:
-                            result = await self.bridge.logged_tool(
-                                method_name,
-                                payload,
-                                lambda: self.dispatch(method_name, payload),
-                            )
+                        else:
+                            async with self.lock:
+                                result = await self.bridge.logged_tool(
+                                    method_name,
+                                    payload,
+                                    lambda: self.dispatch(method_name, payload),
+                                )
                         encoded = json.dumps(result)
                         if len(encoded.encode()) > 14_000:
                             return json.dumps(
@@ -584,13 +669,13 @@ def build_tools(runtime: WorkerRuntime):
                 method, payload, lambda: runtime.dispatch(method, payload)
             )
 
-    @function_tool
+    @model_tool
     async def get_run_context() -> dict:
         """Recover the authoritative current step and legal actions for this assigned run."""
         runtime.policy.require_consultation()
         return await runtime.bridge.snapshot()
 
-    @function_tool
+    @model_tool
     async def search_sop(query: str) -> dict:
         """Find up to three approved cited excerpts in the pinned SOP only."""
         runtime.policy.require_consultation()
@@ -600,13 +685,21 @@ def build_tools(runtime: WorkerRuntime):
         await runtime.emit("ui.present", {"panel": "sop", **result})
         return result
 
-    @function_tool
+    @model_tool
+    async def inspect_camera(question: str) -> dict:
+        """Observe one fresh camera frame to answer a question without verifying a step."""
+        runtime.policy.require_consultation()
+        return await runtime.bridge.logged_tool(
+            "inspect_camera", {}, lambda: runtime.inspect_camera(question)
+        )
+
+    @model_tool
     async def submit_visual_check(context: RunContext, expected_step_id: str) -> dict:
         """Capture one fresh camera frame and submit a criterion assessment through the server."""
         context.disallow_interruptions()
         return await execute("run.retry", await runtime.model_command(expected_step_id, context))
 
-    @function_tool
+    @model_tool
     async def submit_step_response(
         context: RunContext, expected_step_id: str, response: str
     ) -> dict:
@@ -617,7 +710,7 @@ def build_tools(runtime: WorkerRuntime):
             {**await runtime.model_command(expected_step_id, context), "response": response},
         )
 
-    @function_tool
+    @model_tool
     async def record_issue(
         context: RunContext,
         expected_step_id: str,
@@ -637,7 +730,7 @@ def build_tools(runtime: WorkerRuntime):
             },
         )
 
-    @function_tool
+    @model_tool
     async def lookup_parts(query: str) -> dict:
         """Look up real organization inventory by part name or SKU."""
         runtime.policy.require_consultation()
@@ -647,47 +740,18 @@ def build_tools(runtime: WorkerRuntime):
         await runtime.emit("ui.present", {"panel": "parts", **result})
         return result
 
-    @function_tool
+    @model_tool
     async def search_web(query: str) -> dict:
         """Find supplementary web references only; approved SOP always takes precedence."""
         runtime.policy.require_consultation()
-        settings = get_settings()
-        if not settings.web_search_api_key:
-            raise DomainError(
-                "PROVIDER_UNAVAILABLE",
-                "Web search is not configured. Use approved SOP references.",
-                503,
-            )
-        try:
-            response = await runtime.http.get(
-                settings.web_search_url,
-                params={"q": query[:200], "count": 3},
-                headers={"X-Subscription-Token": settings.web_search_api_key},
-                timeout=5.0,
-            )
-            response.raise_for_status()
-            items = response.json().get("web", {}).get("results", [])[:3]
-            result = {
-                "items": [
-                    {
-                        "title": item["title"],
-                        "url": item["url"],
-                        "snippet": item.get("description", "")[:1500],
-                    }
-                    for item in items
-                ],
-                "retrievedAt": datetime.now(UTC).isoformat(),
-                "supplementary": True,
-            }
-            await runtime.bridge.audit("web_search.completed", {"resultCount": len(items)})
-            await runtime.emit("ui.present", {"panel": "references", **result})
-            return result
-        except (httpx.HTTPError, ValueError, KeyError) as error:
-            raise DomainError(
-                "PROVIDER_UNAVAILABLE", "Web search is unavailable. Use the SOP or escalate.", 503
-            ) from error
+        result = await runtime.bridge.logged_tool(
+            "search_web", {}, lambda: search_references(runtime.http, get_settings(), query[:200])
+        )
+        await runtime.bridge.audit("web_search.completed", {"resultCount": len(result["items"])})
+        await runtime.emit("ui.present", {"panel": "references", **result})
+        return result
 
-    @function_tool
+    @model_tool
     async def present_ui(panel: str) -> dict:
         """Open an authorized SOP, activity, parts, evidence, or report panel."""
         runtime.policy.require_consultation()
@@ -698,7 +762,7 @@ def build_tools(runtime: WorkerRuntime):
         await runtime.emit("ui.present", {"panel": panel})
         return {"panel": panel, "presented": True}
 
-    @function_tool
+    @model_tool
     async def control_run(
         context: RunContext, expected_step_id: str, action: str, reason: str = ""
     ) -> dict:
@@ -713,7 +777,7 @@ def build_tools(runtime: WorkerRuntime):
             },
         )
 
-    @function_tool
+    @model_tool
     async def finish_run(
         context: RunContext, expected_step_id: str | None, outcome: str, reason: str = ""
     ) -> dict:
@@ -731,6 +795,7 @@ def build_tools(runtime: WorkerRuntime):
     return [
         get_run_context,
         search_sop,
+        inspect_camera,
         submit_visual_check,
         submit_step_response,
         record_issue,

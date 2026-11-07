@@ -14,7 +14,7 @@ from tara_server.db.models import SOP, SOPChunk, SOPDocument, SOPMedia, SOPVersi
 from tara_server.db.required import required
 from tara_server.domain.execution import audit
 from tara_server.errors import DomainError
-from tara_server.schemas import SOPDefinition
+from tara_server.schemas import SOPDefinition, normalize_sop_definition
 from tara_server.settings import get_settings
 from tara_server.storage import get_storage
 from tara_server.telemetry import instrument
@@ -50,6 +50,8 @@ def validate_definition(definition: dict, sections: list[dict]) -> list[str]:
             errors.append(f"{step.id}: choices and accepted options must be explicit and valid.")
         if step.on_pass.action != "next":
             errors.append(f"{step.id}: ordered v1 procedures require next on pass.")
+        if step.on_fail.action not in {"retry", "hold", "escalate"}:
+            errors.append(f"{step.id}: failure must retry, hold or escalate.")
     if parsed.steps[-1].verification.kind != "finalization":
         errors.append("The last step must explicitly finalize the procedure.")
     return errors
@@ -151,6 +153,8 @@ async def decompose(sections: list[dict]) -> SOPDefinition:
                 headers={"Authorization": f"Bearer {settings.sop_openai_api_key}"},
                 json={
                     "model": settings.sop_model,
+                    # Source-grounded extraction uses the lowest supported Sol effort.
+                    "reasoning": {"effort": "low"},
                     "store": False,
                     "instructions": instructions,
                     "input": json.dumps(
@@ -164,6 +168,8 @@ async def decompose(sections: list[dict]) -> SOPDefinition:
             )
             response.raise_for_status()
             data = response.json()
+            if data.get("status") != "completed":
+                raise ValueError("SOP decomposition did not complete")
             output = "".join(
                 part.get("text", "")
                 for item in data.get("output", [])
@@ -259,16 +265,23 @@ async def version_json(session: AsyncSession, version: SOPVersion):
     media = (await session.scalars(select(SOPMedia).where(SOPMedia.version_id == version.id))).all()
     from tara_server.domain.media import media_json
 
+    try:
+        definition = normalize_sop_definition(version.definition)
+        display_version = definition["version"]
+    except ValidationError:
+        # Invalid drafts stay editable and expose validation errors to the manager.
+        definition = version.definition
+        display_version = version.version
     return {
         "media": [media_json(item) for item in media],
         "id": version.id,
         "sopId": sop.id,
         "key": sop.key,
         "title": sop.title,
-        "version": version.version,
+        "version": display_version,
         "versionNumber": version.version_number,
         "status": version.status,
-        "definition": version.definition,
+        "definition": definition,
         "validationErrors": validate_definition(version.definition, sections),
         "source": {
             "id": source.id,
@@ -293,9 +306,17 @@ async def publish(session: AsyncSession, actor: User, version_id: str):
         )
     document = await required(session, SOPDocument, version.document_id)
     errors = validate_definition(version.definition, document.sections if document else [])
+    if errors:
+        raise DomainError(
+            "VALIDATION_FAILED",
+            "Resolve draft validation errors before publication.",
+            422,
+            {"errors": errors},
+        )
+    definition = normalize_sop_definition(version.definition)
     media = (await session.scalars(select(SOPMedia).where(SOPMedia.version_id == version.id))).all()
     known_media = {item.id for item in media}
-    for step in version.definition.get("steps", []):
+    for step in definition["steps"]:
         if not set(step.get("referenceMediaIds", [])).issubset(known_media):
             errors.append(f"{step.get('id')}: reference media must belong to this exact version.")
     if errors:
@@ -305,6 +326,8 @@ async def publish(session: AsyncSession, actor: User, version_id: str):
             422,
             {"errors": errors},
         )
+    version.definition = definition
+    version.version = definition["version"]
     version.status = "published"
     version.published_at = now()
     for section in document.sections:
