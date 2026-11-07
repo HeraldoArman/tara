@@ -157,8 +157,8 @@ function usePhoneConnection() {
         resolution: {
           aspectRatio: 16 / 9,
           frameRate: 15,
-          height: 720,
-          width: 1280,
+          height: 1080,
+          width: 1920,
         },
       });
       if (!owns()) {
@@ -206,8 +206,8 @@ function usePhoneConnection() {
         resolution: {
           aspectRatio: 16 / 9,
           frameRate: 15,
-          height: 720,
-          width: 1280,
+          height: 1080,
+          width: 1920,
         },
       });
       if (mounted.current && generation.current === current) {

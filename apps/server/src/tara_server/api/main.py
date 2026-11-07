@@ -62,6 +62,7 @@ from tara_server.domain.reports import (
     report_json,
     review_report,
 )
+from tara_server.domain.run_assets import register_asset
 from tara_server.domain.sop_intelligence import intelligence
 from tara_server.domain.sop_sessions import start_sop_session
 from tara_server.domain.sops import (
@@ -90,6 +91,7 @@ from tara_server.schemas import (
     ReportListResponse,
     ReportResponse,
     Review,
+    RunAssetRegistration,
     RunResponse,
     SopIntelligenceResponse,
     SOPListResponse,
@@ -316,6 +318,16 @@ async def run_snapshot(
     session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await get_run_snapshot(session, actor, run_id)
+
+
+@app.patch("/api/v1/runs/{run_id}/asset", response_model=RunResponse)
+async def register_run_asset(
+    run_id: str,
+    body: RunAssetRegistration,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await register_asset(session, actor, run_id, body)
 
 
 @app.post("/api/v1/runs/{run_id}/camera-pairing", response_model=CameraPairingCreatedResponse)

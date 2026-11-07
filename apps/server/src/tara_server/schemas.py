@@ -18,6 +18,11 @@ class AssetInput(Schema):
     serial: str = Field(min_length=1, max_length=200)
 
 
+class RunAssetRegistration(Schema):
+    model: str = Field(min_length=1, max_length=200)
+    serial: str = Field(min_length=1, max_length=200)
+
+
 class WorkOrderInput(Schema):
     reference: str = Field(min_length=1, max_length=100)
     title: str = Field(min_length=1, max_length=300)

@@ -164,6 +164,17 @@ pairings last up to eight hours and can be revoked or replaced from the laptop.
 The QR secret stays in the URL fragment and only its hash is stored. Ending the
 session revokes the pairing. No pairing is needed to use the laptop camera.
 
+**Read model label** reads visible model/serial text from a fresh camera frame and
+shows the transcription and any unreadable fields. Hold the underside label close
+and steady, with enough light. You can also ask TARa to read the label. Camera
+capture requests 1080p and preserves detail for text reading. For a session started
+directly from an SOP, review and save its missing model/serial before comparing
+identity against the procedure; existing assigned-job identifiers remain fixed.
+Label reading does not complete a step. Use **Check current frame**, or **Retest
+current frame** for a held visual step, to perform a fresh verification. Warnings
+remain until the required criteria are satisfied; unreadable text is reported as
+unclear rather than a confirmed model mismatch.
+
 SOP intelligence loads saved source passages and configured checks from the API.
 Its visual checkpoint labels describe the procedure's verification method, not
 a completed verification. Owners and SOP managers can import a source into a

@@ -56,9 +56,40 @@ import {
 import { useRunSession } from "@/lib/use-run-session";
 import { LiveCamera } from "./live-camera";
 import { PairPhoneCamera } from "./pair-phone-camera";
+import { RunAssetLabel } from "./run-asset-label";
 import { RunDetails } from "./run-details";
 
 type RunSession = ReturnType<typeof useRunSession>;
+
+function HeldStepAction({
+  enabled,
+  session,
+  visual,
+}: {
+  enabled: boolean;
+  session: RunSession;
+  visual: boolean;
+}) {
+  const retest = async () => {
+    if (!enabled || (visual && !session.camera)) {
+      return;
+    }
+    const result = await session.action("run.control", { action: "retest" });
+    if (result && visual) {
+      await session.action("run.retry");
+    }
+  };
+  return (
+    <Button
+      disabled={!enabled || (visual && !session.camera) || session.checking}
+      onClick={retest}
+      variant="outline"
+    >
+      <RefreshCw aria-hidden="true" />
+      {visual ? "Retest current frame" : "Retest this step"}
+    </Button>
+  );
+}
 
 function StepActions({
   allStepsComplete,
@@ -91,14 +122,11 @@ function StepActions({
   }
   if (step.status === "held") {
     return (
-      <Button
-        disabled={!enabled}
-        onClick={() => session.action("run.control", { action: "retest" })}
-        variant="outline"
-      >
-        <RefreshCw aria-hidden="true" />
-        Retest this step
-      </Button>
+      <HeldStepAction
+        enabled={enabled}
+        session={session}
+        visual={step.verification.kind === "visual"}
+      />
     );
   }
   if (step.verification.kind === "visual") {
@@ -664,15 +692,22 @@ export function RunAssistantWorkspace({
             view={view}
           />
           {canOperate && view.active ? (
-            <PairPhoneCamera
-              disabled={Boolean(busy) || session.cameraBusy}
-              onConnect={session.startPhoneSession}
-              onPairingChange={session.refreshPhonePairing}
-              onUseLaptop={session.useLaptopCamera}
-              pairing={session.phonePairing}
-              phoneConnected={session.phoneConnected}
-              runId={run.id}
-            />
+            <>
+              <RunAssetLabel
+                canOperate={canOperate}
+                run={run}
+                session={session}
+              />
+              <PairPhoneCamera
+                disabled={Boolean(busy) || session.cameraBusy}
+                onConnect={session.startPhoneSession}
+                onPairingChange={session.refreshPhonePairing}
+                onUseLaptop={session.useLaptopCamera}
+                pairing={session.phonePairing}
+                phoneConnected={session.phoneConnected}
+                runId={run.id}
+              />
+            </>
           ) : null}
         </aside>
       </div>

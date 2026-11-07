@@ -175,6 +175,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs/{run_id}/asset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Register Run Asset */
+        patch: operations["register_run_asset_api_v1_runs__run_id__asset_patch"];
+        trace?: never;
+    };
     "/api/v1/runs/{run_id}/camera-pairing": {
         parameters: {
             query?: never;
@@ -946,6 +963,13 @@ export interface components {
              */
             note: string;
         };
+        /** RunAssetRegistration */
+        RunAssetRegistration: {
+            /** Model */
+            model: string;
+            /** Serial */
+            serial: string;
+        };
         /** RunResponse */
         RunResponse: {
             /** Id */
@@ -1610,6 +1634,43 @@ export interface operations {
             };
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_run_asset_api_v1_runs__run_id__asset_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunAssetRegistration"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

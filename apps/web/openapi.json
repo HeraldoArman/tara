@@ -458,6 +458,71 @@
         }
       }
     },
+    "/api/v1/runs/{run_id}/asset": {
+      "patch": {
+        "summary": "Register Run Asset",
+        "operationId": "register_run_asset_api_v1_runs__run_id__asset_patch",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "tara_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tara Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunAssetRegistration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/runs/{run_id}/camera-pairing": {
       "post": {
         "summary": "Create Run Camera Pairing",
@@ -2963,6 +3028,29 @@
           "decision"
         ],
         "title": "Review"
+      },
+      "RunAssetRegistration": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Model"
+          },
+          "serial": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Serial"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "model",
+          "serial"
+        ],
+        "title": "RunAssetRegistration"
       },
       "RunResponse": {
         "properties": {

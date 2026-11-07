@@ -500,7 +500,10 @@ class WorkerRuntime:
         frame = None
         try:
             frame = await self.capture()
-            assessment = await self.verifier.assess(frame, step)
+            assessment = await self.verifier.assess(
+                frame,
+                {**step, "expectedAsset": snapshot.get("workOrder", {}).get("asset", {})},
+            )
             if isinstance(frame, SelectedCameraFrame):
                 await self.require_camera_identity(frame.camera_identity)
             result = await self.bridge.execute(
@@ -552,6 +555,7 @@ class WorkerRuntime:
                     question,
                     {
                         "sop": snapshot.get("sop", {}),
+                        "expectedAsset": snapshot.get("workOrder", {}).get("asset", {}),
                         "currentStep": {
                             key: current_step.get(key)
                             for key in ("title", "instruction", "verification")
@@ -586,6 +590,32 @@ class WorkerRuntime:
             # Reconsider an initial check postponed by this bounded read-only request.
             self.spawn(self.automatic_check())
 
+    async def read_label(self) -> dict:
+        """Read visible identity text without changing the asset or step record."""
+        snapshot = await self.bridge.snapshot()
+        if snapshot["status"] != "active":
+            raise DomainError(
+                "TRANSITION_REJECTED", "Resume the session before reading a camera label.", 409
+            )
+        frame = await self.capture()
+        result = await self.verifier.read_label(frame)
+        if isinstance(frame, SelectedCameraFrame):
+            await self.require_camera_identity(frame.camera_identity)
+        latest = await self.bridge.snapshot()
+        if latest["version"] != snapshot["version"] or latest["status"] != "active":
+            raise DomainError(
+                "STALE_RUN", "The run changed. Read the label again using a fresh frame.", 409
+            )
+        await self.bridge.audit(
+            "camera.label_read",
+            {
+                "frameSha256": frame.sha256,
+                "visionModel": result["visionModel"],
+                "responseId": result["responseId"],
+            },
+        )
+        return {"label": result, "snapshot": latest}
+
     async def dispatch(self, method: str, payload: dict, *, from_model_tool: bool = False) -> dict:
         if not self.ready and method != "assistant.deactivate":
             raise DomainError(
@@ -593,6 +623,8 @@ class WorkerRuntime:
             )
         if method == "run.get_context":
             return await self.bridge.snapshot()
+        if method == "assistant.read_label":
+            return await self.read_label()
         if method == "assistant.mute":
             if not isinstance(payload.get("muted"), bool):
                 raise DomainError("VALIDATION_FAILED", "Muted must be a boolean.", 422)
@@ -653,6 +685,7 @@ class WorkerRuntime:
             "assistant.deactivate",
             "assistant.text",
             "assistant.mute",
+            "assistant.read_label",
             "run.get_context",
             "run.retry",
             "run.respond",
@@ -694,15 +727,16 @@ class WorkerRuntime:
                                     payload,
                                     lambda: self.dispatch(method_name, payload),
                                 )
-                        encoded = json.dumps(result)
+                        encoded = json.dumps(result, ensure_ascii=False)
                         if len(encoded.encode()) > 14_000:
-                            return json.dumps(
-                                {
-                                    "refreshRequired": True,
-                                    "version": result.get("version"),
-                                    "reportId": result.get("reportId"),
-                                }
-                            )
+                            summary = {
+                                "refreshRequired": True,
+                                "version": result.get("version"),
+                                "reportId": result.get("reportId"),
+                            }
+                            if method_name == "assistant.read_label":
+                                summary["label"] = result["label"]
+                            return json.dumps(summary, ensure_ascii=False)
                         return encoded
                     except DomainError as error:
                         return json.dumps(
@@ -963,8 +997,7 @@ async def entrypoint(ctx: JobContext):
             publication.kind == rtc.TrackKind.KIND_VIDEO
             and publication.source == rtc.TrackSource.SOURCE_CAMERA
             and (
-                participant.identity == identity
-                or participant.identity.startswith("tara-camera-")
+                participant.identity == identity or participant.identity.startswith("tara-camera-")
             )
         ):
             runtime.spawn(runtime.camera_subscribed(participant.identity))
