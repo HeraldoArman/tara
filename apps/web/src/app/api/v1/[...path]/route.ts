@@ -10,6 +10,30 @@ const RESPONSE_HEADERS = [
   "x-request-id",
 ];
 
+function normalizedOrigin(value: string): string {
+  const origin = new URL(value.trim());
+  if (
+    !["http:", "https:"].includes(origin.protocol) ||
+    origin.username ||
+    origin.password ||
+    origin.pathname !== "/" ||
+    origin.search ||
+    origin.hash ||
+    origin.hostname.includes("*")
+  ) {
+    throw new Error("Configure exact HTTP(S) application origins.");
+  }
+  return origin.origin;
+}
+
+function allowedOrigins(): Set<string> {
+  return new Set(
+    [ENV.APP_ORIGIN, ...(ENV.ADDITIONAL_APP_ORIGINS ?? "").split(",")]
+      .filter((origin) => origin.trim())
+      .map(normalizedOrigin)
+  );
+}
+
 function failure(code: string, message: string, status: number): Response {
   return Response.json(
     { error: { code, details: {}, message, requestId: crypto.randomUUID() } },
@@ -57,7 +81,7 @@ async function proxy(
   if (MUTATIONS.has(request.method)) {
     const origin = request.headers.get("origin");
     if (
-      origin !== new URL(ENV.APP_ORIGIN).origin ||
+      !allowedOrigins().has(origin ?? "") ||
       request.headers.get("sec-fetch-site") === "cross-site"
     ) {
       return failure("FORBIDDEN", "Request origin is not allowed.", 403);

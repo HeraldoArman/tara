@@ -235,3 +235,90 @@ async def test_supervisor_resolution_bumps_run_version_and_stale_actions_fail(ap
             ),
         )
     assert error.value.code == "STALE_RUN"
+
+
+@pytest.fixture
+async def multi_origin_client(api_client, monkeypatch):
+    from fastapi.middleware.cors import CORSMiddleware
+
+    settings = get_settings()
+    monkeypatch.setattr(settings, "app_origin", "https://tara.heraldoarman.com")
+    monkeypatch.setattr(
+        settings, "additional_app_origins", "https://web-production-4f08e.up.railway.app"
+    )
+    cors = next(item for item in app.user_middleware if item.cls is CORSMiddleware)
+    monkeypatch.setitem(cors.kwargs, "allow_origins", settings.allowed_origins)
+    # A production process constructs its CORS middleware after loading these settings.
+    app.middleware_stack = None
+    yield api_client
+    app.middleware_stack = None
+
+
+@pytest.mark.parametrize(
+    "origin", ["https://tara.heraldoarman.com", "https://web-production-4f08e.up.railway.app"]
+)
+async def test_trusted_domains_support_cookie_login_session_mutation_and_logout(
+    multi_origin_client, origin
+):
+    client, _session, _users, work = multi_origin_client
+    headers = {"Origin": origin}
+    logged_in = await client.post(
+        "/api/v1/auth/login",
+        headers=headers,
+        json={"username": "technician", "password": "test-password-2026"},
+    )
+    assert logged_in.status_code == 200
+    assert logged_in.headers["access-control-allow-origin"] == origin
+    assert logged_in.headers["access-control-allow-credentials"] == "true"
+    assert "HttpOnly" in logged_in.headers["set-cookie"]
+    assert (await client.get("/api/v1/auth/me", headers=headers)).json()["role"] == "technician"
+    started = await client.post(f"/api/v1/work-orders/{work.id}/runs", headers=headers)
+    assert started.status_code == 200
+    assert started.headers["access-control-allow-origin"] == origin
+    assert started.json()["interactionMode"] == "silent"
+    logged_out = await client.post("/api/v1/auth/logout", headers=headers)
+    assert logged_out.status_code == 200
+    assert (await client.get("/api/v1/auth/me", headers=headers)).status_code == 401
+
+
+async def test_unknown_origins_and_missing_origin_cannot_mutate_cookie_session(multi_origin_client):
+    client, _session, users, work = multi_origin_client
+    client.cookies.set(COOKIE_NAME, token_for(users["technician"]))
+    for origin in [
+        "https://tara.heraldoarman.com.evil.example",
+        "https://unknown.example",
+        "http://tara.heraldoarman.com",
+        "https://tara.heraldoarman.com:444",
+        "null",
+    ]:
+        denied = await client.post(
+            f"/api/v1/work-orders/{work.id}/runs", headers={"Origin": origin}
+        )
+        assert denied.status_code == 403
+        assert denied.json()["error"]["code"] == "FORBIDDEN"
+        assert "access-control-allow-origin" not in denied.headers
+    missing = await client.post("/api/v1/auth/logout")
+    assert missing.status_code == 403
+    assert (await client.get("/api/v1/auth/me")).status_code == 200
+
+
+async def test_cors_preflight_allows_only_the_exact_configured_domains(multi_origin_client):
+    client, _session, _users, _work = multi_origin_client
+    for origin in get_settings().allowed_origins:
+        response = await client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": origin,
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+        assert response.status_code == 200
+        assert response.headers["access-control-allow-origin"] == origin
+        assert response.headers["access-control-allow-credentials"] == "true"
+    denied = await client.options(
+        "/api/v1/auth/login",
+        headers={"Origin": "https://unknown.example", "Access-Control-Request-Method": "POST"},
+    )
+    assert denied.status_code == 400
+    assert "access-control-allow-origin" not in denied.headers

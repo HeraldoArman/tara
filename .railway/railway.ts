@@ -44,6 +44,7 @@ export default defineRailway((ctx) => {
     },
     env: {
       ...sharedServer,
+      ADDITIONAL_APP_ORIGINS: preserve(),
       APP_ORIGIN: preserve(),
       COOKIE_SECURE: "true",
       JWT_EXPIRE_HOURS: "8",
@@ -99,7 +100,9 @@ export default defineRailway((ctx) => {
     deploy: {
       restartPolicyMaxRetries: 5,
     },
+    domains: [{ domain: "tara.heraldoarman.com", port: 3001 }],
     env: {
+      ADDITIONAL_APP_ORIGINS: preserve(),
       // biome-ignore lint/suspicious/noTemplateCurlyInString: Railway expands the private service reference.
       API_INTERNAL_URL: "http://${{api.RAILWAY_PRIVATE_DOMAIN}}:8000",
       APP_ORIGIN: preserve(),

@@ -85,7 +85,7 @@ settings = get_settings()
 app = FastAPI(title="TARa execution API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.app_origin],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["Content-Type"],
@@ -98,8 +98,8 @@ async def security_headers(request: Request, call_next):
     request.state.request_id = uid()
     if request.method in {"POST", "PATCH", "DELETE", "PUT"}:
         origin = request.headers.get("origin")
-        if (origin and origin != settings.app_origin) or (
-            COOKIE_NAME in request.cookies and origin != settings.app_origin
+        if (origin and origin not in settings.allowed_origins) or (
+            COOKIE_NAME in request.cookies and origin not in settings.allowed_origins
         ):
             return JSONResponse(
                 {

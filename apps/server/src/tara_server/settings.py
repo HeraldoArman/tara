@@ -1,9 +1,38 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def normalize_origin(value: str) -> str:
+    """Accept one HTTP(S) origin, without credentials, paths, queries or wildcards."""
+    try:
+        parsed = urlsplit(value.strip())
+        host = parsed.hostname
+        port = parsed.port
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not host
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.path not in {"", "/"}
+            or parsed.query
+            or parsed.fragment
+            or any(character in host for character in ("*", "%", "\\"))
+        ):
+            raise ValueError("Invalid origin")
+        host = host.encode("idna").decode("ascii").lower()
+        authority = f"[{host}]" if ":" in host else host
+        if port is not None and port != {"http": 80, "https": 443}[parsed.scheme]:
+            authority += f":{port}"
+        return f"{parsed.scheme}://{authority}"
+    except (ValueError, UnicodeError):
+        raise ValueError(
+            "Configure exact HTTP(S) app origins without credentials, paths, queries or wildcards"
+        ) from None
 
 
 class Settings(BaseSettings):
@@ -15,6 +44,7 @@ class Settings(BaseSettings):
     jwt_issuer: str = "tara"
     jwt_expire_hours: int = 8
     app_origin: str = "http://localhost:3001"
+    additional_app_origins: str = ""
     cookie_secure: bool = False
     demo_password: str = ""
     livekit_url: str = ""
@@ -41,6 +71,23 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 10 * 1024 * 1024
     max_pdf_pages: int = 80
     max_source_characters: int = 120_000
+
+    @field_validator("app_origin")
+    @classmethod
+    def normalize_app_origin(cls, value: str) -> str:
+        return normalize_origin(value)
+
+    @field_validator("additional_app_origins")
+    @classmethod
+    def normalize_additional_origins(cls, value: str) -> str:
+        return ",".join(normalize_origin(origin) for origin in value.split(",") if origin.strip())
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        configured = [self.app_origin, *self.additional_app_origins.split(",")]
+        return list(
+            dict.fromkeys(normalize_origin(origin) for origin in configured if origin.strip())
+        )
 
     @field_validator("database_url")
     @classmethod
