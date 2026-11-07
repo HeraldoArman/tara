@@ -192,6 +192,12 @@ checks the keyboard model and target key without requiring a serial number.
 Import, review and publish that revision to use it in new sessions; existing
 published procedures and their sessions keep their original requirements.
 
+The live assistant receives the selected published SOP's ordered steps and the
+session's known device details. It can explain the procedure without a separate
+work order or registered identifiers. Large procedures include a step outline
+and retrieve further details from that same saved SOP. Identity matching remains
+required only when the current published check calls for it.
+
 SOP intelligence loads saved source passages and configured checks from the API.
 Its visual checkpoint labels describe the procedure's verification method, not
 a completed verification. Owners and SOP managers can import a source into a
