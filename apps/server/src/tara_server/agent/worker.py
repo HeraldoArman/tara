@@ -83,12 +83,35 @@ def model_tool(function):
 
 
 def procedure_context(snapshot: dict) -> dict:
-    """Provide the selected procedure and known job, without execution history or media."""
+    """Provide the selected procedure, known job and latest feedback without full history or media."""
     steps = [
         {key: item[key] for key in PROCEDURE_STEP_FIELDS if key in item}
         for item in snapshot["steps"]
     ]
     work = snapshot.get("workOrder", {})
+    current_step = next(
+        (item for item in snapshot["steps"] if item["id"] == snapshot["currentStepId"]), {}
+    )
+    attempt = next(
+        (
+            item
+            for item in current_step.get("attempts", [])
+            if item["id"] == snapshot.get("currentAttemptId")
+        ),
+        None,
+    )
+    feedback = None
+    if attempt:
+        result = attempt.get("result", {})
+        serialized = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
+        feedback = {
+            "id": attempt["id"],
+            "kind": attempt.get("kind"),
+            "outcome": attempt.get("outcome"),
+            "result": result
+            if len(serialized) <= 8000
+            else {"excerpt": serialized[:8000], "truncated": True},
+        }
     context = {
         "runId": snapshot["id"],
         "version": snapshot["version"],
@@ -115,6 +138,13 @@ def procedure_context(snapshot: dict) -> dict:
         "currentStep": next(
             (item for item in steps if item["id"] == snapshot["currentStepId"]), None
         ),
+        "currentAttempt": feedback,
+        "currentCorrections": [
+            {"message": item["message"][:1600], "attemptId": item.get("attemptId")}
+            for item in snapshot.get("alerts", [])
+            if item.get("stepId") == snapshot["currentStepId"]
+            and item.get("attemptId") == snapshot.get("currentAttemptId")
+        ][-3:],
         "procedureContext": "complete",
         "procedureContextComplete": True,
         "procedureSteps": steps,
