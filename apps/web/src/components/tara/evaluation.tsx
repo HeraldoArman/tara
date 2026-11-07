@@ -8,13 +8,15 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { api, duration, errorMessage, humanize } from "@/lib/api";
-import type { Evaluation, TechnicianMetric } from "@/lib/contracts";
+import type { Evaluation, Sop, TechnicianMetric } from "@/lib/contracts";
 export function EvaluationView({
   initialSummary,
   ownOnly = false,
+  procedures,
 }: {
   initialSummary: Evaluation;
   ownOnly?: boolean;
+  procedures: Sop[];
 }) {
   const [data, setData] = useState(initialSummary);
   const [error, setError] = useState("");
@@ -71,11 +73,22 @@ export function EvaluationView({
   ];
   const tables = [
     {
+      columns: [
+        { key: "stepId", label: "Step" },
+        { key: "runs", label: "Runs" },
+        { key: "attempts", label: "Attempts" },
+        { key: "firstPass", label: "Passed first time" },
+        { key: "held", label: "Held" },
+      ],
       description: "Attempts, completion and retakes by procedure step.",
       key: "stepMetrics",
       title: "Success by step",
     },
     {
+      columns: [
+        { key: "criterionId", label: "Criterion" },
+        { key: "count", label: "Failed checks" },
+      ],
       description: "Where visual checks need attention.",
       key: "criterionFailures",
       title: "Criterion failures",
@@ -86,6 +99,11 @@ export function EvaluationView({
       title: "Technician outcomes",
     },
     {
+      columns: [
+        { key: "tool", label: "Tool" },
+        { key: "durationMs", label: "Response time" },
+        { key: "status", label: "Status" },
+      ],
       description: "Measured model and tool response times.",
       key: "latency",
       title: "Service latency",
@@ -95,19 +113,33 @@ export function EvaluationView({
     <>
       <form className="evaluation-filters panel" onSubmit={filter}>
         <div>
-          <label htmlFor="filter-sop">SOP / version</label>
-          <input id="filter-sop" name="sopId" placeholder="All procedures" />
+          <label htmlFor="filter-sop">Procedure</label>
+          <select id="filter-sop" name="sopId">
+            <option value="">All procedures</option>
+            {procedures.map((procedure) => (
+              <option key={procedure.id} value={procedure.id}>
+                {procedure.key} · {procedure.title}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label htmlFor="filter-tech">Technician</label>
-          <input
-            disabled={ownOnly}
-            id="filter-tech"
-            name="technicianId"
-            placeholder={
-              ownOnly ? "Your own run history" : "All authorized technicians"
-            }
-          />
+          <select disabled={ownOnly} id="filter-tech" name="technicianId">
+            <option value="">
+              {ownOnly ? "Your own run history" : "All authorized technicians"}
+            </option>
+            {initialSummary.technicianMetrics.map(
+              (technician: TechnicianMetric) => (
+                <option
+                  key={technician.technicianId}
+                  value={technician.technicianId}
+                >
+                  {technician.technicianName}
+                </option>
+              )
+            )}
+          </select>
         </div>
         <div>
           <label htmlFor="filter-from">From</label>
@@ -118,7 +150,7 @@ export function EvaluationView({
           <input id="filter-to" name="to" type="date" />
         </div>
         <button className="button primary" disabled={busy} type="submit">
-          Apply filters
+          {busy ? "Applying…" : "Apply filters"}
         </button>
       </form>
       {error ? (
@@ -147,7 +179,11 @@ export function EvaluationView({
             {table.key === "technicianMetrics" ? (
               <TechnicianOutcomes metrics={data.technicianMetrics ?? []} />
             ) : (
-              <MetricTable value={data[table.key]} />
+              <MetricTable
+                columns={table.columns ?? []}
+                title={table.title}
+                value={data[table.key]}
+              />
             )}
           </section>
         ))}
@@ -204,7 +240,15 @@ function TechnicianOutcomes({ metrics }: { metrics: TechnicianMetric[] }) {
     </div>
   );
 }
-function MetricTable({ value }: { value: unknown }) {
+function MetricTable({
+  columns,
+  title,
+  value,
+}: {
+  columns: { key: string; label: string }[];
+  title: string;
+  value: unknown;
+}) {
   let rows: Record<string, unknown>[] = [];
   if (Array.isArray(value)) {
     rows = value.filter(
@@ -220,18 +264,14 @@ function MetricTable({ value }: { value: unknown }) {
   if (!rows.length) {
     return <p className="inline-empty">No recorded data for this view.</p>;
   }
-  const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))].slice(
-    0,
-    6
-  );
   return (
     <div className="table-scroll">
-      <table>
+      <table aria-label={title}>
         <thead>
           <tr>
-            {keys.map((key) => (
-              <th key={key}>
-                {humanize(key.replace(/([a-z])([A-Z])/g, "$1 $2"))}
+            {columns.map(({ key, label }) => (
+              <th key={key} scope="col">
+                {label}
               </th>
             ))}
           </tr>
@@ -247,12 +287,8 @@ function MetricTable({ value }: { value: unknown }) {
                   JSON.stringify(row)
               )}
             >
-              {keys.map((key) => (
-                <td key={key}>
-                  {typeof row[key] === "object"
-                    ? JSON.stringify(row[key])
-                    : String(row[key] ?? "—")}
-                </td>
+              {columns.map(({ key }) => (
+                <td key={key}>{metricValue(key, row[key])}</td>
               ))}
             </tr>
           ))}
@@ -260,4 +296,16 @@ function MetricTable({ value }: { value: unknown }) {
       </table>
     </div>
   );
+}
+
+function metricValue(key: string, value: unknown): string {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  if (key === "durationMs" && typeof value === "number") {
+    return value < 1000
+      ? `${Math.round(value)} ms`
+      : `${(value / 1000).toFixed(1)} s`;
+  }
+  return typeof value === "string" ? humanize(value) : String(value);
 }
