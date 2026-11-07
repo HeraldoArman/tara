@@ -217,20 +217,33 @@ export function DocumentPanel({
                     <h4>{section.heading}</h4>
                     {section.text ? (
                       <p>
-                        {range ? (
-                          <>
-                            {section.text.slice(0, range.start)}
-                            <mark
-                              data-opportunity-id={selected?.id}
-                              ref={activeHighlight}
-                            >
-                              {section.text.slice(range.start, range.end)}
-                            </mark>
-                            {section.text.slice(range.end)}
-                          </>
-                        ) : (
-                          section.text
-                        )}
+                        {range
+                          ? (range.ranges ?? [range]).map(
+                              (part, partIndex, parts) => (
+                                <span key={`${part.start}-${part.end}`}>
+                                  {section.text.slice(
+                                    partIndex === 0
+                                      ? 0
+                                      : parts[partIndex - 1].end,
+                                    part.start
+                                  )}
+                                  <mark
+                                    data-opportunity-id={selected?.id}
+                                    ref={
+                                      partIndex === 0
+                                        ? activeHighlight
+                                        : undefined
+                                    }
+                                  >
+                                    {section.text.slice(part.start, part.end)}
+                                  </mark>
+                                  {partIndex === parts.length - 1
+                                    ? section.text.slice(part.end)
+                                    : null}
+                                </span>
+                              )
+                            )
+                          : section.text}
                       </p>
                     ) : null}
                     {section.page ? (
