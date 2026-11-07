@@ -1,4 +1,12 @@
 "use client";
+
+import "./sops.css";
+
+import { Alert, AlertDescription } from "@tara/ui/components/alert";
+import { Badge } from "@tara/ui/components/badge";
+import { Button } from "@tara/ui/components/button";
+import { Input } from "@tara/ui/components/input";
+import { Textarea } from "@tara/ui/components/textarea";
 import {
   ArrowRight,
   BookOpen,
@@ -11,7 +19,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ApiError, api, errorMessage } from "@/lib/api";
+import { ApiError, api, errorMessage, humanize } from "@/lib/api";
 import type { SopVersion } from "@/lib/contracts";
 import { objectRecord } from "@/lib/draft-preview";
 import { retainedSopDocumentId } from "@/lib/sop-import-retry";
@@ -120,7 +128,7 @@ export function SopImport({
     <form aria-busy={!!busy} className="import-form panel" onSubmit={submit}>
       <label className="upload-zone" htmlFor="source-file">
         <span className="upload-icon">
-          <Upload size={30} />
+          <Upload aria-hidden="true" size={30} />
         </span>
         <h2>
           {filename ||
@@ -128,15 +136,17 @@ export function SopImport({
               ? "Your source is saved."
               : "Start with your approved source.")}
         </h2>
-        <p>
+        <p id="source-file-help">
           Choose a Markdown, TXT, DOCX or text-based PDF document, up to 10 MB.
         </p>
         <span className="button">
           Choose document
-          <ArrowRight size={15} />
+          <ArrowRight aria-hidden="true" size={15} />
         </span>
         <input
           accept=".md,.txt,.docx,.pdf,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          aria-describedby="source-file-help"
+          aria-label="Source document"
           disabled={!!busy}
           id="source-file"
           name="file"
@@ -157,7 +167,7 @@ export function SopImport({
       </label>
       <div className="import-details">
         <h3>
-          <ShieldCheck size={17} />A draft first. Always.
+          <ShieldCheck aria-hidden="true" size={17} />A draft first. Always.
         </h3>
         <p>
           tara extracts source sections and creates a structured procedure.
@@ -168,10 +178,21 @@ export function SopImport({
           Scanned documents and OCR are not supported. Upload only documents
           authorized for your organization.
         </p>
+        <ol aria-label="Publishing workflow" className="sop-import-workflow">
+          <li>
+            <span>01</span>Import your source
+          </li>
+          <li>
+            <span>02</span>Review and validate
+          </li>
+          <li>
+            <span>03</span>Publish for your team
+          </li>
+        </ol>
         {error ? (
-          <div className="notice danger" role="alert">
-            {error}
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         ) : null}
         {documentId ? (
           <div className="retained-source">
@@ -179,41 +200,80 @@ export function SopImport({
               Your source is saved. Retry draft generation without uploading the
               document again.
             </p>
-            <button
-              className="button primary"
-              disabled={!!busy}
-              onClick={retry}
-              type="button"
-            >
+            <Button disabled={!!busy} onClick={retry} type="button">
               {busy === "retry" ? (
-                <LoaderCircle className="spin" size={16} />
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="spin"
+                  data-icon="inline-start"
+                />
               ) : (
-                <BookOpen size={16} />
+                <BookOpen aria-hidden="true" data-icon="inline-start" />
               )}{" "}
               {busy === "retry"
                 ? "Retrying draft generation…"
                 : "Retry draft generation"}
-            </button>
+            </Button>
             <p className="subtle-note">
               Choose a different document to start another import.
             </p>
           </div>
         ) : (
-          <button
-            className="button primary"
-            disabled={!!busy || !filename}
-            type="submit"
-          >
+          <Button disabled={!!busy || !filename} type="submit">
             {busy ? (
-              <LoaderCircle className="spin" size={16} />
+              <LoaderCircle
+                aria-hidden="true"
+                className="spin"
+                data-icon="inline-start"
+              />
             ) : (
-              <BookOpen size={16} />
+              <BookOpen aria-hidden="true" data-icon="inline-start" />
             )}{" "}
             {busy ? "Extracting and creating draft…" : "Generate SOP draft"}
-          </button>
+          </Button>
         )}
       </div>
     </form>
+  );
+}
+
+function DraftActions({
+  busy,
+  pending,
+  onAction,
+}: {
+  busy: string;
+  pending: boolean;
+  onAction: (kind: string) => Promise<void>;
+}) {
+  return (
+    <div className="form-actions">
+      <Button
+        disabled={pending}
+        onClick={() => onAction("save")}
+        type="button"
+        variant="outline"
+      >
+        {busy === "save" ? "Saving draft…" : "Save draft"}
+      </Button>
+      <Button
+        disabled={pending}
+        onClick={() => onAction("validate")}
+        type="button"
+        variant="outline"
+      >
+        <CheckCircle2 aria-hidden="true" data-icon="inline-start" />
+        {busy === "validate" ? "Validating…" : "Validate"}
+      </Button>
+      <Button
+        disabled={pending}
+        onClick={() => onAction("publish")}
+        type="button"
+      >
+        <ShieldCheck aria-hidden="true" data-icon="inline-start" />
+        {busy === "publish" ? "Publishing…" : "Publish version"}
+      </Button>
+    </div>
   );
 }
 
@@ -241,6 +301,13 @@ export function SopEditor({
   const editable = canEdit && version.status === "draft";
   const pending = !!busy || referenceBusy;
   const preview = objectRecord(version.definition);
+  const readOnlyDescription =
+    version.status === "published"
+      ? "Published definitions are immutable."
+      : "Review the instructions and sources for this saved draft.";
+  const editorDescription = editable
+    ? "Edit the structured draft, then save and validate."
+    : readOnlyDescription;
   const saveDraft = async () => {
     const parsed: unknown = JSON.parse(definition);
     const saved = await api<SopVersion>(`/sop-versions/${version.id}`, {
@@ -326,11 +393,7 @@ export function SopEditor({
         <header className="panel-head">
           <div>
             <h2>Controlled definition</h2>
-            <p>
-              {editable
-                ? "Edit the structured draft, then save and validate."
-                : "Published definitions are immutable."}
-            </p>
+            <p>{editorDescription}</p>
           </div>
           <Status value={version.status} />
         </header>
@@ -358,7 +421,7 @@ export function SopEditor({
           ) : null}
           {version.sourceFilename ? (
             <p className="subtle-note">
-              <FileText size={15} />
+              <FileText aria-hidden="true" size={15} />
               {version.sourceFilename}
             </p>
           ) : null}
@@ -367,43 +430,18 @@ export function SopEditor({
               <label className="field-label" htmlFor="sop-definition">
                 SOP definition (JSON)
               </label>
-              <textarea
+              <Textarea
+                autoComplete="off"
                 className="code-editor"
                 disabled={pending}
                 id="sop-definition"
+                name="definition"
                 onChange={(event) => setDefinition(event.target.value)}
                 rows={26}
                 spellCheck={false}
                 value={definition}
               />
-              <div className="form-actions">
-                <button
-                  className="button"
-                  disabled={pending}
-                  onClick={() => action("save")}
-                  type="button"
-                >
-                  Save draft
-                </button>
-                <button
-                  className="button"
-                  disabled={pending}
-                  onClick={() => action("validate")}
-                  type="button"
-                >
-                  <CheckCircle2 size={16} />
-                  Validate
-                </button>
-                <button
-                  className="button primary"
-                  disabled={pending}
-                  onClick={() => action("publish")}
-                  type="button"
-                >
-                  <ShieldCheck size={16} />
-                  Publish version
-                </button>
-              </div>
+              <DraftActions busy={busy} onAction={action} pending={pending} />
             </>
           ) : (
             <div className="definition-steps">
@@ -413,7 +451,9 @@ export function SopEditor({
                     <div>
                       <span className="step-index">{i + 1}</span>
                       <h3>{step.title}</h3>
-                      <span className="tag">{step.verification.kind}</span>
+                      <Badge variant="secondary">
+                        {humanize(step.verification.kind)}
+                      </Badge>
                     </div>
                     <p>{step.instruction}</p>
                     {step.rationale ? (
@@ -433,7 +473,7 @@ export function SopEditor({
                       </ul>
                     ) : null}
                     <p className="subtle-note">
-                      <FileText size={13} />
+                      <FileText aria-hidden="true" size={13} />
                       {step.sources
                         .map((source) =>
                           [
@@ -451,14 +491,15 @@ export function SopEditor({
             </div>
           )}
           {error ? (
-            <div className="notice danger" role="alert">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           ) : null}
           {message ? (
-            <div className="notice info" role="status">
-              {message}
-            </div>
+            <Alert role="status">
+              <CheckCircle2 aria-hidden="true" />
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
           ) : null}
           {errors.length ? (
             <div className="validation-errors">
@@ -478,22 +519,24 @@ export function SopEditor({
         <section className="panel">
           <header className="panel-head">
             <div>
-              <h2>Test grounded retrieval</h2>
+              <h2>Find an answer in this SOP</h2>
               <p>Search this exact published version.</p>
             </div>
-            <Search size={20} />
+            <Search aria-hidden="true" size={20} />
           </header>
           <form className="search-form" onSubmit={search}>
-            <input
+            <Input
               aria-label="Search the SOP"
+              autoComplete="off"
+              name="query"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Ask about a procedure or source clause…"
               required
               value={query}
             />
-            <button className="button primary" disabled={!!busy} type="submit">
-              Search
-            </button>
+            <Button disabled={!!busy} type="submit">
+              {busy === "search" ? "Searching…" : "Search"}
+            </Button>
           </form>
           {results === null ? null : (
             <div className="panel-body">

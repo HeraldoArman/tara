@@ -102,7 +102,9 @@ test("SOP import accepts Word documents and blocks invalid files before uploadin
     mimeType: "text/plain",
     name: "empty.txt",
   });
-  await expect(page.locator('.notice[role="alert"]')).toContainText("nonempty");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "nonempty"
+  );
   await expect(
     page.getByRole("button", { exact: true, name: "Generate SOP draft" })
   ).toBeDisabled();
@@ -111,12 +113,12 @@ test("SOP import accepts Word documents and blocks invalid files before uploadin
     mimeType: "text/csv",
     name: "unsupported.csv",
   });
-  await expect(page.locator('.notice[role="alert"]')).toContainText("DOCX");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("DOCX");
   await input.setInputFiles(docxFixture);
   await expect(
     page.getByRole("button", { exact: true, name: "Generate SOP draft" })
   ).toBeEnabled();
-  await expect(page.locator('.notice[role="alert"]')).toHaveCount(0);
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
   expect(uploads).toBe(0);
 });
 

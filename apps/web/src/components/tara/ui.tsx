@@ -1,16 +1,10 @@
-import {
-  ArrowUpRight,
-  CircleAlert,
-  FileCheck2,
-  Radio,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowUpRight, CircleAlert, FileCheck2, Radio } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { humanize } from "@/lib/api";
 import type { User } from "@/lib/contracts";
-import { AccountMenu } from "./account-menu";
+import { WorkspaceShell } from "./workspace-shell";
 
 export function Wordmark() {
   return (
@@ -35,47 +29,9 @@ export function AppShell({
   active: string;
 }) {
   return (
-    <>
-      <header className="app-header">
-        <Wordmark />
-        <span className="header-rule" />
-        <nav aria-label="Primary">
-          {(
-            [
-              ...(user.role === "owner"
-                ? [{ href: "/dashboard" as const, label: "Overview" }]
-                : []),
-              ...(["sop_manager", "owner"].includes(user.role)
-                ? []
-                : [{ href: "/" as const, label: "Work queue" }]),
-              { href: "/sops", label: "SOP library" },
-              { href: "/sop-intelligence", label: "SOP intelligence" },
-              ...(user.role === "sop_manager"
-                ? []
-                : [{ href: "/reports" as const, label: "Reports" }]),
-              { href: "/evaluation", label: "Evaluation" },
-            ] as const
-          ).map((link) => (
-            <Link
-              aria-current={active === link.href ? "page" : undefined}
-              href={link.href}
-              key={link.href}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <AccountMenu user={user} />
-      </header>
-      <main className="app-main">{children}</main>
-      <footer className="app-footer">
-        <span>
-          <ShieldCheck size={14} />
-          Approved work. A clear record.
-        </span>
-        <span>tara · Field operations</span>
-      </footer>
-    </>
+    <WorkspaceShell active={active} user={user}>
+      {children}
+    </WorkspaceShell>
   );
 }
 export function PageHeading({
@@ -140,7 +96,7 @@ export function ErrorPanel({ message }: { message: string }) {
       <div>
         <strong>Unable to load this view</strong>
         <p>{message}</p>
-        <Link href="/">Return to work queue</Link>
+        <Link href="/">Return to workspace</Link>
       </div>
     </div>
   );

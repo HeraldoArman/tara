@@ -1,0 +1,265 @@
+.sop-library .sop-library-card {
+  gap: 20px;
+  padding: 28px;
+}
+
+.sop-library .sop-library-icon {
+  flex-shrink: 0;
+  color: var(--tara-active);
+  background: var(--tara-active-soft);
+  border: 1px solid var(--tara-border);
+  border-radius: 14px;
+}
+
+.sop-library h2,
+.sop-library .eyebrow,
+.sop-editor .subtle-note {
+  overflow-wrap: anywhere;
+}
+
+.sop-library .sop-versions {
+  margin-bottom: 20px;
+}
+
+.sop-library .sop-versions > a {
+  min-height: 48px;
+  color: var(--tara-muted);
+  border-color: var(--tara-border);
+}
+
+.sop-library .sop-versions > a:hover {
+  color: var(--tara-active);
+}
+
+.sop-version-label {
+  min-width: 0;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.sop-library .sop-versions > a > .status {
+  flex-shrink: 0;
+}
+
+.import-form.panel {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+}
+
+.import-form .upload-zone {
+  min-width: 0;
+  background: var(--tara-canvas);
+  border-color: var(--tara-border);
+  border-radius: 20px;
+}
+
+.import-form .upload-zone:hover {
+  border-color: var(--tara-active);
+}
+
+.import-form .upload-icon {
+  color: var(--tara-active);
+  background: var(--tara-surface);
+  border-color: var(--tara-border);
+}
+
+.import-form .upload-zone p,
+.import-form .import-details p {
+  color: var(--tara-muted);
+}
+
+.import-form .import-details {
+  min-width: 0;
+}
+
+.sop-import-workflow {
+  display: grid;
+  gap: 14px;
+  padding: 0;
+  margin: 0 0 28px;
+  list-style: none;
+}
+
+.sop-import-workflow li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--tara-ink);
+}
+
+.sop-import-workflow li > span {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  color: var(--tara-active);
+  background: var(--tara-active-soft);
+  border-radius: 9px;
+}
+
+.import-form [data-slot="alert"],
+.sop-editor [data-slot="alert"] {
+  margin-block: 16px;
+  overflow-wrap: anywhere;
+}
+
+.import-form [data-slot="button"] {
+  max-width: 100%;
+  height: auto;
+  min-height: 42px;
+  white-space: normal;
+}
+
+.sop-editor .panel-head,
+.sop-editor .sop-step {
+  border-color: var(--tara-border);
+}
+
+.sop-editor .panel-body {
+  min-width: 0;
+}
+
+.sop-editor .code-editor {
+  min-height: 420px;
+  max-height: 65svh;
+  field-sizing: fixed;
+  font-family: var(--font-geist-mono), monospace;
+  line-height: 1.8;
+  color: var(--tara-ink);
+  resize: vertical;
+  background: var(--tara-canvas);
+}
+
+.sop-editor .form-actions {
+  flex-wrap: wrap;
+}
+
+.sop-editor .sop-step > div:first-child {
+  flex-wrap: wrap;
+  gap: 10px 12px;
+}
+
+.sop-editor .sop-step h3 {
+  min-width: 120px;
+  overflow-wrap: anywhere;
+}
+
+.sop-editor .sop-step > p,
+.sop-editor .rationale p {
+  color: var(--tara-muted);
+  overflow-wrap: anywhere;
+}
+
+.sop-editor .step-index {
+  color: var(--tara-active);
+  background: var(--tara-active-soft);
+  border-color: var(--tara-border);
+}
+
+.sop-editor .rationale {
+  background: var(--tara-canvas);
+  border-color: var(--tara-active);
+}
+
+.sop-editor .rationale strong {
+  color: var(--tara-ink);
+}
+
+.sop-editor .validation-errors {
+  color: var(--tara-warning);
+  overflow-wrap: anywhere;
+  background: color-mix(in srgb, var(--tara-warning) 5%, var(--tara-surface));
+  border: 1px solid color-mix(in srgb, var(--tara-warning) 20%, transparent);
+}
+
+.reference-media-grid .reference-media-card {
+  min-width: 0;
+  background: var(--tara-surface);
+  border-color: var(--tara-border);
+  border-radius: 14px;
+}
+
+.reference-media-card .reference-image-placeholder {
+  color: var(--tara-active);
+  background: var(--tara-active-soft);
+}
+
+.reference-media-grid .reference-media-card h4 {
+  font-size: 12px;
+  color: var(--tara-ink);
+  overflow-wrap: anywhere;
+}
+
+.reference-media-grid .reference-media-card > p,
+.reference-media-grid .reference-media-card .text-button {
+  font-size: 11px;
+  color: var(--tara-muted);
+  overflow-wrap: anywhere;
+}
+
+.sop-editor .reference-upload {
+  gap: 12px;
+  background: var(--tara-canvas);
+  border: 1px solid var(--tara-border);
+  border-radius: 16px;
+}
+
+.sop-editor .reference-upload > p,
+.sop-editor .reference-upload > label {
+  color: var(--tara-muted);
+}
+
+.sop-editor .reference-upload > label {
+  font-size: 12px;
+}
+
+.sop-editor .reference-upload select {
+  max-width: 100%;
+  min-height: 42px;
+  color: var(--tara-ink);
+  background: var(--tara-surface);
+  border-color: var(--tara-border);
+}
+
+.sop-editor .reference-upload [type="file"] {
+  height: auto;
+  min-height: 42px;
+}
+
+.sop-editor .reference-upload > [data-slot="button"] {
+  align-self: flex-start;
+}
+
+@media (max-width: 760px) {
+  .import-form.panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .import-form .upload-zone {
+    min-height: 280px;
+    padding: 24px 18px;
+  }
+
+  .import-form .import-details {
+    padding: 12px 4px;
+  }
+
+  .sop-library .sop-library-card {
+    gap: 14px;
+    padding: 20px;
+  }
+
+  .sop-editor .search-form {
+    flex-wrap: wrap;
+  }
+
+  .sop-editor .search-form > [data-slot="button"],
+  .sop-editor .form-actions > [data-slot="button"] {
+    flex: 1 1 auto;
+  }
+}

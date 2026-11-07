@@ -2,6 +2,9 @@
 
 import "./create-work-order.css";
 
+import { Button } from "@tara/ui/components/button";
+import { Input } from "@tara/ui/components/input";
+import { Textarea } from "@tara/ui/components/textarea";
 import { ArrowRight, CheckCircle2, LoaderCircle, Play } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,7 +42,7 @@ function CreatedJob({
 }) {
   return (
     <section className="panel create-job-result">
-      <div className="notice info" role="status">
+      <div className="notice create-job-confirmation" role="status">
         <CheckCircle2 aria-hidden="true" size={20} />
         <div>
           <strong>Job created: {created.reference}</strong>
@@ -58,23 +61,22 @@ function CreatedJob({
         </div>
       ) : null}
       <div className="form-actions">
-        <Link className="button" href="/">
+        <Link className="button" href="/dashboard#work-queue">
           View work queue <ArrowRight aria-hidden="true" size={16} />
         </Link>
         {assignedToYou ? (
-          <button
-            className="button primary"
-            disabled={busy}
-            onClick={onStartSession}
-            type="button"
-          >
+          <Button disabled={busy} onClick={onStartSession} type="button">
             {busy ? (
-              <LoaderCircle aria-hidden="true" className="spin" size={16} />
+              <LoaderCircle
+                aria-hidden="true"
+                className="spin"
+                data-icon="inline-start"
+              />
             ) : (
-              <Play aria-hidden="true" size={16} />
+              <Play aria-hidden="true" data-icon="inline-start" />
             )}
             {busy ? "Opening session…" : "Start video session"}
-          </button>
+          </Button>
         ) : null}
       </div>
     </section>
@@ -184,7 +186,7 @@ export function CreateWorkOrder({
           </p>
         )}
         <div className="form-actions">
-          <Link className="button" href="/">
+          <Link className="button" href="/dashboard#work-queue">
             View work queue
           </Link>
           {procedures.length ? null : (
@@ -198,10 +200,15 @@ export function CreateWorkOrder({
   }
 
   return (
-    <form aria-busy={busy} className="panel create-job-form" onSubmit={submit}>
+    <form
+      aria-busy={busy}
+      autoComplete="off"
+      className="panel create-job-form"
+      onSubmit={submit}
+    >
       <fieldset disabled={busy}>
         <legend>Procedure and assignment</legend>
-        <p className="create-job-help">
+        <p className="create-job-help" id="job-assignment-help">
           Assigned jobs appear in that person’s work queue. Choose yourself to
           run the session on this account.
         </p>
@@ -227,6 +234,7 @@ export function CreateWorkOrder({
           <div className="create-job-field">
             <label htmlFor="job-assignee">Assign to</label>
             <select
+              aria-describedby="job-assignment-help"
               defaultValue=""
               id="job-assignee"
               name="assignedUsername"
@@ -250,31 +258,53 @@ export function CreateWorkOrder({
         <div className="create-job-grid">
           <div className="create-job-field">
             <label htmlFor="job-reference">Work reference</label>
-            <input
+            <Input
               id="job-reference"
               maxLength={100}
               name="reference"
+              placeholder="e.g. WO-1042"
               required
+              spellCheck={false}
             />
           </div>
           <div className="create-job-field">
             <label htmlFor="job-title">Job title</label>
-            <input id="job-title" maxLength={300} name="title" required />
+            <Input
+              id="job-title"
+              maxLength={300}
+              name="title"
+              placeholder="e.g. Replace the faulty switch"
+              required
+            />
           </div>
           <div className="create-job-field">
             <label htmlFor="job-model">Equipment or work area</label>
-            <input id="job-model" maxLength={200} name="model" required />
+            <Input
+              id="job-model"
+              maxLength={200}
+              name="model"
+              placeholder="e.g. Keychron K2"
+              required
+            />
           </div>
           <div className="create-job-field">
             <label htmlFor="job-serial">Asset or location ID</label>
-            <input id="job-serial" maxLength={200} name="serial" required />
+            <Input
+              id="job-serial"
+              maxLength={200}
+              name="serial"
+              placeholder="e.g. KBD-042"
+              required
+              spellCheck={false}
+            />
           </div>
           <div className="create-job-field create-job-wide">
             <label htmlFor="job-issue">Work to be done</label>
-            <textarea
+            <Textarea
               id="job-issue"
               maxLength={4000}
               name="issue"
+              placeholder="Describe the issue and the expected result…"
               required
               rows={4}
             />
@@ -293,7 +323,7 @@ export function CreateWorkOrder({
           </div>
           <div className="create-job-field">
             <label htmlFor="job-minutes">Estimated minutes</label>
-            <input
+            <Input
               defaultValue={20}
               id="job-minutes"
               max={10_080}
@@ -312,15 +342,19 @@ export function CreateWorkOrder({
         </div>
       ) : null}
       <div className="form-actions">
-        <Link className="button" href="/">
+        <Link className="button" href="/dashboard#work-queue">
           Cancel
         </Link>
-        <button className="button primary" disabled={busy} type="submit">
+        <Button disabled={busy} type="submit">
           {busy ? (
-            <LoaderCircle aria-hidden="true" className="spin" size={16} />
+            <LoaderCircle
+              aria-hidden="true"
+              className="spin"
+              data-icon="inline-start"
+            />
           ) : null}
           {busy ? "Creating job…" : "Create job"}
-        </button>
+        </Button>
       </div>
     </form>
   );

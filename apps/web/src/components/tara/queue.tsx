@@ -63,7 +63,7 @@ export function WorkQueue({
       {resume ? (
         <div className="resume-strip">
           <span className="resume-icon">
-            <Play size={18} />
+            <Play aria-hidden="true" size={18} />
           </span>
           <div>
             <strong>Pick up where you left off.</strong>
@@ -73,11 +73,14 @@ export function WorkQueue({
           </div>
           <Link className="button primary" href={`/runs/${resume.runId}`}>
             Resume session
-            <ArrowRight size={16} />
+            <ArrowRight aria-hidden="true" size={16} />
           </Link>
         </div>
       ) : null}
-      <section className="panel work-queue">
+      <section
+        aria-busy={refreshing || Boolean(busy)}
+        className="panel work-queue"
+      >
         <header className="panel-head">
           <div>
             <h2>
@@ -104,7 +107,7 @@ export function WorkQueue({
         </header>
         <div className="panel-body queue-session-help">
           <p className="subtle-note">
-            <Video size={15} />
+            <Video aria-hidden="true" size={15} />
             Start a session, connect the assistant, then enable your camera.
           </p>
           <button
@@ -113,13 +116,13 @@ export function WorkQueue({
             onClick={() => refresh(() => router.refresh())}
             type="button"
           >
-            <RefreshCw size={14} />
+            <RefreshCw aria-hidden="true" size={14} />
             {refreshing ? "Refreshing…" : "Refresh jobs"}
           </button>
         </div>
         {error ? (
           <div className="notice danger" role="alert">
-            <CircleAlert size={18} />
+            <CircleAlert aria-hidden="true" size={18} />
             {error}
           </div>
         ) : null}
@@ -130,13 +133,13 @@ export function WorkQueue({
                 <span className="mono">{item.reference}</span>
                 <Status value={item.priority} />
                 <span className="work-order-time">
-                  <Clock3 size={13} />
+                  <Clock3 aria-hidden="true" size={13} />
                   {item.estimatedMinutes} min
                 </span>
               </div>
               <div className="work-order-body">
                 <div className="work-order-device">
-                  <Wrench size={23} />
+                  <Wrench aria-hidden="true" size={23} />
                 </div>
                 <div>
                   <h3>{item.title}</h3>
@@ -148,7 +151,7 @@ export function WorkQueue({
               <p className="work-order-issue">{item.issue}</p>
               <div className="work-order-bottom">
                 <span>
-                  <ShieldCheck size={14} />
+                  <ShieldCheck aria-hidden="true" size={14} />
                   {humanize(item.status)}
                 </span>
                 {item.assignedTo === userId ? (
@@ -159,18 +162,22 @@ export function WorkQueue({
                     type="button"
                   >
                     {busy === item.id ? (
-                      <LoaderCircle className="spin" size={15} />
+                      <LoaderCircle
+                        aria-hidden="true"
+                        className="spin"
+                        size={15}
+                      />
                     ) : (
-                      <Play size={14} />
+                      <Play aria-hidden="true" size={14} />
                     )}{" "}
                     {item.runId ? "Resume session" : "Start video session"}
-                    <ArrowUpRight size={14} />
+                    <ArrowUpRight aria-hidden="true" size={14} />
                   </button>
                 ) : null}
                 {item.assignedTo !== userId && item.runId ? (
                   <Link className="button small" href={`/runs/${item.runId}`}>
                     Review session
-                    <ArrowUpRight size={14} />
+                    <ArrowUpRight aria-hidden="true" size={14} />
                   </Link>
                 ) : null}
                 {item.assignedTo !== userId && !item.runId ? (
@@ -199,7 +206,7 @@ export function WorkQueue({
                 {role === "owner" ? (
                   <Link className="button primary" href="/work-orders/new">
                     Create job
-                    <ArrowRight size={15} />
+                    <ArrowRight aria-hidden="true" size={15} />
                   </Link>
                 ) : null}
               </>
@@ -291,14 +298,18 @@ export function Readiness({ publishedCount }: { publishedCount?: number }) {
           onClick={check}
           type="button"
         >
-          <RefreshCw className={busy ? "spin" : ""} size={16} />
+          <RefreshCw
+            aria-hidden="true"
+            className={busy ? "spin" : ""}
+            size={16}
+          />
         </button>
       </header>
       <div className="readiness-list">
         {checks.map(({ icon: Icon, label, value }) => (
           <div className="readiness-row" key={label}>
             <span className="readiness-icon">
-              <Icon size={16} />
+              <Icon aria-hidden="true" size={16} />
             </span>
             <div>
               <strong>{label}</strong>
@@ -309,7 +320,7 @@ export function Readiness({ publishedCount }: { publishedCount?: number }) {
             (publishedCount !== undefined &&
               label === "Published procedures" &&
               publishedCount > 0) ? (
-              <Check className="success-text" size={15} />
+              <Check aria-hidden="true" className="success-text" size={15} />
             ) : null}
           </div>
         ))}
@@ -335,7 +346,7 @@ export function RecentReports({ items }: { items: Report[] }) {
           className="icon-button"
           href="/reports"
         >
-          <ArrowUpRight size={17} />
+          <ArrowUpRight aria-hidden="true" size={17} />
         </Link>
       </header>
       {items.length ? (
@@ -343,7 +354,7 @@ export function RecentReports({ items }: { items: Report[] }) {
           {items.slice(0, 3).map((report) => (
             <Link href={`/reports/${report.id}`} key={report.id}>
               <span className="report-icon">
-                <FileText size={18} />
+                <FileText aria-hidden="true" size={18} />
               </span>
               <div>
                 <strong>

@@ -11,6 +11,11 @@
   border: 0;
 }
 
+.create-job-form fieldset + fieldset {
+  padding-top: 28px;
+  border-top: 1px solid var(--tara-border);
+}
+
 .create-job-form legend {
   padding: 0;
   margin-bottom: 14px;
@@ -34,6 +39,7 @@
   display: grid;
   gap: 8px;
   align-content: start;
+  min-width: 0;
 }
 
 .create-job-field label {
@@ -44,15 +50,17 @@
 .create-job-field select {
   width: 100%;
   min-width: 0;
+  min-height: 44px;
   padding: 12px 14px;
-  color: var(--tara-text);
-  background: #fff;
-  border: 1px solid var(--tara-line);
-  border-radius: 10px;
+  font-size: 14px;
+  color: var(--tara-ink);
+  background: var(--tara-surface);
+  border: 1px solid var(--tara-border);
+  border-radius: 12px;
 }
 
 .create-job-field select:focus-visible {
-  outline: 2px solid #7398ff;
+  outline: 2px solid var(--tara-active);
   outline-offset: 1px;
 }
 
@@ -68,6 +76,18 @@
   margin-top: 8px;
 }
 
+.create-job-confirmation {
+  color: var(--tara-success);
+  background: color-mix(in srgb, var(--tara-success) 5%, var(--tara-surface));
+  border-color: color-mix(in srgb, var(--tara-success) 20%, var(--tara-border));
+}
+
+.create-job-form .form-actions,
+.create-job-result .form-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 @media (max-width: 640px) {
   .create-job-form,
   .create-job-result {
@@ -78,8 +98,15 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .create-job-form .form-actions,
-  .create-job-result .form-actions {
-    flex-wrap: wrap;
+  .create-job-field input,
+  .create-job-field select,
+  .create-job-field textarea {
+    font-size: 16px;
+  }
+
+  .create-job-form .form-actions > *,
+  .create-job-result .form-actions > * {
+    flex: 1 1 auto;
+    min-height: 44px;
   }
 }

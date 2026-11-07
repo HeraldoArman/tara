@@ -97,7 +97,7 @@ export function EvaluationView({
     },
   ];
   return (
-    <div className="evaluation-dashboard">
+    <div aria-busy={busy} className="evaluation-dashboard">
       <form className="evaluation-filters panel" onSubmit={filter}>
         <div>
           <label htmlFor="filter-sop">Procedure</label>
@@ -196,20 +196,25 @@ function TechnicianOutcomes({ metrics }: { metrics: TechnicianMetric[] }) {
     return <p className="inline-empty">No matching technician run history.</p>;
   }
   return (
-    <div className="table-scroll">
+    <section
+      aria-label="Technician outcomes table"
+      className="table-scroll"
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users must be able to scroll the overflowed table.
+      tabIndex={0}
+    >
       <table aria-label="Technician outcomes">
         <thead>
           <tr>
-            <th>Technician</th>
-            <th>Runs</th>
-            <th>Complete</th>
-            <th>Partial</th>
-            <th>Active</th>
-            <th>Attempts</th>
-            <th>Steps attempted</th>
-            <th>First-pass success</th>
-            <th>Retakes</th>
-            <th>Active time</th>
+            <th scope="col">Technician</th>
+            <th scope="col">Runs</th>
+            <th scope="col">Complete</th>
+            <th scope="col">Partial</th>
+            <th scope="col">Active</th>
+            <th scope="col">Attempts</th>
+            <th scope="col">Steps attempted</th>
+            <th scope="col">First-pass success</th>
+            <th scope="col">Retakes</th>
+            <th scope="col">Active time</th>
           </tr>
         </thead>
         <tbody>
@@ -233,7 +238,7 @@ function TechnicianOutcomes({ metrics }: { metrics: TechnicianMetric[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </section>
   );
 }
 function MetricTable({
@@ -261,7 +266,12 @@ function MetricTable({
     return <p className="inline-empty">No recorded data for this view.</p>;
   }
   return (
-    <div className="table-scroll">
+    <section
+      aria-label={`${title} table`}
+      className="table-scroll"
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users must be able to scroll the overflowed table.
+      tabIndex={0}
+    >
       <table aria-label={title}>
         <thead>
           <tr>
@@ -292,7 +302,7 @@ function MetricTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </section>
   );
 }
 
