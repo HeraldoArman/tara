@@ -2,6 +2,7 @@ import { Button } from "@tara/ui/components/button";
 import { FileText, Minus, Plus, ScanText } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { findSourceHighlight } from "./source-highlight";
 import { canAssist, type Opportunity, type SopDocument } from "./types";
 
 interface DocumentPanelProps {
@@ -13,12 +14,14 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
   const [zoom, setZoom] = useState(100);
   const viewport = useRef<HTMLElement>(null);
   const activeSection = useRef<HTMLElement>(null);
+  const activeHighlight = useRef<HTMLElement>(null);
+  const highlight = findSourceHighlight(document, selected);
   const previousSelection = useRef(selected?.id);
   const zoomOut = useCallback(() => setZoom((value) => value - 10), []);
   const zoomIn = useCallback(() => setZoom((value) => value + 10), []);
 
   useEffect(() => {
-    const target = activeSection.current;
+    const target = activeHighlight.current ?? activeSection.current;
     const container = viewport.current;
     const changed = previousSelection.current !== selected?.id;
     previousSelection.current = selected?.id;
@@ -124,6 +127,8 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
           <div className="sop-source-sections">
             {document.sections.map((section, index) => {
               const active = selected?.sectionId === section.id;
+              const range =
+                highlight?.sectionId === section.id ? highlight : null;
               const tone =
                 selected && canAssist(selected.category) ? "assist" : "human";
               return (
@@ -140,16 +145,23 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
-                    <h4>
-                      {active && !section.text ? (
-                        <mark>{section.heading}</mark>
-                      ) : (
-                        section.heading
-                      )}
-                    </h4>
+                    <h4>{section.heading}</h4>
                     {section.text ? (
                       <p>
-                        {active ? <mark>{section.text}</mark> : section.text}
+                        {range ? (
+                          <>
+                            {section.text.slice(0, range.start)}
+                            <mark
+                              data-opportunity-id={selected?.id}
+                              ref={activeHighlight}
+                            >
+                              {section.text.slice(range.start, range.end)}
+                            </mark>
+                            {section.text.slice(range.end)}
+                          </>
+                        ) : (
+                          section.text
+                        )}
                       </p>
                     ) : null}
                     {section.page ? (
@@ -172,7 +184,11 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
             ? `${document.pageCount} pages`
             : `${document.sections.length} passages`}
         </span>
-        <span>Select an opportunity to locate its source</span>
+        <span>
+          {selected && !highlight
+            ? "Exact source text unavailable for this step"
+            : "Select a card to locate its exact instruction"}
+        </span>
       </footer>
     </section>
   );

@@ -8,11 +8,20 @@ import {
   LayoutDashboard,
   Radio,
   Sparkles,
+  Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AccountMenu } from "@/components/tara/account-menu";
+import type { User } from "@/lib/contracts";
 
-export function DashboardShell({ children }: { children: ReactNode }) {
+export function DashboardShell({
+  children,
+  user,
+}: {
+  children: ReactNode;
+  user: User;
+}) {
   return (
     <div className="tara-assistant tara-dashboard">
       <a className="dash-skip" href="#dashboard-content">
@@ -33,7 +42,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <Building2 aria-hidden="true" />
           <div>
             <strong>Operations workspace</strong>
-            <span>Management preview</span>
+            <span>Owner overview</span>
           </div>
         </div>
         <p className="dash-nav-label">YOUR WORKSPACE</p>
@@ -45,6 +54,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <a href="#sop-breakdown">
             <ChartNoAxesCombined aria-hidden="true" />
             SOP activity
+          </a>
+          <a href="#work-queue">
+            <Wrench aria-hidden="true" />
+            Work queue
           </a>
           <Link href="/sops">
             <BookOpen aria-hidden="true" />
@@ -61,13 +74,18 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             Execution reports
             <ArrowUpRight aria-hidden="true" className="dash-nav-external" />
           </Link>
+          <Link href="/evaluation">
+            <ChartNoAxesCombined aria-hidden="true" />
+            Evaluation
+            <ArrowUpRight aria-hidden="true" className="dash-nav-external" />
+          </Link>
         </nav>
         <div className="dash-sidebar-note">
           <Sparkles aria-hidden="true" />
           <strong>A little perspective.</strong>
           <p>See where guidance makes a difference, one procedure at a time.</p>
-          <Link href="/sop-intelligence">
-            Select SOP &amp; start session
+          <Link href="/sops">
+            Review SOPs
             <ArrowUpRight aria-hidden="true" />
           </Link>
         </div>
@@ -81,15 +99,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <p>
             WORKSPACE <span>/</span> OPERATIONS OVERVIEW
           </p>
-          <span className="dash-demo-badge">
-            <span aria-hidden="true" />
-            Demo data
-          </span>
+          <AccountMenu user={user} />
         </header>
         {children}
         <footer className="dash-footer">
           <span>TARA · Your work, in focus.</span>
-          <span>Sample activity. No live operational data.</span>
+          <span>Recorded work. A clearer perspective.</span>
         </footer>
       </main>
     </div>

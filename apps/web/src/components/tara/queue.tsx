@@ -197,7 +197,7 @@ export function WorkQueue({
                     : "Select a published SOP to start your own session. Jobs assigned by an owner also appear here."}
                 </p>
                 {["technician", "owner"].includes(role) ? (
-                  <Link className="button primary" href="/sop-intelligence">
+                  <Link className="button primary" href="/sops">
                     Select SOP &amp; start session
                     <ArrowRight size={15} />
                   </Link>

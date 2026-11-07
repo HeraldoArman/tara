@@ -7,8 +7,13 @@ import {
   RoomEvent,
   Track,
 } from "livekit-client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { api, errorMessage } from "./api";
+import {
+  consultationTurn,
+  emptyConsultationTurn,
+  trackConsultationRequest,
+} from "./consultation-turn";
 import type { Connection, Run } from "./contracts";
 import { publishCameraTrack } from "./publish-camera";
 import { recoverWorkerContext } from "./worker-readiness";
@@ -26,7 +31,10 @@ export function useRunSession(initialRun: Run) {
   const [muted, setMuted] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [audioReady, setAudioReady] = useState(0);
-  const [transcript, setTranscript] = useState("");
+  const [conversation, updateConversation] = useReducer(
+    consultationTurn,
+    emptyConsultationTurn
+  );
   const [checking, setChecking] = useState(false);
   const [presentation, setPresentation] = useState<Record<
     string,
@@ -287,8 +295,15 @@ export function useRunSession(initialRun: Run) {
       } else {
         await refresh();
       }
-      if (typeof value.text === "string") {
-        setTranscript(value.text);
+      if (method === "assistant.text" && typeof value.text === "string") {
+        updateConversation({
+          payload: {
+            mode: "consultation",
+            role: "assistant",
+            text: value.text,
+          },
+          type: "transcript",
+        });
       }
       return value;
     },
@@ -431,7 +446,9 @@ export function useRunSession(initialRun: Run) {
                   reload().catch(showRoomError);
                 }
               },
-              transcript: setTranscript,
+              transcript: (payload) => {
+                updateConversation({ payload, type: "transcript" });
+              },
             });
           }
         );
@@ -643,7 +660,12 @@ export function useRunSession(initialRun: Run) {
       }
       setError("");
       try {
-        return await call(method, extra);
+        return await trackConsultationRequest(
+          method,
+          extra,
+          () => call(method, extra),
+          updateConversation
+        );
       } catch (e) {
         if (mounted.current && room.current === actionRoom) {
           setError(errorMessage(e));
@@ -738,7 +760,10 @@ export function useRunSession(initialRun: Run) {
     }
     const start = async () => {
       const started = await startCamera();
-      if (!started || !mounted.current || current.current.status !== "active") {
+      if (
+        !(started && mounted.current) ||
+        current.current.status !== "active"
+      ) {
         return started;
       }
       await enableAudio();
@@ -785,8 +810,9 @@ export function useRunSession(initialRun: Run) {
     connect,
     connection,
     consultation,
-    error,
+    conversation,
     enableAudio,
+    error,
     microphone,
     muted,
     presentation,
@@ -797,7 +823,7 @@ export function useRunSession(initialRun: Run) {
     stopCamera,
     toggleCamera,
     toggleMute,
-    transcript,
+    transcript: conversation.answer,
     video,
   };
 }
@@ -867,7 +893,7 @@ interface WorkerEventHandlers {
   present: (payload: Record<string, unknown>) => void;
   reload: () => void;
   snapshot: (payload: Record<string, unknown>) => void;
-  transcript: (text: string) => void;
+  transcript: (payload: Record<string, unknown>) => void;
 }
 function receiveWorkerEvent(
   bytes: Uint8Array,
@@ -912,9 +938,7 @@ function receiveWorkerEvent(
         }
         return;
       case "agent.transcript":
-        if (payload.role !== "user" && typeof payload.text === "string") {
-          handlers.transcript(payload.text);
-        }
+        handlers.transcript(payload);
         return;
       case "attempt.updated":
         if (payload.status === "scanning") {

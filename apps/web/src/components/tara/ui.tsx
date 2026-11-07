@@ -14,7 +14,7 @@ import { AccountMenu } from "./account-menu";
 
 export function Wordmark() {
   return (
-    <Link aria-label="TARa work queue" className="wordmark" href="/">
+    <Link aria-label="TARa home" className="wordmark" href="/">
       <span aria-hidden="true" className="tara-mark">
         <i />
         <i />
@@ -42,7 +42,10 @@ export function AppShell({
         <nav aria-label="Primary">
           {(
             [
-              ...(user.role === "sop_manager"
+              ...(user.role === "owner"
+                ? [{ href: "/dashboard" as const, label: "Overview" }]
+                : []),
+              ...(["sop_manager", "owner"].includes(user.role)
                 ? []
                 : [{ href: "/" as const, label: "Work queue" }]),
               { href: "/sops", label: "SOP library" },

@@ -1,0 +1,55 @@
+import type { Evaluation } from "../../apps/web/src/lib/contracts";
+
+export const ownerEvaluationFixture: Evaluation = {
+  active: 4,
+  aiVerified: 35,
+  alerts: 9,
+  attested: 12,
+  completed: 12,
+  criterionFailures: [],
+  evidenceCoverage: 0.8,
+  firstPassRate: 0.875,
+  held: 3,
+  latency: [],
+  openEscalations: 2,
+  partial: 3,
+  returned: 1,
+  runs: 20,
+  stepMetrics: [
+    { attempts: 8, firstPass: 5, held: 2, runs: 7, stepId: "inspect-switch" },
+    { attempts: 7, firstPass: 7, held: 0, runs: 7, stepId: "disconnect-power" },
+  ],
+  technicianMetrics: [
+    {
+      active: 2,
+      activeSeconds: 4200,
+      attemptedSteps: 24,
+      attempts: 28,
+      completed: 7,
+      firstPassRate: 0.875,
+      partial: 2,
+      retakes: 4,
+      runs: 12,
+      technicianId: "technician-a",
+      technicianName: "Maya Putri",
+    },
+    {
+      active: 2,
+      activeSeconds: 3200,
+      attemptedSteps: 16,
+      attempts: 18,
+      completed: 5,
+      firstPassRate: 0.875,
+      partial: 1,
+      retakes: 2,
+      runs: 8,
+      technicianId: "technician-b",
+      technicianName: "Rafi Pratama",
+    },
+  ],
+};
+
+export const ownerSopFixtures = [
+  { id: "keyboard-sop", title: "Keyboard switch replacement" },
+  { id: "device-sop", title: "Device intake and inspection" },
+];

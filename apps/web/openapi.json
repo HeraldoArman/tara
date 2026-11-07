@@ -3019,6 +3019,29 @@
           "reason": {
             "type": "string",
             "title": "Reason"
+          },
+          "instruction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instruction"
+          },
+          "sourceQuote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcequote",
+            "description": "Unique verbatim text in sectionId for this flag; null if no precise location resolves."
           }
         },
         "additionalProperties": true,
@@ -3160,6 +3183,19 @@
               }
             ],
             "title": "Page"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote",
+            "description": "A verbatim excerpt specific to this step, unique within the cited section."
           }
         },
         "additionalProperties": false,

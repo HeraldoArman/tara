@@ -40,7 +40,7 @@ export async function WorkQueuePage({ user }: { readonly user: User }) {
         title={`Good to see you, ${firstName}.`}
       >
         {["technician", "owner"].includes(user.role) ? (
-          <Link className="button primary" href="/sop-intelligence">
+          <Link className="button primary" href="/sops">
             Select SOP &amp; start session
           </Link>
         ) : null}
