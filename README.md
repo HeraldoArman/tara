@@ -52,6 +52,12 @@ Migrations never run independently in worker/web startup.
 
 ## Realtime and AI
 
+SOP imports accept Markdown, TXT and unencrypted text-based PDFs up to 10 MiB.
+The default extraction limits are 250 PDF pages and 300,000 text characters,
+configurable with `MAX_PDF_PAGES` and `MAX_SOURCE_CHARACTERS`. Extraction has a
+20-second deadline. Scanned/image-only PDFs require OCR and are not supported.
+Oversized manuals should be split into individual procedures before import.
+
 Set scoped `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and the same
 `LIVEKIT_AGENT_NAME` on API/worker. The worker needs `OPENAI_API_KEY`;
 API offline SOP decomposition separately uses `SOP_OPENAI_API_KEY`. Set these in

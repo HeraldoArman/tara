@@ -57,6 +57,66 @@ def validate_definition(definition: dict, sections: list[dict]) -> list[str]:
     return errors
 
 
+def check_source_length(length: int, maximum: int) -> None:
+    if length > maximum:
+        raise DomainError(
+            "VALIDATION_FAILED",
+            f"Extracted source text exceeds the {maximum:,}-character limit "
+            f"(at least {length:,} characters). "
+            "Split the document into smaller procedures.",
+            422,
+        )
+
+
+def extract_pdf_sections(content: bytes) -> list[dict]:
+    settings = get_settings()
+    if not content.startswith(b"%PDF-"):
+        raise DomainError("VALIDATION_FAILED", "This file is not a valid PDF.", 422)
+    try:
+        reader = PdfReader(io.BytesIO(content))
+        encrypted = reader.is_encrypted
+        page_count = len(reader.pages) if not encrypted else 0
+    except Exception:
+        raise DomainError(
+            "VALIDATION_FAILED",
+            "This PDF could not be read. Export it again as a text-based PDF.",
+            422,
+        ) from None
+    if encrypted:
+        raise DomainError(
+            "VALIDATION_FAILED",
+            "Password-protected PDFs are not supported. Upload an unencrypted PDF.",
+            422,
+        )
+    if page_count > settings.max_pdf_pages:
+        raise DomainError(
+            "VALIDATION_FAILED",
+            f"This PDF has {page_count} pages; the limit is {settings.max_pdf_pages}. "
+            "Split it into smaller procedures.",
+            422,
+        )
+    sections: list[dict] = []
+    text_length = 0
+    for index, page in enumerate(reader.pages):
+        try:
+            text = page.extract_text() or ""
+        except Exception:
+            raise DomainError(
+                "VALIDATION_FAILED",
+                f"Text could not be extracted from PDF page {index + 1}. "
+                "Export it again as a readable text-based PDF.",
+                422,
+            ) from None
+        text_length += len(text)
+        check_source_length(text_length, settings.max_source_characters)
+        sections.append({"heading": f"Page {index + 1}", "page": index + 1, "text": text})
+    if not any(len(section["text"].strip()) > 20 for section in sections):
+        raise DomainError(
+            "VALIDATION_FAILED", "Image-only PDFs require OCR, which is not supported.", 422
+        )
+    return sections
+
+
 def extract_sections(filename: str, content: bytes) -> list[dict]:
     settings = get_settings()
     sections: list[dict] = []
@@ -66,26 +126,7 @@ def extract_sections(filename: str, content: bytes) -> list[dict]:
             "VALIDATION_FAILED", "Upload a nonempty file within the 10 MB limit.", 422
         )
     if suffix == "pdf":
-        if not content.startswith(b"%PDF-"):
-            raise DomainError("VALIDATION_FAILED", "This file is not a valid PDF.", 422)
-        try:
-            reader = PdfReader(io.BytesIO(content))
-            if reader.is_encrypted or len(reader.pages) > settings.max_pdf_pages:
-                raise ValueError("Unsupported PDF")
-            sections = [
-                {"heading": f"Page {i + 1}", "page": i + 1, "text": page.extract_text() or ""}
-                for i, page in enumerate(reader.pages)
-            ]
-        except Exception:
-            raise DomainError(
-                "VALIDATION_FAILED",
-                "Upload an unencrypted text-based PDF within the page limit.",
-                422,
-            ) from None
-        if not any(len(s["text"].strip()) > 20 for s in sections):
-            raise DomainError(
-                "VALIDATION_FAILED", "Image-only PDFs require OCR, which is not supported.", 422
-            )
+        sections = extract_pdf_sections(content)
     elif suffix in {"md", "txt"}:
         try:
             source = content.decode("utf-8")
@@ -118,10 +159,7 @@ def extract_sections(filename: str, content: bytes) -> list[dict]:
         raise DomainError(
             "VALIDATION_FAILED", "Supported source files are Markdown, TXT and text-based PDF.", 422
         )
-    if sum(len(s["text"]) for s in sections) > settings.max_source_characters:
-        raise DomainError(
-            "VALIDATION_FAILED", "Extracted source text exceeds the processing limit.", 422
-        )
+    check_source_length(sum(len(s["text"]) for s in sections), settings.max_source_characters)
     if not any(s["text"].strip() for s in sections):
         raise DomainError("VALIDATION_FAILED", "The source document has no usable text.", 422)
     return sections
@@ -190,7 +228,7 @@ async def import_source(session: AsyncSession, actor: User, filename: str, conte
     require_roles(actor, "sop_manager", "owner")
     try:
         sections = await asyncio.wait_for(
-            asyncio.to_thread(extract_sections, filename, content), 10
+            asyncio.to_thread(extract_sections, filename, content), 20
         )
     except TimeoutError:
         raise DomainError(

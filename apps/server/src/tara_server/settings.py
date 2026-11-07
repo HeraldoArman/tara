@@ -71,8 +71,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     web_search_api_key: str = ""
     max_upload_bytes: int = 10 * 1024 * 1024
-    max_pdf_pages: int = 80
-    max_source_characters: int = 120_000
+    max_pdf_pages: int = 250
+    max_source_characters: int = 300_000
 
     @field_validator("app_origin")
     @classmethod
