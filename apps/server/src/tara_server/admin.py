@@ -5,33 +5,17 @@ import asyncio
 import json
 import os
 from pathlib import Path
-from typing import Literal
 
 from pydantic import Field
 from sqlalchemy import select
 
 from tara_server.auth import authenticate, password_hasher, require_roles
-from tara_server.db.models import Part, SOPVersion, User, WorkOrder
+from tara_server.db.models import Part, User
 from tara_server.db.session import session_factory
 from tara_server.domain.execution import audit
+from tara_server.domain.work_orders import create_work_order
 from tara_server.errors import DomainError
-from tara_server.schemas import Schema
-
-
-class AssetInput(Schema):
-    model: str = Field(min_length=1, max_length=200)
-    serial: str = Field(min_length=1, max_length=200)
-
-
-class WorkOrderInput(Schema):
-    reference: str = Field(min_length=1, max_length=100)
-    title: str = Field(min_length=1, max_length=300)
-    asset: AssetInput
-    issue: str = Field(min_length=1, max_length=4000)
-    priority: Literal["priority", "standard"] = "standard"
-    assigned_username: str
-    sop_version_id: str
-    estimated_minutes: int = Field(default=20, ge=1, le=10080)
+from tara_server.schemas import Schema, WorkOrderInput
 
 
 class PartInput(Schema):
@@ -85,52 +69,7 @@ async def import_work_orders(session, owner: User, records: list):
         raise DomainError("VALIDATION_FAILED", "Import at most 500 work orders per operation.", 422)
     for raw in records:
         record = WorkOrderInput.model_validate(raw)
-        technician = await session.scalar(
-            select(User).where(
-                User.org_id == owner.org_id,
-                User.username == record.assigned_username,
-                User.active.is_(True),
-                User.role.in_(["technician", "owner"]),
-            )
-        )
-        version = await session.scalar(
-            select(SOPVersion).where(
-                SOPVersion.id == record.sop_version_id,
-                SOPVersion.org_id == owner.org_id,
-                SOPVersion.status == "published",
-            )
-        )
-        if not technician or not version:
-            raise DomainError(
-                "VALIDATION_FAILED",
-                "Each work order needs an active assigned technician and a published SOP from the owner's organization.",
-                422,
-            )
-        if await session.scalar(
-            select(WorkOrder).where(
-                WorkOrder.org_id == owner.org_id, WorkOrder.reference == record.reference
-            )
-        ):
-            raise DomainError(
-                "VALIDATION_FAILED",
-                "A work-order reference is already in use; imports never overwrite execution records.",
-                409,
-            )
-        work = WorkOrder(
-            org_id=owner.org_id,
-            reference=record.reference,
-            title=record.title,
-            model=record.asset.model,
-            serial=record.asset.serial,
-            issue=record.issue,
-            priority=record.priority,
-            assigned_to=technician.id,
-            sop_version_id=version.id,
-            estimated_minutes=record.estimated_minutes,
-        )
-        session.add(work)
-        await session.flush()
-        audit(session, owner, None, "work_order.provisioned", {"workOrderId": work.id})
+        await create_work_order(session, owner, record)
 
 
 async def import_parts(session, owner: User, records: list):

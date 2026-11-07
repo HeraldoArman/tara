@@ -53,6 +53,8 @@ services:
       <<: *server-environment
       SOP_OPENAI_API_KEY: ${SOP_OPENAI_API_KEY:-}
       SOP_MODEL: ${SOP_MODEL:-gpt-6.1-sol}
+      MAX_PDF_PAGES: ${MAX_PDF_PAGES:-250}
+      MAX_SOURCE_CHARACTERS: ${MAX_SOURCE_CHARACTERS:-300000}
       DEMO_PASSWORD: ${DEMO_PASSWORD:-}
     ports:
       - "127.0.0.1:8000:8000"

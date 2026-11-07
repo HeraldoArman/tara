@@ -52,6 +52,15 @@ Migrations never run independently in worker/web startup.
 
 ## Realtime and AI
 
+SOP imports accept Markdown, TXT and unencrypted text-based PDFs up to 10 MiB.
+The default extraction limits are 250 PDF pages and 300,000 text characters,
+configurable with `MAX_PDF_PAGES` and `MAX_SOURCE_CHARACTERS`. Extraction has a
+20-second deadline. Scanned/image-only PDFs require OCR and are not supported.
+Oversized manuals should be split into individual procedures before import.
+AI drafting has a separate 60-second total deadline and requests concise output.
+Timeout, rate-limit, credential and invalid-response failures have distinct
+diagnostics. The saved source can be retried without uploading it again.
+
 Set scoped `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and the same
 `LIVEKIT_AGENT_NAME` on API/worker. The worker needs `OPENAI_API_KEY`;
 API offline SOP decomposition separately uses `SOP_OPENAI_API_KEY`. Set these in
@@ -121,10 +130,18 @@ proxy. Migrations run once in API pre-deploy. Runtime secrets are never web Dock
 build arguments. See the parent workspace's `docs/deployment.md` and the
 [Railway configuration](.railway/README.md).
 
+Owners create and assign work from **Create job** in the work queue or
+**Create job from this SOP** on a published procedure. Select a published version
+and an active technician (or yourself); the assigned account then sees
+**Start video session** in its queue. **Start bench camera** connects the assistant
+and publishes the camera to LiveKit in one action. Microphone access starts only
+after **Ask TARA**; text consultation remains available if microphone access is
+denied. Technician accounts cannot create or reassign jobs.
+
 Use the controlled administrative CLI, documented in the parent workspace's
-`docs/admin-operations.md`, to provision
-organization users and assign work orders after the initial owner bootstrap.
-There is deliberately no self-service user administration screen.
+`docs/admin-operations.md`, to provision organization users or bulk-import work
+orders after the initial owner bootstrap. There is deliberately no self-service
+user administration screen.
 
 Production requires isolated credentials/data, secure cookies, tested database
 and evidence recovery, actual provider evaluation and measured latency budgets.
@@ -137,7 +154,16 @@ Start the web app with `bun run dev:web` and open
 status, guidance, controls, verification badge and task-step components. Demo and
 Product layouts share the same presentation state and use a simulated keyboard
 or local webcam preview. This route does not connect to AI or submit execution
-records; the application execution workspace lives separately at `/runs/[id]`.
+records.
+
+Assigned jobs open the connected workspace at `/runs/[id]`, using the same
+assistant components and Demo/Product layouts. The current instruction, citations,
+corrections, verification labels and completed count come from the pinned run
+snapshot. Camera, pause/resume, visual checks, recorded confirmations, Ask TARA,
+evidence, session records and report creation use the existing authenticated
+backend and LiveKit worker. Appearance controls and simulated completion remain
+exclusive to the preview. Correct work stays silent; an attestation is labeled
+separately from AI visual verification.
 
 See the parent workspace's `docs/12-assistant-components.md` for imports, ownership,
 preview behavior and integration boundaries.

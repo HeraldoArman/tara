@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { chromium, expect } from "@playwright/test";
 
 const execute = promisify(execFile);
-const startAction = /Start job|Open session/;
+const startAction = /Start video session|Resume session/;
 const runRoute = /\/runs\/[^/]+$/;
 const groundedTerms = /keycap|switch|inspect/i;
 const serverDirectory = fileURLToPath(
@@ -156,9 +156,9 @@ async function runSmoke() {
       (await inspectFixture(runId)).outputCount === 0,
       "The fresh fixture already has agent outputs."
     );
-    stage = "connect actual worker silently";
+    stage = "connect actual worker and camera silently";
     await page
-      .getByRole("button", { exact: true, name: "Connect assistant" })
+      .getByRole("button", { exact: true, name: "Start bench camera" })
       .click();
     const confirm = page.getByRole("button", {
       exact: true,
@@ -166,7 +166,7 @@ async function runSmoke() {
     });
     await expect(confirm).toBeEnabled({ timeout });
     await expect(
-      page.getByRole("textbox", { name: "Message TARa" })
+      page.getByRole("textbox", { name: "Reply to TARA" })
     ).toBeDisabled();
     check(
       await page.evaluate(() => window.__taraProviderSmoke.audioRequests === 0),
@@ -192,9 +192,6 @@ async function runSmoke() {
       "Silent execution requested the microphone."
     );
     stage = "one synthetic-camera rejection with exact evidence bytes";
-    await page
-      .getByRole("button", { exact: true, name: "Enable bench camera" })
-      .click();
     await expect
       .poll(
         async () =>
@@ -252,15 +249,13 @@ async function runSmoke() {
     );
     stage = "explicit typed consultation";
     const beforeConsultation = await inspectFixture(runId);
-    await page.getByRole("button", { exact: true, name: "Ask TARa" }).click();
-    const composer = page.getByRole("textbox", { name: "Message TARa" });
+    await page.getByRole("button", { exact: true, name: "Ask TARA" }).click();
+    const composer = page.getByRole("textbox", { name: "Reply to TARA" });
     await expect(composer).toBeEnabled({ timeout });
     await composer.fill(
       "Using the approved SOP context, why must the keycap be removed before inspecting the switch? Please answer briefly."
     );
-    await page
-      .getByRole("button", { exact: true, name: "Send message" })
-      .click();
+    await page.getByRole("button", { exact: true, name: "Send reply" }).click();
     await expect
       .poll(
         async () => {

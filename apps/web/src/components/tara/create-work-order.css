@@ -1,0 +1,85 @@
+.create-job-form,
+.create-job-result {
+  max-width: 960px;
+  padding: 28px;
+}
+
+.create-job-form fieldset {
+  min-width: 0;
+  padding: 0;
+  margin: 0 0 28px;
+  border: 0;
+}
+
+.create-job-form legend {
+  padding: 0;
+  margin-bottom: 14px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.create-job-help {
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--tara-muted);
+}
+
+.create-job-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.create-job-field {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.create-job-field label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.create-job-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  color: var(--tara-text);
+  background: #fff;
+  border: 1px solid var(--tara-line);
+  border-radius: 10px;
+}
+
+.create-job-field select:focus-visible {
+  outline: 2px solid #7398ff;
+  outline-offset: 1px;
+}
+
+.create-job-wide {
+  grid-column: 1 / -1;
+}
+
+.create-job-result h2 {
+  margin-bottom: 14px;
+}
+
+.create-job-result p {
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .create-job-form,
+  .create-job-result {
+    padding: 20px;
+  }
+
+  .create-job-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .create-job-form .form-actions,
+  .create-job-result .form-actions {
+    flex-wrap: wrap;
+  }
+}

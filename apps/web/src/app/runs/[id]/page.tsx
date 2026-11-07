@@ -1,6 +1,6 @@
 import { unstable_rethrow } from "next/navigation";
+import { RunAssistantWorkspace } from "@/components/assistant/run-assistant-workspace";
 import { PageUnavailable } from "@/components/tara/ui";
-import { Workspace } from "@/components/tara/workspace";
 import { errorMessage } from "@/lib/api";
 import type { Run, User } from "@/lib/contracts";
 import { currentUser, serverApi } from "@/lib/server-api";
@@ -20,10 +20,14 @@ export default async function RunPage({
     return <PageUnavailable message={errorMessage(e)} />;
   }
   return (
-    <Workspace
-      canOperate={["technician", "owner"].includes(user.role)}
+    <RunAssistantWorkspace
+      canOperate={
+        ["technician", "owner"].includes(user.role) &&
+        run.workOrder.assignedTo === user.id
+      }
       canResolve={["supervisor", "owner"].includes(user.role)}
       initialRun={run}
+      key={run.id}
     />
   );
 }

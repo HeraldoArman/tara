@@ -750,7 +750,10 @@ async def set_consultation(session: AsyncSession, actor: User, run_id: str, acti
         raise DomainError("TRANSITION_REJECTED", "Resume the run before asking TARa.", 409)
     if active:
         CONSULTATIONS.inc()
-    run.interaction_mode = "consultation" if active else "silent"
+    mode = "consultation" if active else "silent"
+    if run.interaction_mode != mode:
+        run.interaction_mode = mode
+        run.version += 1
     audit(session, actor, run, "consultation.activated" if active else "consultation.deactivated")
     await session.flush()
     return await get_run_snapshot(session, actor, run.id)

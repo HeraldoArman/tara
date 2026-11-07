@@ -154,7 +154,9 @@ async def test_incomplete_sop_response_cannot_be_accepted_as_a_draft(monkeypatch
         "AsyncClient",
         lambda **kwargs: original(transport=httpx.MockTransport(respond), **kwargs),
     )
-    with pytest.raises(DomainError, match="did not produce a valid draft"):
+    with pytest.raises(DomainError) as error:
         await decompose(
             [{"heading": "Source heading", "page": None, "text": "Untrusted source text."}]
         )
+    assert error.value.code == "PROVIDER_UNAVAILABLE"
+    assert error.value.details["reason"] == "incomplete"

@@ -1,4 +1,5 @@
 import { ClipboardCheck, Clock3, FileCheck2, ShieldAlert } from "lucide-react";
+import Link from "next/link";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { Readiness, RecentReports, WorkQueue } from "@/components/tara/queue";
 import { AppShell, PageHeading, PageUnavailable } from "@/components/tara/ui";
@@ -37,7 +38,13 @@ export async function WorkQueuePage({ user }: { readonly user: User }) {
         description={`${orders.items.length} assigned jobs. Follow the procedure, keep the evidence, and move forward with confidence.`}
         eyebrow="WORKSPACE / TODAY"
         title={`Good to see you, ${firstName}.`}
-      />
+      >
+        {user.role === "owner" ? (
+          <Link className="button primary" href="/work-orders/new">
+            Create job
+          </Link>
+        ) : null}
+      </PageHeading>
       <div className="metrics-row">
         {[
           {
@@ -74,7 +81,7 @@ export async function WorkQueuePage({ user }: { readonly user: User }) {
       </div>
       <div className="dashboard-grid">
         <div>
-          <WorkQueue items={orders.items} userId={user.id} />
+          <WorkQueue items={orders.items} role={user.role} userId={user.id} />
         </div>
         <aside className="dashboard-rail">
           <Readiness

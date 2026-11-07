@@ -1,0 +1,200 @@
+.tara-live-workspace .tara-live-connection {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--tara-muted);
+  border: 1px solid var(--tara-border);
+  border-radius: 20px;
+}
+
+.tara-live-workspace .tara-live-camera-off {
+  position: absolute;
+  inset: 22% 16% 30%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.tara-live-camera-off > svg {
+  width: 36px;
+  height: 36px;
+  color: #bccbea;
+}
+
+.tara-live-camera-off h2 {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.tara-live-camera-off p {
+  font-size: 12px;
+  color: #d0d9e6;
+}
+
+.tara-live-workspace .tara-live-media {
+  flex-wrap: wrap;
+}
+
+.tara-live-workspace .tara-live-step-actions {
+  margin: 18px 0;
+}
+
+.tara-live-workspace .tara-live-step-actions [data-slot="button"] {
+  height: auto;
+  min-height: 34px;
+  white-space: normal;
+  border-radius: 9px;
+}
+
+.tara-live-responses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tara-live-approved-step,
+.tara-live-microphone,
+.tara-live-report-link {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 14px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--tara-muted);
+}
+
+.tara-live-approved-step svg,
+.tara-live-microphone svg,
+.tara-live-report-link svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.tara-live-criteria {
+  padding-left: 18px;
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.tara-live-prerequisites {
+  margin-top: 14px;
+  font-size: 11px;
+}
+
+.tara-live-prerequisites summary {
+  cursor: pointer;
+}
+
+.tara-live-prerequisites .procedure-requirements {
+  margin-top: 12px;
+}
+
+.tara-live-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.tara-live-results > div {
+  padding: 10px;
+  border: 1px solid var(--tara-border);
+  border-radius: 9px;
+}
+
+.tara-live-results [data-verdict="fail"] {
+  border-color: var(--tara-warning);
+}
+
+.tara-live-answer {
+  padding: 14px;
+  margin-top: 16px;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  background: var(--tara-accent-soft);
+  border: 1px solid var(--tara-border);
+  border-radius: 12px;
+}
+
+.tara-live-answer > span {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tara-accent);
+  letter-spacing: 1px;
+}
+
+.tara-live-workspace .tara-workspace-footer {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.tara-live-workspace .tara-workspace-footer > span:first-child {
+  margin-right: auto;
+}
+
+.tara-live-error,
+.tara-live-review-note {
+  position: relative;
+  z-index: 3;
+  padding: 16px 20px;
+  margin-top: 20px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--tara-ink);
+  background: var(--tara-surface);
+  border: 1px solid var(--tara-border);
+  border-radius: 12px;
+}
+
+.tara-live-error {
+  border-color: var(--tara-warning);
+}
+
+.tara-live-workspace .tara-live-error [data-slot="button"] {
+  margin-top: 10px;
+}
+
+.tara-live-workspace[data-mode="product"] .tara-workspace-assistant {
+  padding-bottom: 90px;
+  margin-top: -34px;
+}
+
+.tara-live-workspace[data-mode="product"] .tara-live-camera-off {
+  right: 420px;
+  left: 28px;
+}
+
+@media (max-width: 900px) {
+  .tara-live-workspace[data-mode="product"] .tara-workspace-assistant {
+    padding-bottom: 0;
+    margin-top: 0;
+  }
+
+  .tara-live-workspace[data-mode="product"] .tara-live-camera-off {
+    right: 16%;
+    left: 16%;
+  }
+}
+
+@media (max-width: 580px) {
+  .tara-live-workspace .tara-live-camera-off {
+    right: 8%;
+    left: 8%;
+  }
+
+  .tara-live-workspace .tara-live-connection {
+    order: 3;
+  }
+
+  .tara-live-camera-off h2 {
+    font-size: 18px;
+  }
+}

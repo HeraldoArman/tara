@@ -65,8 +65,10 @@ from tara_server.domain.sops import (
     validate_definition,
     version_json,
 )
+from tara_server.domain.work_orders import create_work_order, list_assignees
 from tara_server.errors import DomainError
 from tara_server.schemas import (
+    AssigneeListResponse,
     DraftEdit,
     EvaluationResponse,
     Login,
@@ -77,6 +79,7 @@ from tara_server.schemas import (
     SOPListResponse,
     SOPVersionResponse,
     UserResponse,
+    WorkOrderInput,
     WorkOrderListResponse,
     WorkOrderResponse,
     normalize_sop_definition,
@@ -255,6 +258,23 @@ async def work_orders(
     return {"items": result}
 
 
+@app.get("/api/v1/work-orders/assignees", response_model=AssigneeListResponse)
+async def work_order_assignees(
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return {"items": [user_json(user) for user in await list_assignees(session, actor)]}
+
+
+@app.post("/api/v1/work-orders", response_model=WorkOrderResponse, status_code=201)
+async def add_work_order(
+    body: WorkOrderInput,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return work_order_json(await create_work_order(session, actor, body))
+
+
 @app.get("/api/v1/work-orders/{work_id}", response_model=WorkOrderResponse)
 async def work_order(
     work_id: str,
@@ -311,7 +331,18 @@ async def connection(
                 8,
             )
             existing = await asyncio.wait_for(lk.agent_dispatch.list_dispatch(room_name), 8)
-            if not any(d.agent_name == settings.livekit_agent_name for d in existing):
+            if not any(
+                dispatch.agent_name == settings.livekit_agent_name
+                and not dispatch.state.deleted_at
+                and (
+                    not dispatch.state.jobs
+                    or any(
+                        job.state.status in {api.JobStatus.JS_PENDING, api.JobStatus.JS_RUNNING}
+                        for job in dispatch.state.jobs
+                    )
+                )
+                for dispatch in existing
+            ):
                 await asyncio.wait_for(
                     lk.agent_dispatch.create_dispatch(
                         api.CreateAgentDispatchRequest(
@@ -328,7 +359,9 @@ async def connection(
             "The live worker could not be dispatched. Retry the connection.",
             503,
         ) from None
-    run.interaction_mode = "silent"
+    if run.interaction_mode != "silent":
+        run.interaction_mode = "silent"
+        run.version += 1
     audit(session, actor, run, "run.connection_authorized")
     token = (
         api.AccessToken(settings.livekit_api_key, settings.livekit_api_secret)

@@ -191,6 +191,106 @@
             }
           }
         }
+      },
+      "post": {
+        "summary": "Add Work Order",
+        "operationId": "add_work_order_api_v1_work_orders_post",
+        "parameters": [
+          {
+            "name": "tara_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tara Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkOrderInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/work-orders/assignees": {
+      "get": {
+        "summary": "Work Order Assignees",
+        "operationId": "work_order_assignees_api_v1_work_orders_assignees_get",
+        "parameters": [
+          {
+            "name": "tara_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tara Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssigneeListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/work-orders/{work_id}": {
@@ -1745,6 +1845,29 @@
         ],
         "title": "AlertResponse"
       },
+      "AssetInput": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Model"
+          },
+          "serial": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Serial"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "model",
+          "serial"
+        ],
+        "title": "AssetInput"
+      },
       "AssetResponse": {
         "properties": {
           "model": {
@@ -1763,6 +1886,23 @@
           "serial"
         ],
         "title": "AssetResponse"
+      },
+      "AssigneeListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "AssigneeListResponse"
       },
       "AttemptResponse": {
         "properties": {
@@ -2810,6 +2950,66 @@
           "kind"
         ],
         "title": "Verification"
+      },
+      "WorkOrderInput": {
+        "properties": {
+          "reference": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Reference"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "asset": {
+            "$ref": "#/components/schemas/AssetInput"
+          },
+          "issue": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Issue"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "priority",
+              "standard"
+            ],
+            "title": "Priority",
+            "default": "standard"
+          },
+          "assignedUsername": {
+            "type": "string",
+            "title": "Assignedusername"
+          },
+          "sopVersionId": {
+            "type": "string",
+            "title": "Sopversionid"
+          },
+          "estimatedMinutes": {
+            "type": "integer",
+            "maximum": 10080.0,
+            "minimum": 1.0,
+            "title": "Estimatedminutes",
+            "default": 20
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reference",
+          "title",
+          "asset",
+          "issue",
+          "assignedUsername",
+          "sopVersionId"
+        ],
+        "title": "WorkOrderInput"
       },
       "WorkOrderListResponse": {
         "properties": {

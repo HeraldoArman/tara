@@ -10,7 +10,7 @@ const origin = process.env.TARA_E2E_ORIGIN ?? "http://localhost:3001";
 const loginPath = /\/login$/;
 const workQueueHeading = /Work queue/;
 const publishedVersionLink = /Version .*Published/i;
-const startOrResumeButton = /Start job|Open session/;
+const startOrResumeButton = /Start video session|Resume session/;
 const runPath = /\/runs\/.+/;
 const importPath = /\/sops\/import$/;
 const priorityFilter = /^priority$/i;
@@ -116,15 +116,15 @@ test("workspace stays silent when the realtime provider is unavailable", async (
   await order.getByRole("button", { name: startOrResumeButton }).click();
   await expect(page).toHaveURL(runPath);
   await expect(
-    page.getByRole("heading", { name: "Quietly here" })
+    page.getByRole("heading", { exact: true, name: "Sleep" })
   ).toBeVisible();
-  await expect(page.getByLabel("Message TARa", { exact: true })).toBeDisabled();
   await expect(
-    page.getByRole("button", { exact: true, name: "Ask TARa" })
+    page.getByLabel("Reply to TARA", { exact: true })
   ).toBeDisabled();
   await expect(
-    page.getByText("Microphone off · silent execution", { exact: true })
-  ).toBeVisible();
+    page.getByRole("button", { exact: true, name: "Ask TARA" })
+  ).toBeDisabled();
+  await expect(page.getByText("Microphone off", { exact: true })).toBeVisible();
   await expect(page.locator("audio")).toHaveCount(0);
   const connection = page.waitForResponse(
     (response) =>
@@ -132,13 +132,15 @@ test("workspace stays silent when the realtime provider is unavailable", async (
       response.request().method() === "POST"
   );
   await page
-    .getByRole("button", { exact: true, name: "Connect assistant" })
+    .getByRole("button", { exact: true, name: "Start bench camera" })
     .click();
   expect((await connection).status()).toBe(503);
-  await expect(page.locator('.notice[role="alert"]')).toContainText(
+  await expect(page.locator('.tara-live-error[role="alert"]')).toContainText(
     "not configured"
   );
-  await expect(page.getByLabel("Message TARa", { exact: true })).toBeDisabled();
+  await expect(
+    page.getByLabel("Reply to TARA", { exact: true })
+  ).toBeDisabled();
   expect(mediaRequests).toBe(0);
 });
 
