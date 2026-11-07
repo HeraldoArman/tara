@@ -11,7 +11,7 @@ export function DashboardShell({
 }) {
   return (
     <AppShell active="/dashboard" user={user}>
-      {children}
+      <div className="owner-dashboard-content">{children}</div>
     </AppShell>
   );
 }

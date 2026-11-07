@@ -5,16 +5,16 @@
   justify-content: flex-end;
 }
 
-.tara-dashboard .avatar {
+.owner-dashboard-content .avatar {
   color: var(--tara-ink);
 }
 
-.tara-dashboard th[scope="row"] {
+.owner-dashboard-content th[scope="row"] {
   color: var(--tara-ink);
   text-transform: none;
 }
 
-.tara-dashboard .ops-table-scroll td {
+.owner-dashboard-content .ops-table-scroll td {
   color: var(--tara-ink);
 }
 
@@ -438,7 +438,7 @@
   .ops-hero-actions {
     justify-content: flex-start;
   }
-  .tara-dashboard .dash-hero {
+  .owner-dashboard-content .dash-hero {
     align-items: start;
   }
 }

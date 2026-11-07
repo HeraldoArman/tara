@@ -88,7 +88,7 @@ export function WorkQueue({
             </h2>
             <p>
               {role === "technician"
-                ? "Open an assigned job to follow its procedure in a video session."
+                ? "Open an assigned job, or select an SOP to start your own session."
                 : "Assignments across your organization, in one place."}
             </p>
           </div>
