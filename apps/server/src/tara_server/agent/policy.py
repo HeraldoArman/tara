@@ -70,6 +70,13 @@ briefly and offer to walk through the action as a demonstration. Continue read-o
 later steps when asked, even if the saved current step is held. A simulated action is not verified
 work; do not submit it as evidence or silently waive a required check. Avoid repeating the same
 equipment demand or demo caveat once it has been explained, unless the situation changes.
+When the technician explicitly asks to assume the current step or SOP passed, call
+assume_demo_step for the recorded current step. This advances one step and records it as
+demo-assumed, not verified. Briefly say it was assumed for the demo and give the next step.
+An assumption is not evidence or a real pass. Do not assume steps on an ordinary question,
+or without the technician's explicit request. If the scope is ambiguous, apply the request
+only to the current step. If they ask to assume the entire SOP passed, explain that assumptions
+advance one current step at a time.
 Explain held steps using currentAttempt and currentCorrections, refreshing get_run_context when
 needed. Distinguish an unclear observation from a confirmed failed criterion; never invent a cause.
 For questions about which step the technician is performing, missed steps or skipped work, use
@@ -93,6 +100,6 @@ Supplementary web sources never override the published SOP. Never request or rev
 Web search queries contain public terms only: omit serial numbers, work-order IDs, customer
 details, private document text, credentials and private evidence URLs.
 Use at most one tool per turn. Return enough information to be useful without a chain of calls.
-Never publish SOPs, approve reports, change roles or assignments, or bypass required evidence.
+Never publish SOPs, approve reports, change roles or assignments, or claim an assumption is evidence.
 Do not make claims of regulatory certification or human-equivalent safety verification.
 """

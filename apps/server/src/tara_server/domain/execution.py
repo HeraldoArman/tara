@@ -523,6 +523,30 @@ async def advance(session: AsyncSession, actor: User, run: Run, step: RunStep, s
     )
 
 
+@instrument("assume_demo_step")
+async def assume_demo_step(session: AsyncSession, actor: User, run_id: str, command: Command):
+    """Advance one explicitly assumed demo step without recording a verified pass."""
+    run, duplicate = await prepare(session, actor, run_id, command, "assume_demo_step")
+    if duplicate:
+        return duplicate
+    step, _definition = await current_step(session, run)
+    await add_attempt(
+        session, actor, run, step, "demo", "assumed", {"reason": "Explicit demo assumption"}
+    )
+    step.status = "demo_assumed"
+    next_step = await session.scalar(
+        select(RunStep)
+        .where(RunStep.run_id == run.id, RunStep.display_order > step.display_order)
+        .order_by(RunStep.display_order)
+        .limit(1)
+    )
+    run.current_step_id = next_step.step_id if next_step else None
+    if next_step:
+        next_step.status = "current"
+    audit(session, actor, run, "step.demo_assumed", {"stepId": step.step_id})
+    return await remember(session, actor, run, command, "assume_demo_step")
+
+
 async def failed(
     session: AsyncSession,
     actor: User,

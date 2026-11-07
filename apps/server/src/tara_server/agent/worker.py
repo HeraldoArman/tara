@@ -824,6 +824,7 @@ class WorkerRuntime:
         if method == "run.retry":
             return await self.visual(payload, from_model_tool=from_model_tool)
         operations: dict[str, tuple[str, type[BaseModel]]] = {
+            "run.assume_demo_step": ("assume_demo_step", Command),
             "run.respond": ("respond", ResponseCommand),
             "run.control": ("control", ControlCommand),
             "run.finish": ("finish", FinishCommand),
@@ -1007,6 +1008,14 @@ def build_tools(runtime: WorkerRuntime):
         )
 
     @model_tool
+    async def assume_demo_step(context: RunContext, expected_step_id: str) -> dict:
+        """On an explicit demo assumption request, advance the current step as unverified."""
+        context.disallow_interruptions()
+        return await execute(
+            "run.assume_demo_step", await runtime.model_command(expected_step_id, context)
+        )
+
+    @model_tool
     async def record_issue(
         context: RunContext,
         expected_step_id: str,
@@ -1095,6 +1104,7 @@ def build_tools(runtime: WorkerRuntime):
         review_progress,
         submit_visual_check,
         submit_step_response,
+        assume_demo_step,
         record_issue,
         lookup_parts,
         search_web,
