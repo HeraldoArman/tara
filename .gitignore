@@ -56,3 +56,16 @@ coverage
 .cache
 tmp
 temp
+
+# Python and local evidence
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.evidence/
+.env.*
+!.env.example
+!.env.schema
