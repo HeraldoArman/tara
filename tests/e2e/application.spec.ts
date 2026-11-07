@@ -35,7 +35,7 @@ test("invalid login stays signed out and shows a useful error", async ({
     .getByLabel("Password", { exact: true })
     .fill("invalid-password-for-e2e");
   await page.getByRole("button", { exact: true, name: "Sign in" }).click();
-  await expect(page.locator('.notice[role="alert"]')).toBeVisible();
+  await expect(page.locator("form").getByRole("alert")).toBeVisible();
   await expect(page).toHaveURL(loginPath);
 });
 

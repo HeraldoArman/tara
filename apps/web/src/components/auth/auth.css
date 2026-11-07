@@ -1,0 +1,632 @@
+.tara-auth {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding: 32px clamp(24px, 5vw, 88px) 24px;
+  overflow: clip;
+  font-family: var(--font-geist-sans), sans-serif;
+  background:
+    radial-gradient(ellipse at 0% 72%, #dde4fc85, transparent 55%),
+    radial-gradient(ellipse at 100% 0%, #e6e9fb90, transparent 45%),
+    var(--tara-canvas);
+  isolation: isolate;
+}
+
+.tara-auth-header {
+  display: flex;
+  gap: 26px;
+  align-items: center;
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.tara-auth-brand {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--tara-ink);
+}
+
+.tara-auth-brand > span:last-child {
+  font-size: 35px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.tara-auth-brand-period {
+  color: var(--tara-active);
+}
+
+.tara-auth-header-caption {
+  padding-left: 26px;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--tara-muted);
+  letter-spacing: 1.5px;
+  border-left: 1px solid var(--tara-border);
+}
+
+.tara-auth-preview-link {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--tara-muted);
+}
+
+.tara-auth-preview-link svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 180ms ease;
+}
+
+.tara-auth-preview-link:hover {
+  color: var(--tara-accent);
+}
+
+.tara-auth-preview-link:where(:hover) svg {
+  transform: translateX(3px);
+}
+
+.tara-auth-main {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(40px, 7vw, 116px);
+  align-items: center;
+  width: 100%;
+  max-width: 1180px;
+  padding-block: 64px 76px;
+  margin: 0 auto;
+}
+
+.tara-auth-story {
+  min-width: 0;
+  padding-top: 10px;
+}
+
+.tara-auth-eyebrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--tara-muted);
+  letter-spacing: 1.7px;
+}
+
+.tara-auth-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--tara-active);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px var(--tara-accent-soft);
+}
+
+.tara-auth-story h2 {
+  margin: 23px 0 24px;
+  font-size: clamp(44px, 4.5vw, 65px);
+  font-weight: 430;
+  line-height: 1.06;
+  letter-spacing: -3.1px;
+}
+
+.tara-auth-story h2 span {
+  color: var(--tara-active);
+}
+
+.tara-auth-story-description {
+  max-width: 380px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--tara-muted);
+}
+
+.tara-auth-flow {
+  max-width: 470px;
+  margin-top: 22px;
+}
+
+.tara-auth-orbit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 164px;
+  overflow: hidden;
+}
+
+.tara-auth-orbit-ring {
+  position: absolute;
+  width: 280px;
+  height: 112px;
+  border: 1px solid #ccd5ee85;
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.tara-auth-orbit-ring:nth-child(2) {
+  width: 358px;
+  height: 142px;
+  border-color: #d9e0f2a3;
+  transform: rotate(13deg);
+}
+
+.tara-auth-orbit-core {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 89px;
+  height: 89px;
+  background: radial-gradient(
+    circle at 30% 20%,
+    #fff 16%,
+    #edf0ff 65%,
+    #d9dfff
+  );
+  border: 1px solid #fff;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 10px #ffffff45,
+    0 16px 32px #4758db12;
+}
+
+.tara-auth-orbit-core .tara-assistant-mark {
+  transform: scale(1.25) rotate(16deg);
+}
+
+.tara-auth-orbit-dot {
+  position: absolute;
+  top: 41px;
+  left: calc(50% + 120px);
+  width: 7px;
+  height: 7px;
+  background: #adb8ef;
+  border: 2px solid #f5f7ff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #dbe1fb80;
+}
+
+.tara-auth-flow ol {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+  margin: -2px 0 0;
+  list-style: none;
+}
+
+.tara-auth-flow li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 18px 16px 17px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #ffffffa6;
+  border: 1px solid #fff;
+  border-radius: 17px;
+  box-shadow: 0 8px 30px #31457504;
+  backdrop-filter: blur(12px);
+}
+
+.tara-auth-flow :where(li) > svg {
+  width: 19px;
+  height: 19px;
+  color: var(--tara-active);
+  stroke-width: 1.5;
+}
+
+.tara-auth-flow-number {
+  position: absolute;
+  top: 17px;
+  right: 15px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--tara-muted);
+}
+
+.tara-auth-flow > p {
+  margin-top: 17px;
+  font-size: 10px;
+  color: var(--tara-muted);
+  text-align: center;
+}
+
+.tara-auth-panel {
+  width: 100%;
+  max-width: 466px;
+  padding: clamp(28px, 3.25vw, 48px);
+  margin-left: auto;
+  background: #ffffffd9;
+  border: 1px solid #fff;
+  border-radius: 28px;
+  box-shadow:
+    0 20px 70px #31457506,
+    0 0 0 1px #e7ebf470;
+  backdrop-filter: blur(20px);
+}
+
+.tara-auth-panel-heading {
+  margin-bottom: 29px;
+}
+
+.tara-auth-panel h1 {
+  margin: 15px 0 12px;
+  font-size: 32px;
+  font-weight: 480;
+  line-height: 1.18;
+  letter-spacing: -1.2px;
+}
+
+.tara-auth-description {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--tara-muted);
+}
+
+.tara-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+  margin: 0;
+}
+
+.tara-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.tara-auth-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tara-auth-label {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--tara-ink);
+}
+
+.tara-auth .tara-auth-input {
+  height: 47px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--tara-ink);
+  background: var(--tara-surface);
+  border: 1px solid var(--tara-border);
+  border-radius: 11px;
+  box-shadow: 0 2px 3px #24304902;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.tara-auth .tara-auth-input::placeholder {
+  color: #8994a8;
+}
+
+.tara-auth .tara-auth-input:focus {
+  outline: none;
+  border-color: var(--tara-active);
+  box-shadow: 0 0 0 3px #4758db15;
+}
+
+.tara-auth .tara-auth-input[aria-invalid="true"] {
+  border-color: var(--tara-warning);
+}
+
+.tara-auth .tara-auth-input:disabled {
+  color: var(--tara-muted);
+  background: var(--muted);
+  opacity: 0.7;
+}
+
+.tara-auth .tara-auth-input-wrap {
+  height: 47px;
+  padding: 0;
+  margin: 0;
+  background: var(--tara-surface);
+  border: 1px solid var(--tara-border);
+  border-radius: 11px;
+  box-shadow: 0 2px 3px #24304902;
+}
+
+.tara-auth .tara-auth-input-wrap:focus-within {
+  border-color: var(--tara-active);
+  box-shadow: 0 0 0 3px #4758db15;
+}
+
+.tara-auth .tara-auth-input-wrap .tara-auth-input {
+  height: 45px;
+  border: 0;
+  box-shadow: none;
+}
+
+.tara-auth .tara-auth-input-wrap [data-slot="input-group-addon"] {
+  padding: 0 7px 0 0;
+}
+
+.tara-auth .tara-auth-password-toggle {
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  color: var(--tara-muted);
+  border-radius: 8px;
+}
+
+.tara-auth .tara-auth-password-toggle:hover {
+  color: var(--tara-active);
+  background: var(--tara-accent-soft);
+}
+
+.tara-auth .tara-auth-submit {
+  gap: 10px;
+  width: 100%;
+  min-height: 47px;
+  padding: 12px 18px;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-foreground);
+  background: var(--tara-ink);
+  border-radius: 11px;
+  box-shadow: 0 4px 10px #2430490d;
+}
+
+.tara-auth .tara-auth-submit:hover:not(:disabled) {
+  background: var(--tara-active);
+}
+
+.tara-auth .tara-auth-submit:disabled {
+  opacity: 0.65;
+}
+
+.tara-auth-error,
+.tara-auth-success,
+.tara-auth-status {
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  border: 1px solid var(--tara-border);
+  border-radius: 10px;
+}
+
+.tara-auth-error {
+  color: var(--tara-warning);
+  background: #fff4f5;
+  border-color: #f5dce0;
+}
+
+.tara-auth-success {
+  color: var(--tara-success);
+  background: #eaf7f1;
+  border-color: #d0eade;
+}
+
+.tara-auth-status {
+  color: var(--tara-ink);
+  background: var(--tara-accent-soft);
+}
+
+.tara-auth-field-error {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--tara-warning);
+}
+
+.tara-auth-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--tara-muted);
+}
+
+.tara-auth-note > svg {
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+}
+
+.tara-auth-alternate {
+  padding-top: 23px;
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--tara-muted);
+  text-align: center;
+  border-top: 1px solid var(--tara-border);
+}
+
+.tara-auth-alternate a {
+  font-weight: 550;
+  color: var(--tara-active);
+  text-underline-offset: 4px;
+}
+
+.tara-auth-alternate a:hover {
+  text-decoration: underline;
+}
+
+.tara-auth-footer {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--tara-muted);
+}
+
+.tara-auth-skip {
+  position: absolute;
+  top: -100px;
+  left: 24px;
+  z-index: 2;
+  padding: 12px 18px;
+  background: var(--tara-surface);
+  border-radius: 9px;
+}
+
+.tara-auth-skip:focus {
+  top: 12px;
+}
+
+.tara-auth :is(a, button):focus-visible {
+  outline: 2px solid var(--tara-active);
+  outline-offset: 4px;
+}
+
+.tara-auth-spinner {
+  animation: tara-auth-spin 900ms linear infinite;
+}
+
+@keyframes tara-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 1600px) {
+  .tara-auth-main {
+    gap: 150px;
+    max-width: 1240px;
+  }
+}
+
+@media (max-width: 1050px) {
+  .tara-auth-header-caption {
+    display: none;
+  }
+
+  .tara-auth-main {
+    gap: 36px;
+    padding-block: 58px;
+  }
+
+  .tara-auth-story h2 {
+    font-size: 46px;
+    letter-spacing: -2.2px;
+  }
+
+  .tara-auth-flow li {
+    padding-inline: 12px;
+    font-size: 10px;
+  }
+
+  .tara-auth-panel {
+    padding: 30px 26px;
+  }
+}
+
+@media (max-width: 760px) {
+  .tara-auth {
+    padding: 24px 22px 22px;
+  }
+
+  .tara-auth-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    max-width: 466px;
+    padding-block: 45px;
+  }
+
+  .tara-auth-story {
+    padding: 0 4px;
+  }
+
+  .tara-auth-story-copy > .tara-auth-eyebrow,
+  .tara-auth-story-description,
+  .tara-auth-flow,
+  .tara-auth-footer > span:last-child {
+    display: none;
+  }
+
+  .tara-auth-story h2 {
+    margin: 0;
+    font-size: 37px;
+    line-height: 1.12;
+    letter-spacing: -1.7px;
+  }
+
+  .tara-auth-story h2 br {
+    display: none;
+  }
+
+  .tara-auth-story h2 span::before {
+    content: " ";
+  }
+
+  .tara-auth-panel {
+    max-width: none;
+    padding: 32px 28px;
+    border-radius: 23px;
+  }
+
+  .tara-auth .tara-auth-input {
+    font-size: 16px;
+  }
+
+  .tara-auth-footer {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .tara-auth {
+    padding-inline: 16px;
+  }
+
+  .tara-auth-brand > span:last-child {
+    font-size: 30px;
+  }
+
+  .tara-auth-header {
+    gap: 16px;
+  }
+
+  .tara-auth-preview-link {
+    gap: 6px;
+    font-size: 10px;
+  }
+
+  .tara-auth-panel {
+    padding: 29px 22px;
+  }
+
+  .tara-auth-panel h1 {
+    font-size: 29px;
+  }
+
+  .tara-auth-field-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 21px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tara-auth-spinner {
+    animation: none;
+  }
+}
