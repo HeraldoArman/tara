@@ -55,7 +55,7 @@ export default defineRailway((ctx) => {
     },
     healthcheck: "/health/ready",
     healthcheckTimeout: 120,
-    preDeploy: "cd /app/apps/server && alembic upgrade head",
+    preDeploy: "alembic upgrade head",
     replicas: { [region]: 1 },
     source: source(),
     start:
