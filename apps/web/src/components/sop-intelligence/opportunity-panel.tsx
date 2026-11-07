@@ -10,6 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from "@tara/ui/components/toggle-group";
 import { ArrowUpRight, Check, Hand, ScanEye, Sparkles } from "lucide-react";
 import { type MouseEvent, useCallback } from "react";
 
+import { highlightDescription, type SourceHighlight } from "./source-highlight";
 import {
   canAssist,
   categoryLabels,
@@ -19,7 +20,7 @@ import {
 
 interface OpportunityPanelProps {
   filter: OpportunityFilter;
-  highlightedId: string | null;
+  highlight: SourceHighlight | null;
   onFilterChange: (filter: OpportunityFilter) => void;
   onSelect: (opportunity: Opportunity) => void;
   opportunities: Opportunity[];
@@ -30,7 +31,7 @@ export function OpportunityPanel({
   opportunities,
   selectedId,
   filter,
-  highlightedId,
+  highlight,
   onFilterChange,
   onSelect,
 }: OpportunityPanelProps) {
@@ -101,8 +102,7 @@ export function OpportunityPanel({
       </div>
 
       <p className="sop-map-hint">
-        <ScanEye aria-hidden="true" /> Select a card to highlight its exact
-        instruction.
+        <ScanEye aria-hidden="true" /> Select a card to highlight its source.
       </p>
 
       <div className="sop-opportunity-scroll">
@@ -175,12 +175,10 @@ export function OpportunityPanel({
                     {selected ? (
                       <span
                         className="sop-source-linked"
-                        data-linked={highlightedId === opportunity.id}
+                        data-linked={Boolean(highlight)}
                       >
                         <span />
-                        {highlightedId === opportunity.id
-                          ? "Exact instruction highlighted"
-                          : "Exact source text unavailable · review saved instruction"}
+                        {highlightDescription(highlight)}
                       </span>
                     ) : null}
                   </button>

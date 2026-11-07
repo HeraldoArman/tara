@@ -221,3 +221,29 @@
     font-size: 18px;
   }
 }
+
+.tara-live-workspace .tara-demo-pass[data-slot="button"] {
+  height: 34px;
+  border-radius: 9px;
+}
+
+.tara-demo-pass-label {
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+.tara-live-workspace[data-mode="product"] .tara-demo-pass[data-slot="button"] {
+  position: absolute;
+  top: 8px;
+  right: 450px;
+  color: var(--tara-ink);
+  background: var(--tara-glass-fill);
+  border-color: var(--tara-border);
+}
+
+@media (max-width: 900px) {
+  .tara-live-workspace[data-mode="product"]
+    .tara-demo-pass[data-slot="button"] {
+    position: static;
+  }
+}

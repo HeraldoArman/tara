@@ -31,7 +31,7 @@ import type { Run, User } from "@/lib/contracts";
 import { sopVersionPath } from "@/lib/sop-version-route";
 import { DocumentPanel } from "./document-panel";
 import { OpportunityPanel } from "./opportunity-panel";
-import { findSourceHighlight } from "./source-highlight";
+import { findSourceHighlight, highlightDescription } from "./source-highlight";
 import {
   canAssist,
   categoryLabels,
@@ -48,6 +48,7 @@ function SavedProcedureReview({
   onFilterChange,
   onSelect,
   selectedId,
+  selectionCount,
 }: {
   analysis: SavedSopAnalysis | null;
   error: string;
@@ -56,6 +57,7 @@ function SavedProcedureReview({
   onFilterChange: (filter: OpportunityFilter) => void;
   onSelect: (opportunity: Opportunity) => void;
   selectedId: string | null;
+  selectionCount: number;
 }) {
   if (!analysis) {
     if (loading || error) {
@@ -74,9 +76,7 @@ function SavedProcedureReview({
   }
   const { opportunities } = analysis;
   const selected = opportunities.find((item) => item.id === selectedId);
-  const highlightedId = findSourceHighlight(analysis.document, selected)
-    ? selectedId
-    : null;
+  const highlight = findSourceHighlight(analysis.document, selected);
   const assistCount = opportunities.filter((item) =>
     canAssist(item.category)
   ).length;
@@ -159,10 +159,11 @@ function SavedProcedureReview({
           document={analysis.document}
           key={analysis.version.id}
           selected={selected}
+          selectionCount={selectionCount}
         />
         <OpportunityPanel
           filter={filter}
-          highlightedId={highlightedId}
+          highlight={highlight}
           onFilterChange={onFilterChange}
           onSelect={onSelect}
           opportunities={opportunities}
@@ -184,6 +185,7 @@ export function SopWorkspace({
   const versionId = initialVersionId;
   const [analysis, setAnalysis] = useState<SavedSopAnalysis | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectionCount, setSelectionCount] = useState(0);
   const [filter, setFilter] = useState<OpportunityFilter>("all");
   const [helpOpen, setHelpOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(initialVersionId));
@@ -268,11 +270,10 @@ export function SopWorkspace({
   const selectOpportunity = useCallback(
     (opportunity: Opportunity) => {
       setSelectedId(opportunity.id);
+      setSelectionCount((count) => count + 1);
       const linked =
         analysis && findSourceHighlight(analysis.document, opportunity);
-      const sourceMessage = linked
-        ? "Exact instruction highlighted."
-        : "Exact source text unavailable. Review the saved instruction.";
+      const sourceMessage = highlightDescription(linked || null);
       setAnnouncement(
         `${opportunity.title}. ${categoryLabels[opportunity.category]}. ${sourceMessage}`
       );
@@ -375,6 +376,7 @@ export function SopWorkspace({
           onFilterChange={changeFilter}
           onSelect={selectOpportunity}
           selectedId={selectedId}
+          selectionCount={selectionCount}
         />
         <footer className="sop-footer">
           <span>
@@ -415,10 +417,9 @@ export function SopWorkspace({
             <li>
               <strong>Follow a step to its source.</strong>
               <p>
-                Select a card to highlight only its linked instruction. If an
-                exact excerpt is unavailable, review the saved instruction and
-                its source. Colors describe how that step is configured, not a
-                completed verification.
+                Select a card to locate its source. Matching excerpts or step
+                headings are highlighted when available. Colors describe how
+                that step is configured, not a completed verification.
               </p>
             </li>
             <li>

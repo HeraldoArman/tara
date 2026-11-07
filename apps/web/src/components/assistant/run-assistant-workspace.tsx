@@ -501,25 +501,6 @@ function RunStepControls({
   const paused = session.run.status === "paused";
   return (
     <div className="tara-live-step-controls">
-      <details className="tara-live-prerequisites">
-        <summary>Step checks &amp; prerequisites</summary>
-        <ProcedureRequirements
-          compact
-          prerequisites={session.run.sop.prerequisites}
-          scope={session.run.sop.scope}
-        />
-        {view.correction && view.step ? (
-          <p className="tara-live-approved-step">
-            <BookOpen aria-hidden="true" />
-            Approved step: {view.step.title}
-          </p>
-        ) : null}
-        <RunCriteria
-          checking={session.checking}
-          currentAttemptId={session.run.currentAttemptId}
-          step={view.step}
-        />
-      </details>
       {view.active ? (
         <div className="tara-live-step-actions">
           <StepActions
@@ -529,26 +510,6 @@ function RunStepControls({
             session={session}
             step={view.step}
           />
-          <Button
-            disabled={
-              !canOperate ||
-              session.connection !== "connected" ||
-              session.run.status !== "active" ||
-              session.run.interactionMode !== "consultation" ||
-              Boolean(session.busy)
-            }
-            onClick={async () => {
-              await session.action("assistant.text", {
-                text: "Review my progress against the selected SOP. Look at the current camera view, identify the likely step, and tell me which earlier required steps lack recorded verification or were explicitly skipped.",
-              });
-            }}
-            size="sm"
-            title="Check the current camera view against saved progress"
-            variant="outline"
-          >
-            <ScanLine aria-hidden="true" />
-            Review my progress
-          </Button>
         </div>
       ) : (
         <Link
@@ -578,6 +539,139 @@ function RunStepControls({
         </Button>
       ) : null}
     </div>
+  );
+}
+
+function RunCurrentStep({
+  mode,
+  onViewSop,
+  run,
+  view,
+}: {
+  mode: AssistantMode;
+  onViewSop: () => void;
+  run: Run;
+  view: RunAssistantView;
+}) {
+  const latestAttempt = view.step?.attempts.at(-1);
+  const firstProblem =
+    latestAttempt &&
+    latestAttempt.id === run.currentAttemptId &&
+    view.correction?.attemptId === latestAttempt.id
+      ? latestAttempt.result.criteria?.find(
+          (criterion) => criterion.verdict !== "pass"
+        )
+      : undefined;
+  const compactWarning = mode === "product" && Boolean(view.correction);
+  return (
+    <TaskStep
+      description={
+        compactWarning ? (firstProblem?.reason ?? view.title) : view.description
+      }
+      title={compactWarning ? "Step needs attention" : view.title}
+      verificationLabel={view.verificationLabel}
+      verificationStatus={view.verificationStatus}
+    >
+      {mode === "demo" ? (
+        <button
+          className="tara-source-button"
+          onClick={onViewSop}
+          type="button"
+        >
+          {view.source} <ArrowUpRight aria-hidden="true" />
+        </button>
+      ) : null}
+    </TaskStep>
+  );
+}
+
+function RunExtraDetails({
+  canOperate,
+  onViewSop,
+  session,
+  view,
+}: {
+  canOperate: boolean;
+  onViewSop: () => void;
+  session: RunSession;
+  view: RunAssistantView;
+}) {
+  const { run } = session;
+  return (
+    <details className="tara-live-session-tools">
+      <summary>Step details &amp; camera tools</summary>
+      <div>
+        {view.correction && view.step ? (
+          <div className="tara-live-warning-details">
+            <p>
+              <strong>{view.step.title}</strong>
+            </p>
+            <p>{view.step.instruction}</p>
+            <p>{view.correction.message}</p>
+          </div>
+        ) : null}
+        <button
+          className="tara-source-button"
+          onClick={onViewSop}
+          type="button"
+        >
+          View approved SOP <ArrowUpRight aria-hidden="true" />
+        </button>
+        {view.active ? (
+          <Button
+            disabled={
+              !canOperate ||
+              session.connection !== "connected" ||
+              session.run.status !== "active" ||
+              session.run.interactionMode !== "consultation" ||
+              Boolean(session.busy)
+            }
+            onClick={async () => {
+              await session.action("assistant.text", {
+                text: "Review my progress against the selected SOP. Look at the current camera view, identify the likely step, and tell me which earlier required steps lack recorded verification or were explicitly skipped.",
+              });
+            }}
+            size="sm"
+            title="Check the current camera view against saved progress"
+            variant="outline"
+          >
+            <ScanLine aria-hidden="true" />
+            Review my progress
+          </Button>
+        ) : null}
+        <details className="tara-live-prerequisites">
+          <summary>Step checks &amp; prerequisites</summary>
+          <ProcedureRequirements
+            compact
+            prerequisites={run.sop.prerequisites}
+            scope={run.sop.scope}
+          />
+          <RunCriteria
+            checking={session.checking}
+            currentAttemptId={run.currentAttemptId}
+            step={view.step}
+          />
+        </details>
+        {canOperate && view.active ? (
+          <>
+            <RunAssetLabel
+              canOperate={canOperate}
+              run={run}
+              session={session}
+            />
+            <PairPhoneCamera
+              disabled={Boolean(session.busy) || session.cameraBusy}
+              onConnect={session.startPhoneSession}
+              onPairingChange={session.refreshPhonePairing}
+              onUseLaptop={session.useLaptopCamera}
+              pairing={session.phonePairing}
+              phoneConnected={session.phoneConnected}
+              runId={run.id}
+            />
+          </>
+        ) : null}
+      </div>
+    </details>
   );
 }
 
@@ -649,6 +743,20 @@ export function RunAssistantWorkspace({
         <span className="tara-live-connection" role="status">
           {humanize(connection)}
         </span>
+        {canOperate ? (
+          <Button
+            aria-label="Assume the current step passed for this demo"
+            className="tara-demo-pass"
+            disabled={!(canAct && view.step) || session.checking}
+            onClick={() => session.action("run.assume_demo_step")}
+            size="sm"
+            title="Demo only: advance this step without verification"
+            variant="outline"
+          >
+            <Check aria-hidden="true" />
+            Passed <span className="tara-demo-pass-label">Demo</span>
+          </Button>
+        ) : null}
         <Button
           aria-label="Session help"
           className="tara-workspace-help"
@@ -708,8 +816,8 @@ export function RunAssistantWorkspace({
             startLabel={usingPhone ? "Reconnect phone session" : undefined}
             status={status}
             stepLabel={
-              view.allStepsComplete
-                ? `${view.totalSteps}/${view.totalSteps} steps recorded`
+              view.allStepsComplete || !view.step
+                ? `${view.totalSteps}/${view.totalSteps} steps reviewed`
                 : `Step ${view.stepNumber}/${view.totalSteps}`
             }
             stream={session.cameraStream}
@@ -722,48 +830,24 @@ export function RunAssistantWorkspace({
             id="current-instruction"
             tabIndex={-1}
           >
-            <TaskStep
-              description={view.description}
-              title={view.title}
-              verificationLabel={view.verificationLabel}
-              verificationStatus={view.verificationStatus}
-            >
-              <button
-                className="tara-source-button"
-                onClick={openSop}
-                type="button"
-              >
-                {view.source}
-                <ArrowUpRight aria-hidden="true" />
-              </button>
-            </TaskStep>
+            <RunCurrentStep
+              mode={mode}
+              onViewSop={openSop}
+              run={run}
+              view={view}
+            />
             <RunStepControls
               canOperate={canOperate}
               onFinish={finish}
               session={session}
               view={view}
             />
-            {canOperate && view.active ? (
-              <details className="tara-live-session-tools">
-                <summary>Camera &amp; model tools</summary>
-                <div>
-                  <RunAssetLabel
-                    canOperate={canOperate}
-                    run={run}
-                    session={session}
-                  />
-                  <PairPhoneCamera
-                    disabled={Boolean(busy) || session.cameraBusy}
-                    onConnect={session.startPhoneSession}
-                    onPairingChange={session.refreshPhonePairing}
-                    onUseLaptop={session.useLaptopCamera}
-                    pairing={session.phonePairing}
-                    phoneConnected={session.phoneConnected}
-                    runId={run.id}
-                  />
-                </div>
-              </details>
-            ) : null}
+            <RunExtraDetails
+              canOperate={canOperate}
+              onViewSop={openSop}
+              session={session}
+              view={view}
+            />
           </div>
         </section>
         <aside aria-label="tara assistant" className="tara-workspace-assistant">

@@ -1,30 +1,79 @@
 import { Button } from "@tara/ui/components/button";
 import { FileText, Minus, Plus, ScanText } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { findSourceHighlight } from "./source-highlight";
+import { findSourceHighlight, highlightDescription } from "./source-highlight";
 import { canAssist, type Opportunity, type SopDocument } from "./types";
 
 interface DocumentPanelProps {
   document: SopDocument;
   selected: Opportunity | undefined;
+  selectionCount: number;
 }
 
-export function DocumentPanel({ document, selected }: DocumentPanelProps) {
+export function DocumentPanel({
+  document,
+  selected,
+  selectionCount,
+}: DocumentPanelProps) {
   const [zoom, setZoom] = useState(100);
   const viewport = useRef<HTMLElement>(null);
   const activeSection = useRef<HTMLElement>(null);
   const activeHighlight = useRef<HTMLElement>(null);
   const highlight = findSourceHighlight(document, selected);
-  const previousSelection = useRef(selected?.id);
+  const previousSelection = useRef({ count: selectionCount, id: selected?.id });
+  const pages = [
+    ...new Set(
+      document.sections
+        .map((section) => section.page)
+        .filter((page): page is number => typeof page === "number")
+    ),
+  ].sort((a, b) => a - b);
+  const goToPage = useCallback(
+    (page: number) => {
+      const section = document.sections.find((item) => item.page === page);
+      const container = viewport.current;
+      const target =
+        section &&
+        container?.querySelector(
+          `[data-source-id="${CSS.escape(section.id)}"]`
+        );
+      if (container && target) {
+        container.scrollTo({
+          behavior: "smooth",
+          top:
+            target.getBoundingClientRect().top -
+            container.getBoundingClientRect().top +
+            container.scrollTop -
+            20,
+        });
+      }
+    },
+    [document.sections]
+  );
+  const handlePageChange = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      goToPage(Number(event.target.value));
+      event.target.value = "";
+    },
+    [goToPage]
+  );
   const zoomOut = useCallback(() => setZoom((value) => value - 10), []);
   const zoomIn = useCallback(() => setZoom((value) => value + 10), []);
 
   useEffect(() => {
     const target = activeHighlight.current ?? activeSection.current;
     const container = viewport.current;
-    const changed = previousSelection.current !== selected?.id;
-    previousSelection.current = selected?.id;
+    const changed =
+      previousSelection.current.id !== selected?.id ||
+      previousSelection.current.count !== selectionCount;
+    previousSelection.current = { count: selectionCount, id: selected?.id };
     if (!(target && container && changed)) {
       return;
     }
@@ -44,7 +93,7 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
         container.scrollTop -
         70,
     });
-  }, [selected?.id]);
+  }, [selected?.id, selectionCount]);
 
   return (
     <section aria-labelledby="document-heading" className="sop-document-panel">
@@ -72,6 +121,25 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
             ? "Procedure definition · original source unavailable"
             : "Extracted text"}
         </span>
+        {pages.length > 1 ? (
+          <label>
+            <span className="sr-only">Go to page</span>
+            <select
+              aria-label="Go to page"
+              defaultValue=""
+              onChange={handlePageChange}
+            >
+              <option disabled value="">
+                Go to page
+              </option>
+              {pages.map((page) => (
+                <option key={page} value={page}>
+                  Page {page}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <fieldset className="sop-zoom">
           <legend className="sr-only">Document text size</legend>
           <Button
@@ -136,6 +204,7 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
                   aria-label={section.heading}
                   className="sop-source-section"
                   data-selected={active}
+                  data-source-id={section.id}
                   data-tone={active ? tone : undefined}
                   id={`passage-${section.id}`}
                   key={section.id}
@@ -148,20 +217,33 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
                     <h4>{section.heading}</h4>
                     {section.text ? (
                       <p>
-                        {range ? (
-                          <>
-                            {section.text.slice(0, range.start)}
-                            <mark
-                              data-opportunity-id={selected?.id}
-                              ref={activeHighlight}
-                            >
-                              {section.text.slice(range.start, range.end)}
-                            </mark>
-                            {section.text.slice(range.end)}
-                          </>
-                        ) : (
-                          section.text
-                        )}
+                        {range
+                          ? (range.ranges ?? [range]).map(
+                              (part, partIndex, parts) => (
+                                <span key={`${part.start}-${part.end}`}>
+                                  {section.text.slice(
+                                    partIndex === 0
+                                      ? 0
+                                      : parts[partIndex - 1].end,
+                                    part.start
+                                  )}
+                                  <mark
+                                    data-opportunity-id={selected?.id}
+                                    ref={
+                                      partIndex === 0
+                                        ? activeHighlight
+                                        : undefined
+                                    }
+                                  >
+                                    {section.text.slice(part.start, part.end)}
+                                  </mark>
+                                  {partIndex === parts.length - 1
+                                    ? section.text.slice(part.end)
+                                    : null}
+                                </span>
+                              )
+                            )
+                          : section.text}
                       </p>
                     ) : null}
                     {section.page ? (
@@ -185,9 +267,9 @@ export function DocumentPanel({ document, selected }: DocumentPanelProps) {
             : `${document.sections.length} passages`}
         </span>
         <span>
-          {selected && !highlight
-            ? "Exact source text unavailable for this step"
-            : "Select a card to locate its exact instruction"}
+          {selected
+            ? highlightDescription(highlight)
+            : "Select a card to locate its source"}
         </span>
       </footer>
     </section>

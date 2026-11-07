@@ -824,6 +824,7 @@ class WorkerRuntime:
         if method == "run.retry":
             return await self.visual(payload, from_model_tool=from_model_tool)
         operations: dict[str, tuple[str, type[BaseModel]]] = {
+            "run.assume_demo_step": ("assume_demo_step", Command),
             "run.respond": ("respond", ResponseCommand),
             "run.control": ("control", ControlCommand),
             "run.finish": ("finish", FinishCommand),
@@ -847,6 +848,7 @@ class WorkerRuntime:
             "run.get_context",
             "run.retry",
             "run.respond",
+            "run.assume_demo_step",
             "run.control",
             "run.finish",
             "run.issue",
@@ -991,7 +993,7 @@ def build_tools(runtime: WorkerRuntime):
 
     @model_tool
     async def submit_visual_check(context: RunContext, expected_step_id: str) -> dict:
-        """Capture one fresh camera frame and submit a criterion assessment through the server."""
+        """Check the current visual criteria using a fresh frame; return the recorded result."""
         context.disallow_interruptions()
         return await execute("run.retry", await runtime.model_command(expected_step_id, context))
 
@@ -1004,6 +1006,14 @@ def build_tools(runtime: WorkerRuntime):
         return await execute(
             "run.respond",
             {**await runtime.model_command(expected_step_id, context), "response": response},
+        )
+
+    @model_tool
+    async def assume_demo_step(context: RunContext, expected_step_id: str) -> dict:
+        """On an explicit demo assumption request, advance the current step as unverified."""
+        context.disallow_interruptions()
+        return await execute(
+            "run.assume_demo_step", await runtime.model_command(expected_step_id, context)
         )
 
     @model_tool
@@ -1095,6 +1105,7 @@ def build_tools(runtime: WorkerRuntime):
         review_progress,
         submit_visual_check,
         submit_step_response,
+        assume_demo_step,
         record_issue,
         lookup_parts,
         search_web,

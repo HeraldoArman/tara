@@ -43,20 +43,6 @@ def validate_definition(definition: dict, sections: list[dict]) -> list[str]:
         v = step.verification
         if any((s.heading, s.page) not in headings for s in step.sources):
             errors.append(f"{step.id}: a citation does not resolve to an extracted heading/page.")
-        for source in step.sources:
-            if (
-                source.quote is not None
-                and sum(
-                    unique_source_quote(str(section.get("text") or ""), source.quote) is not None
-                    for section in sections
-                    if section.get("heading") == source.heading
-                    and section.get("page") == source.page
-                )
-                != 1
-            ):
-                errors.append(
-                    f"{step.id}: a source quote must identify one unique original excerpt."
-                )
         if v.kind == "visual" and (
             not v.criteria or len({c.id for c in v.criteria}) != len(v.criteria)
         ):
@@ -538,6 +524,22 @@ async def publish(session: AsyncSession, actor: User, version_id: str):
             {"errors": errors},
         )
     definition = normalize_sop_definition(version.definition)
+    # Quote highlights are optional metadata. Discard a quote that cannot be located
+    # safely; keep its heading/page citation and the reviewed procedure intact.
+    for step in definition["steps"]:
+        for source in step["sources"]:
+            quote = source.get("quote")
+            if (
+                quote is not None
+                and sum(
+                    unique_source_quote(str(section.get("text") or ""), quote) is not None
+                    for section in document.sections
+                    if section.get("heading") == source["heading"]
+                    and section.get("page") == source.get("page")
+                )
+                != 1
+            ):
+                source["quote"] = None
     media = (await session.scalars(select(SOPMedia).where(SOPMedia.version_id == version.id))).all()
     known_media = {item.id for item in media}
     for step in definition["steps"]:
