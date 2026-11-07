@@ -61,7 +61,7 @@ async def authenticate(session: AsyncSession, username: str, password: str) -> U
 
 
 async def current_user(
-    tara_session: str | None = Cookie(default=None),
+    tara_session: str | None = Cookie(default=None, title="tara Session"),
     session: AsyncSession = Depends(get_session, scope="function"),
 ) -> User:
     settings = get_settings()

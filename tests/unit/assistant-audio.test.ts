@@ -225,7 +225,7 @@ test("only owned speech is cancelled when feedback is interrupted", () => {
   player.stop();
   expect(audio.speechCancellations()).toBe(0);
   player.play("online");
-  expect(audio.messages[0]?.text).toBe("TARA is online");
+  expect(audio.messages[0]?.text).toBe("tara is online");
   player.play("warning");
   expect(audio.speechCancellations()).toBe(1);
   player.play("online");

@@ -9,8 +9,8 @@ import { optionalCurrentUser } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   description:
-    "Turn your SOPs into guided work. TARA connects intelligent workflows, real-time workforce assistance, and a clearer view of your operations.",
-  title: { absolute: "TARA · Intelligence in Every Operation" },
+    "Turn your SOPs into guided work. tara connects intelligent workflows, real-time workforce assistance, and a clearer view of your operations.",
+  title: { absolute: "tara · Intelligence in Every Operation" },
 };
 
 export default async function HomePage() {

@@ -1,4 +1,4 @@
-"""Render the existing vector TARa mark into installable PWA icons."""
+"""Render the existing vector tara mark into installable PWA icons."""
 import json
 from pathlib import Path
 
@@ -25,9 +25,9 @@ canvas.resize((256, 256), Image.Resampling.LANCZOS).save(
     root / "src/app/favicon.ico", sizes=[(16, 16), (32, 32), (48, 48), (64, 64)]
 )
 (root / "public/favicon/site.webmanifest").write_text(json.dumps({
-    "name": "TARa · Field assistant", "short_name": "TARa", "start_url": "/",
+    "name": "tara · Field assistant", "short_name": "tara", "start_url": "/",
     "display": "standalone", "background_color": "#ffffff", "theme_color": "#3869ed",
     "icons": [{"src": f"/favicon/web-app-manifest-{size}x{size}.png",
                "sizes": f"{size}x{size}", "type": "image/png"} for size in (192, 512)],
 }, indent=2) + "\n")
-print("Generated TARa favicon and PWA icons")
+print("Generated tara favicon and PWA icons")

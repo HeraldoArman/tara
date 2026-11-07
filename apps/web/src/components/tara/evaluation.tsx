@@ -1,28 +1,41 @@
 "use client";
-import {
-  Activity,
-  CheckCheck,
-  ClipboardCheck,
-  ScanLine,
-  ShieldAlert,
-} from "lucide-react";
+import "./evaluation-dashboard.css";
+import Link from "next/link";
 import { useState } from "react";
 import { api, duration, errorMessage, humanize } from "@/lib/api";
-import type { Evaluation, TechnicianMetric } from "@/lib/contracts";
+import type { Evaluation, Sop, TechnicianMetric } from "@/lib/contracts";
+import { EvaluationEvidence, EvaluationInsights } from "./evaluation-insights";
+import { EvaluationOverview } from "./evaluation-overview";
 export function EvaluationView({
   initialSummary,
   ownOnly = false,
+  procedures,
 }: {
   initialSummary: Evaluation;
   ownOnly?: boolean;
+  procedures: Sop[];
 }) {
   const [data, setData] = useState(initialSummary);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const filter = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const [appliedQuery, setAppliedQuery] = useState("");
+  const load = async (query: string) => {
     setBusy(true);
     setError("");
+    try {
+      setData(await api<Evaluation>(`/evaluation/summary?${query}`));
+      setAppliedQuery(query);
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const filter = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy) {
+      return;
+    }
     const form = new FormData(event.currentTarget);
     const query = new URLSearchParams();
     for (const [key, value] of form) {
@@ -30,55 +43,42 @@ export function EvaluationView({
         query.set(key, String(value));
       }
     }
-    try {
-      setData(await api<Evaluation>(`/evaluation/summary?${query}`));
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
+    await load(query.toString());
+  };
+  const refresh = async () => {
+    if (!busy) {
+      await load(appliedQuery);
     }
   };
-  const percent = (value: unknown) =>
-    typeof value === "number"
-      ? `${(value <= 1 ? value * 100 : value).toFixed(1)}%`
-      : "—";
-  const metrics = [
-    {
-      icon: ClipboardCheck,
-      label: "Recorded runs",
-      value: data.totalRuns ?? data.runs ?? 0,
-    },
-    {
-      icon: CheckCheck,
-      label: "Complete runs",
-      value: data.completedRuns ?? data.completed ?? 0,
-    },
-    {
-      icon: ShieldAlert,
-      label: "Partial runs",
-      value: data.partialRuns ?? data.partial ?? 0,
-    },
-    {
-      icon: Activity,
-      label: "First-pass success",
-      value: percent(data.firstPassRate),
-    },
-    {
-      icon: ScanLine,
-      label: "Evidence coverage",
-      value: percent(data.evidenceCoverage),
-    },
-  ];
+  const stepRows = data.stepMetrics
+    .filter((step) => step.attempts > 0 || step.held > 0)
+    .sort((a, b) => b.held - a.held || b.attempts - a.attempts);
   const tables = [
     {
-      description: "Attempts, completion and retakes by procedure step.",
+      columns: [
+        { key: "stepTitle", label: "Step" },
+        { key: "sopKey", label: "Procedure" },
+        { key: "runs", label: "Runs" },
+        { key: "attempts", label: "Attempts" },
+        { key: "firstPass", label: "Passed first time" },
+        { key: "held", label: "Held" },
+      ],
+      description:
+        "Attempted and held steps. Open a step to review its session and images.",
       key: "stepMetrics",
       title: "Success by step",
     },
     {
-      description: "Where visual checks need attention.",
+      columns: [
+        { key: "criterionDescription", label: "Criterion" },
+        { key: "stepTitle", label: "Step" },
+        { key: "count", label: "Failed" },
+        { key: "unclearCount", label: "Unclear" },
+      ],
+      description:
+        "Counts include saved attempts and retakes, with unclear checks counted separately.",
       key: "criterionFailures",
-      title: "Criterion failures",
+      title: "Recorded criterion results",
     },
     {
       description: "Performance within your authorized scope.",
@@ -86,28 +86,47 @@ export function EvaluationView({
       title: "Technician outcomes",
     },
     {
-      description: "Measured model and tool response times.",
+      columns: [
+        { key: "tool", label: "Tool" },
+        { key: "durationMs", label: "Response time" },
+        { key: "status", label: "Status" },
+      ],
+      description: "The most recent 100 measured model and tool actions.",
       key: "latency",
       title: "Service latency",
     },
   ];
   return (
-    <>
+    <div className="evaluation-dashboard">
       <form className="evaluation-filters panel" onSubmit={filter}>
         <div>
-          <label htmlFor="filter-sop">SOP / version</label>
-          <input id="filter-sop" name="sopId" placeholder="All procedures" />
+          <label htmlFor="filter-sop">Procedure</label>
+          <select id="filter-sop" name="sopId">
+            <option value="">All procedures</option>
+            {procedures.map((procedure) => (
+              <option key={procedure.id} value={procedure.id}>
+                {procedure.key} · {procedure.title}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label htmlFor="filter-tech">Technician</label>
-          <input
-            disabled={ownOnly}
-            id="filter-tech"
-            name="technicianId"
-            placeholder={
-              ownOnly ? "Your own run history" : "All authorized technicians"
-            }
-          />
+          <select disabled={ownOnly} id="filter-tech" name="technicianId">
+            <option value="">
+              {ownOnly ? "Your own run history" : "All authorized technicians"}
+            </option>
+            {initialSummary.technicianMetrics.map(
+              (technician: TechnicianMetric) => (
+                <option
+                  key={technician.technicianId}
+                  value={technician.technicianId}
+                >
+                  {technician.technicianName}
+                </option>
+              )
+            )}
+          </select>
         </div>
         <div>
           <label htmlFor="filter-from">From</label>
@@ -117,24 +136,31 @@ export function EvaluationView({
           <label htmlFor="filter-to">To</label>
           <input id="filter-to" name="to" type="date" />
         </div>
-        <button className="button primary" disabled={busy} type="submit">
-          Apply filters
-        </button>
+        <div className="evaluation-filter-actions">
+          <button className="button primary" disabled={busy} type="submit">
+            {busy ? "Loading…" : "Apply filters"}
+          </button>
+          <button
+            className="button"
+            disabled={busy}
+            onClick={refresh}
+            type="button"
+          >
+            Refresh data
+          </button>
+        </div>
       </form>
       {error ? (
         <div className="notice danger" role="alert">
           {error}
         </div>
       ) : null}
-      <div className="metrics-row evaluation-metrics">
-        {metrics.map(({ icon: Icon, label, value }) => (
-          <div className="metric" key={label}>
-            <Icon size={19} />
-            <strong>{String(value)}</strong>
-            <span>{label}</span>
-          </div>
-        ))}
-      </div>
+      <EvaluationOverview
+        data={data}
+        filtered={appliedQuery !== ""}
+        ownOnly={ownOnly}
+      />
+      <EvaluationInsights data={data} />
       <div className="evaluation-grid">
         {tables.map((table) => (
           <section className="panel" key={table.key}>
@@ -147,16 +173,22 @@ export function EvaluationView({
             {table.key === "technicianMetrics" ? (
               <TechnicianOutcomes metrics={data.technicianMetrics ?? []} />
             ) : (
-              <MetricTable value={data[table.key]} />
+              <MetricTable
+                columns={table.columns ?? []}
+                title={table.title}
+                value={table.key === "stepMetrics" ? stepRows : data[table.key]}
+              />
             )}
           </section>
         ))}
       </div>
+      <EvaluationEvidence data={data} />
       <p className="subtle-note">
-        Evidence coverage, exceptions and first-pass success are separate
-        measures. These values come from recorded execution data.
+        {data.scope ||
+          "These values use saved sessions in your authorized scope."}{" "}
+        {data.firstPassRateScope}
       </p>
-    </>
+    </div>
   );
 }
 function TechnicianOutcomes({ metrics }: { metrics: TechnicianMetric[] }) {
@@ -204,7 +236,15 @@ function TechnicianOutcomes({ metrics }: { metrics: TechnicianMetric[] }) {
     </div>
   );
 }
-function MetricTable({ value }: { value: unknown }) {
+function MetricTable({
+  columns,
+  title,
+  value,
+}: {
+  columns: { key: string; label: string }[];
+  title: string;
+  value: unknown;
+}) {
   let rows: Record<string, unknown>[] = [];
   if (Array.isArray(value)) {
     rows = value.filter(
@@ -220,18 +260,14 @@ function MetricTable({ value }: { value: unknown }) {
   if (!rows.length) {
     return <p className="inline-empty">No recorded data for this view.</p>;
   }
-  const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))].slice(
-    0,
-    6
-  );
   return (
     <div className="table-scroll">
-      <table>
+      <table aria-label={title}>
         <thead>
           <tr>
-            {keys.map((key) => (
-              <th key={key}>
-                {humanize(key.replace(/([a-z])([A-Z])/g, "$1 $2"))}
+            {columns.map(({ key, label }) => (
+              <th key={key} scope="col">
+                {label}
               </th>
             ))}
           </tr>
@@ -247,11 +283,9 @@ function MetricTable({ value }: { value: unknown }) {
                   JSON.stringify(row)
               )}
             >
-              {keys.map((key) => (
+              {columns.map(({ key }) => (
                 <td key={key}>
-                  {typeof row[key] === "object"
-                    ? JSON.stringify(row[key])
-                    : String(row[key] ?? "—")}
+                  <MetricCell field={key} row={row} />
                 </td>
               ))}
             </tr>
@@ -260,4 +294,48 @@ function MetricTable({ value }: { value: unknown }) {
       </table>
     </div>
   );
+}
+
+function metricValue(key: string, value: unknown): string {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  if (key === "durationMs" && typeof value === "number") {
+    return value < 1000
+      ? `${Math.round(value)} ms`
+      : `${(value / 1000).toFixed(1)} s`;
+  }
+  return typeof value === "string" ? humanize(value) : String(value);
+}
+
+function MetricCell({
+  field,
+  row,
+}: {
+  field: string;
+  row: Record<string, unknown>;
+}) {
+  const value = metricValue(field, row[field]);
+  if (
+    (field === "stepTitle" || field === "criterionDescription") &&
+    typeof row.runId === "string"
+  ) {
+    return (
+      <Link
+        className="evaluation-record-link"
+        href={`/reports/runs/${encodeURIComponent(row.runId)}`}
+      >
+        {value}
+      </Link>
+    );
+  }
+  if (field === "sopKey" && typeof row.version === "string") {
+    return (
+      <span>
+        {value}
+        <small className="table-subtext">v{row.version}</small>
+      </span>
+    );
+  }
+  return value;
 }

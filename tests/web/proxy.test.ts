@@ -100,7 +100,7 @@ for (const origin of [
   "https://web-production-4f08e.up.railway.app",
 ]) {
   test(`trusted app origin ${origin} preserves cookie login and mutation headers`, async () => {
-    configuration.APP_ORIGIN = "HTTPS://TARA.HERALDOARMAN.COM:443/";
+    configuration.APP_ORIGIN = "HTTPS://tara.HERALDOARMAN.COM:443/";
     configuration.ADDITIONAL_APP_ORIGINS =
       " https://web-production-4f08e.up.railway.app/ ,";
     let forwarded: RequestInit | undefined;

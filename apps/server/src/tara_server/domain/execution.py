@@ -209,8 +209,17 @@ async def get_run_snapshot(session: AsyncSession, actor: User, run_id: str) -> d
     elapsed = run.active_seconds
     if run.status == "active" and run.resumed_at:
         elapsed += max(0, int((now() - run.resumed_at.replace(tzinfo=UTC)).total_seconds()))
+    report_id = None
+    if run.status not in {"active", "paused"}:
+        report_id = await session.scalar(
+            select(Report.id)
+            .where(Report.run_id == run.id, Report.org_id == actor.org_id)
+            .order_by(Report.revision.desc())
+            .limit(1)
+        )
     return {
         "id": run.id,
+        "reportId": report_id,
         "workOrderId": work.id,
         "version": run.version,
         "status": run.status,
@@ -747,7 +756,7 @@ async def record_issue(session: AsyncSession, actor: User, run_id: str, command:
 async def set_consultation(session: AsyncSession, actor: User, run_id: str, active: bool):
     run = await authorize_run(session, actor, run_id, mutate=True)
     if run.status != "active" and active:
-        raise DomainError("TRANSITION_REJECTED", "Resume the run before asking TARa.", 409)
+        raise DomainError("TRANSITION_REJECTED", "Resume the run before asking tara.", 409)
     if active:
         CONSULTATIONS.inc()
     mode = "consultation" if active else "silent"
@@ -799,6 +808,9 @@ async def finish(session: AsyncSession, actor: User, run_id: str, command: Finis
     work = await required(session, WorkOrder, run.work_order_id)
     work.status = command.outcome
     audit(session, actor, run, "run.closed", {"outcome": command.outcome, "reason": command.reason})
+    from tara_server.domain.camera_pairings import revoke_pairing
+
+    await revoke_pairing(session, actor, run.id)
     await session.flush()
     snapshot = await get_run_snapshot(session, actor, run.id)
     events = (

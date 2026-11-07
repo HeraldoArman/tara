@@ -139,7 +139,7 @@ function ReplyComposer({
         {composerStatus}
       </p>
       <label className="sr-only" htmlFor={inputId}>
-        Reply to TARA
+        Reply to tara
       </label>
       <InputGroup>
         <InputGroupInput

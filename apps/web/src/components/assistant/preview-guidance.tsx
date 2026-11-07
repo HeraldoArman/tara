@@ -45,7 +45,7 @@ export function PreviewGuidance({
               variant="ghost"
             >
               <MessageCircle aria-hidden="true" />
-              {consultation ? "Return to silent mode" : "Ask TARA"}
+              {consultation ? "Return to silent mode" : "Ask tara"}
             </Button>
             <span>{consultation ? "Text preview" : "Silent mode"}</span>
           </div>
@@ -56,7 +56,7 @@ export function PreviewGuidance({
             statusMessage={
               consultation
                 ? "Preview only · AI and voice are not connected"
-                : "Activate Ask TARA to type"
+                : "Activate Ask tara to type"
             }
           />
         </>
@@ -72,13 +72,13 @@ export function PreviewGuidance({
             <p>{question}</p>
           </div>
           <p className="tara-chat-empty" role="status">
-            This is a component preview. A connected session is needed for TARA
+            This is a component preview. A connected session is needed for tara
             to answer your question.
           </p>
         </div>
       ) : (
         <p className="tara-chat-empty">
-          Your questions and TARA’s replies appear here.
+          Your questions and tara’s replies appear here.
         </p>
       )}
     </AssistantGuidance>

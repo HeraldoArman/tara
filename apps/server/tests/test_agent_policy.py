@@ -10,7 +10,7 @@ from tara_server.errors import DomainError
 def test_join_and_reconnect_default_silent():
     policy = SpeechPolicy()
     assert policy.mode == "silent"
-    with pytest.raises(DomainError, match="Activate Ask TARa"):
+    with pytest.raises(DomainError, match="Activate Ask tara"):
         policy.require_consultation()
     policy.activate()
     policy.require_consultation()

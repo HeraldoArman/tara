@@ -6,7 +6,7 @@ existing operational flow, and SOP managers retain the SOP library. Direct acces
 to `/dashboard` checks the authenticated role on the server before reading any
 management data.
 
-The page reuses the original TARA dashboard shell, typography, cards, color tokens,
+The page reuses the original tara dashboard shell, typography, cards, color tokens,
 and responsive layout. It combines the analytics overview with the existing work
 queue, recent reports, SOP library access, and Create job action. Procedure review
 starts in the SOP library, which links a specific version into SOP Intelligence.
@@ -56,11 +56,12 @@ evidence does not automatically establish a violation.
 - Run composition is a stacked count bar with exact, labeled values.
 - Technician activity uses the same count scale for every technician, with a
   complete data table. Volume is not labeled as a performance ranking.
-- Procedure detail is shown only after selecting an SOP. The backend groups steps
-  by step ID and could otherwise combine identically named IDs across procedures.
-  The selected view combines versions of that SOP, labels this scope, and shows
-  held counts, attempts, initial passes, and runs with the step. Held bars use a
-  shared zero baseline. Human attestation remains part of the initial-pass measure.
+- Procedure detail is shown after selecting an SOP. The backend groups steps by
+  SOP version and step ID. Each row preserves its unique metric ID and displays
+  the saved step title, ID, and version, so matching step IDs from different
+  versions stay separate. Rows show held counts, attempts, initial passes, and
+  runs with the step. Held bars use a shared zero baseline. Human attestation
+  remains part of the initial-pass measure.
 
 ## Visual-state telemetry boundary
 

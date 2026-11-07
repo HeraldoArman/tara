@@ -106,7 +106,7 @@ test("owner assigns a published SOP job that its technician can start", async ({
     page.getByRole("button", { exact: true, name: "Start bench camera" })
   ).toBeEnabled();
   await expect(
-    page.getByLabel("Reply to TARA", { exact: true })
+    page.getByLabel("Reply to tara", { exact: true })
   ).toBeDisabled();
 });
 

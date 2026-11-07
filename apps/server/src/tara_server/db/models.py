@@ -160,6 +160,26 @@ Index(
 )
 
 
+class CameraPairing(Record, Base):
+    __tablename__ = "camera_pairings"
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("runs.id"), index=True)
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    secret_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+Index(
+    "one_current_camera_pairing_per_run",
+    CameraPairing.run_id,
+    unique=True,
+    postgresql_where=text("revoked_at IS NULL"),
+    sqlite_where=text("revoked_at IS NULL"),
+)
+
+
 class RunStep(Record, Base):
     __tablename__ = "run_steps"
     __table_args__ = (UniqueConstraint("run_id", "step_id"),)

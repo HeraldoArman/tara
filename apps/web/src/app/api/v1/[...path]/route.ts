@@ -138,7 +138,7 @@ async function proxy(
     }
     return failure(
       "PROVIDER_UNAVAILABLE",
-      "The TARa API is unavailable. Check the connection and try again.",
+      "The tara API is unavailable. Check the connection and try again.",
       503
     );
   }

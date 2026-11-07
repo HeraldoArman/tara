@@ -26,7 +26,6 @@ from tara_server.db.models import (
     SOP,
     AuditEvent,
     Escalation,
-    Evidence,
     Report,
     Run,
     SOPDocument,
@@ -37,6 +36,14 @@ from tara_server.db.models import (
     uid,
 )
 from tara_server.db.session import get_session
+from tara_server.domain.camera_pairings import (
+    create_pairing,
+    pairing_state,
+    phone_connection,
+    phone_status,
+    revoke_pairing,
+)
+from tara_server.domain.evidence_access import authorize_evidence, evidence_content_response
 from tara_server.domain.execution import (
     audit,
     audit_json,
@@ -55,6 +62,8 @@ from tara_server.domain.reports import (
     report_json,
     review_report,
 )
+from tara_server.domain.run_assets import register_asset
+from tara_server.domain.run_records import list_run_records
 from tara_server.domain.sop_intelligence import intelligence
 from tara_server.domain.sop_sessions import start_sop_session
 from tara_server.domain.sops import (
@@ -71,12 +80,20 @@ from tara_server.domain.work_orders import create_work_order, list_assignees
 from tara_server.errors import DomainError
 from tara_server.schemas import (
     AssigneeListResponse,
+    CameraPairingClaim,
+    CameraPairingConnectionResponse,
+    CameraPairingCreatedResponse,
+    CameraPairingRevokedResponse,
+    CameraPairingStateResponse,
+    CameraPairingStatusResponse,
     DraftEdit,
     EvaluationResponse,
     Login,
     ReportListResponse,
     ReportResponse,
     Review,
+    RunAssetRegistration,
+    RunRecordListResponse,
     RunResponse,
     SopIntelligenceResponse,
     SOPListResponse,
@@ -92,12 +109,12 @@ from tara_server.storage import get_storage
 from tara_server.telemetry import API_DURATION, API_REQUESTS
 
 settings = get_settings()
-app = FastAPI(title="TARa execution API", version="1.0.0")
+app = FastAPI(title="tara execution API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Content-Type"],
 )
 login_attempts: dict[str, deque] = defaultdict(deque)
@@ -305,6 +322,64 @@ async def run_snapshot(
     return await get_run_snapshot(session, actor, run_id)
 
 
+@app.patch("/api/v1/runs/{run_id}/asset", response_model=RunResponse)
+async def register_run_asset(
+    run_id: str,
+    body: RunAssetRegistration,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await register_asset(session, actor, run_id, body)
+
+
+@app.post("/api/v1/runs/{run_id}/camera-pairing", response_model=CameraPairingCreatedResponse)
+async def create_run_camera_pairing(
+    run_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await create_pairing(session, actor, run_id)
+
+
+@app.get("/api/v1/runs/{run_id}/camera-pairing", response_model=CameraPairingStateResponse)
+async def run_camera_pairing(
+    run_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await pairing_state(session, actor, run_id)
+
+
+@app.delete("/api/v1/runs/{run_id}/camera-pairing", response_model=CameraPairingRevokedResponse)
+async def delete_run_camera_pairing(
+    run_id: str,
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await revoke_pairing(session, actor, run_id)
+
+
+@app.post(
+    "/api/v1/camera-pairings/{pairing_id}/connection",
+    response_model=CameraPairingConnectionResponse,
+)
+async def paired_phone_connection(
+    pairing_id: str,
+    body: CameraPairingClaim,
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await phone_connection(session, pairing_id, body.token)
+
+
+@app.post("/api/v1/camera-pairings/{pairing_id}/status", response_model=CameraPairingStatusResponse)
+async def paired_phone_status(
+    pairing_id: str,
+    body: CameraPairingClaim,
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await phone_status(session, pairing_id, body.token)
+
+
 @app.post("/api/v1/runs/{run_id}/connection")
 async def connection(
     run_id: str,
@@ -329,7 +404,7 @@ async def connection(
         ) as lk:
             await asyncio.wait_for(
                 lk.room.create_room(
-                    api.CreateRoomRequest(name=room_name, empty_timeout=300, max_participants=2)
+                    api.CreateRoomRequest(name=room_name, empty_timeout=300, max_participants=3)
                 ),
                 8,
             )
@@ -435,54 +510,30 @@ async def evidence_url(
     actor: User = Depends(current_user),
     session: AsyncSession = Depends(get_session, scope="function"),
 ):
-    evidence = await session.scalar(
-        select(Evidence).where(Evidence.id == evidence_id, Evidence.org_id == actor.org_id)
-    )
-    if not evidence:
-        raise DomainError("NOT_FOUND", "Evidence not found.", 404)
-    await authorize_run(session, actor, evidence.run_id)
-    url = await get_storage().signed_url(evidence.object_key)
-    if not url:
-        token = jwt.encode(
-            {
-                "sub": evidence.id,
-                "actor": actor.id,
-                "iss": "tara-evidence",
-                "exp": now() + timedelta(seconds=120),
-            },
-            settings.jwt_secret,
-            algorithm="HS256",
-        )
-        url = f"/api/v1/evidence/{evidence.id}/content?token={token}"
-    return {"url": url, "expiresIn": 120}
+    evidence = await authorize_evidence(session, actor, evidence_id)
+    return {"url": f"/api/v1/evidence/{evidence.id}/content", "expiresIn": None}
 
 
 @app.get("/api/v1/evidence/{evidence_id}/content")
 async def evidence_content(
     evidence_id: str,
-    token: str,
+    token: str | None = None,
     actor: User = Depends(current_user),
     session: AsyncSession = Depends(get_session, scope="function"),
 ):
-    try:
-        claims = jwt.decode(
-            token, settings.jwt_secret, algorithms=["HS256"], issuer="tara-evidence"
-        )
-        if claims["sub"] != evidence_id or claims["actor"] != actor.id:
-            raise ValueError("Scope mismatch")
-    except (jwt.InvalidTokenError, ValueError, KeyError):
-        raise DomainError(
-            "FORBIDDEN", "The evidence link expired or is not authorized.", 403
-        ) from None
-    evidence = await session.get(Evidence, evidence_id)
-    if not evidence:
-        raise DomainError("NOT_FOUND", "Evidence not found.", 404)
-    await authorize_run(session, actor, evidence.run_id)
-    return Response(
-        await get_storage().read_local(evidence.object_key),
-        media_type=evidence.media_type,
-        headers={"Cache-Control": "no-store"},
-    )
+    # Earlier local-storage links included a short-lived actor-bound token.
+    if token is not None:
+        try:
+            claims = jwt.decode(
+                token, settings.jwt_secret, algorithms=["HS256"], issuer="tara-evidence"
+            )
+            if claims["sub"] != evidence_id or claims["actor"] != actor.id:
+                raise ValueError("Scope mismatch")
+        except (jwt.InvalidTokenError, ValueError, KeyError):
+            raise DomainError(
+                "FORBIDDEN", "The evidence link expired or is not authorized.", 403
+            ) from None
+    return await evidence_content_response(session, actor, evidence_id)
 
 
 @app.get("/api/v1/sops", response_model=SOPListResponse)
@@ -638,6 +689,16 @@ async def sop_search(
     session: AsyncSession = Depends(get_session, scope="function"),
 ):
     return await search_sop(session, actor, version_id, q)
+
+
+@app.get("/api/v1/run-records", response_model=RunRecordListResponse)
+async def run_records(
+    limit: int = Query(100, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    actor: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session, scope="function"),
+):
+    return await list_run_records(session, actor, limit, offset)
 
 
 @app.get("/api/v1/reports", response_model=ReportListResponse)

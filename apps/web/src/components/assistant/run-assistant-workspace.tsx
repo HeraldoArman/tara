@@ -38,6 +38,7 @@ import {
   RefreshCw,
   ScanLine,
   ShieldCheck,
+  Smartphone,
   Volume2,
   VolumeX,
   Wrench,
@@ -55,9 +56,41 @@ import {
 } from "@/lib/run-assistant";
 import { useRunSession } from "@/lib/use-run-session";
 import { LiveCamera } from "./live-camera";
+import { PairPhoneCamera } from "./pair-phone-camera";
+import { RunAssetLabel } from "./run-asset-label";
 import { RunDetails } from "./run-details";
 
 type RunSession = ReturnType<typeof useRunSession>;
+
+function HeldStepAction({
+  enabled,
+  session,
+  visual,
+}: {
+  enabled: boolean;
+  session: RunSession;
+  visual: boolean;
+}) {
+  const retest = async () => {
+    if (!enabled || (visual && !session.camera)) {
+      return;
+    }
+    const result = await session.action("run.control", { action: "retest" });
+    if (result && visual) {
+      await session.action("run.retry");
+    }
+  };
+  return (
+    <Button
+      disabled={!enabled || (visual && !session.camera) || session.checking}
+      onClick={retest}
+      variant="outline"
+    >
+      <RefreshCw aria-hidden="true" />
+      {visual ? "Retest current frame" : "Retest this step"}
+    </Button>
+  );
+}
 
 function StepActions({
   allStepsComplete,
@@ -90,14 +123,11 @@ function StepActions({
   }
   if (step.status === "held") {
     return (
-      <Button
-        disabled={!enabled}
-        onClick={() => session.action("run.control", { action: "retest" })}
-        variant="outline"
-      >
-        <RefreshCw aria-hidden="true" />
-        Retest this step
-      </Button>
+      <HeldStepAction
+        enabled={enabled}
+        session={session}
+        visual={step.verification.kind === "visual"}
+      />
     );
   }
   if (step.verification.kind === "visual") {
@@ -137,6 +167,66 @@ function StepActions({
   );
 }
 
+async function changeVideoSource(
+  canOperate: boolean,
+  open: boolean,
+  session: RunSession
+): Promise<void> {
+  const { useLaptopCamera: switchToLaptop } = session;
+  if (session.cameraSource === "phone") {
+    if (canOperate && open) {
+      await switchToLaptop();
+    }
+    return;
+  }
+  if (session.camera) {
+    await session.toggleCamera();
+    return;
+  }
+  if (canOperate && open) {
+    await session.startCamera();
+  }
+}
+
+function CameraSourceControl({
+  canOperate,
+  session,
+}: {
+  canOperate: boolean;
+  session: RunSession;
+}) {
+  const open = ["active", "paused"].includes(session.run.status);
+  const pending = Boolean(session.busy) || session.cameraBusy;
+  const usingPhone = session.cameraSource === "phone";
+  let CameraIcon = session.camera ? CameraOff : Camera;
+  let cameraLabel = session.camera ? "Camera off" : "Use camera";
+  if (usingPhone) {
+    CameraIcon = Smartphone;
+    cameraLabel = "Use laptop camera";
+  }
+  const changeCamera = async () => {
+    await changeVideoSource(canOperate, open, session);
+  };
+  return (
+    <Button
+      disabled={
+        usingPhone || !session.camera
+          ? !(canOperate && open) || pending
+          : session.cameraBusy
+      }
+      onClick={changeCamera}
+      variant="ghost"
+    >
+      {session.cameraBusy ? (
+        <LoaderCircle aria-hidden="true" className="animate-spin" />
+      ) : (
+        <CameraIcon aria-hidden="true" />
+      )}
+      {cameraLabel}
+    </Button>
+  );
+}
+
 function LiveMediaControls({
   canOperate,
   session,
@@ -148,35 +238,11 @@ function LiveMediaControls({
   const connected = session.connection === "connected";
   const pending = Boolean(session.busy) || session.cameraBusy;
   const paused = session.run.status === "paused";
-  const CameraIcon = session.camera ? CameraOff : Camera;
   const audioUnavailable = session.muted || session.audioBlocked;
-  const changeCamera = async () => {
-    if (session.camera) {
-      await session.toggleCamera();
-      return;
-    }
-    if (!(canOperate && open)) {
-      return;
-    }
-    await session.startCamera();
-  };
   return (
     <fieldset className="tara-media-controls tara-live-media">
       <legend className="sr-only">Live view controls</legend>
-      <Button
-        disabled={
-          session.camera ? session.cameraBusy : !(canOperate && open) || pending
-        }
-        onClick={changeCamera}
-        variant="ghost"
-      >
-        {session.cameraBusy ? (
-          <LoaderCircle aria-hidden="true" className="animate-spin" />
-        ) : (
-          <CameraIcon aria-hidden="true" />
-        )}
-        {session.camera ? "Camera off" : "Use camera"}
-      </Button>
+      <CameraSourceControl canOperate={canOperate} session={session} />
       <span aria-hidden="true" className="tara-control-divider" />
       <Button
         aria-pressed={paused}
@@ -193,7 +259,7 @@ function LiveMediaControls({
         disabled={!(canOperate && connected && open)}
         onClick={session.enableAudio}
         size="sm"
-        title="Enable TARa replies on your speaker"
+        title="Enable tara replies on your speaker"
         variant="ghost"
       >
         <Volume2 aria-hidden="true" />
@@ -299,7 +365,7 @@ function RunConversationMessages({
     sending: "Sending your question…",
     unconfirmed:
       "Your question could not be confirmed. Check the connection and try again.",
-    waiting: "Waiting for TARA’s reply…",
+    waiting: "Waiting for tara’s reply…",
   };
   return (
     <div className="tara-chat-messages">
@@ -315,7 +381,7 @@ function RunConversationMessages({
           data-speaker="assistant"
           role="status"
         >
-          <span>TARA</span>
+          <span>tara</span>
           <p>{answer}</p>
         </div>
       ) : null}
@@ -326,7 +392,7 @@ function RunConversationMessages({
       ) : null}
       {question || answer ? null : (
         <p className="tara-chat-empty">
-          Your questions and TARA’s replies appear here.
+          Your questions and tara’s replies appear here.
         </p>
       )}
     </div>
@@ -463,6 +529,26 @@ function RunStepControls({
             session={session}
             step={view.step}
           />
+          <Button
+            disabled={
+              !canOperate ||
+              session.connection !== "connected" ||
+              session.run.status !== "active" ||
+              session.run.interactionMode !== "consultation" ||
+              Boolean(session.busy)
+            }
+            onClick={async () => {
+              await session.action("assistant.text", {
+                text: "Review my progress against the selected SOP. Look at the current camera view, identify the likely step, and tell me which earlier required steps lack recorded verification or were explicitly skipped.",
+              });
+            }}
+            size="sm"
+            title="Check the current camera view against saved progress"
+            variant="outline"
+          >
+            <ScanLine aria-hidden="true" />
+            Review my progress
+          </Button>
         </div>
       ) : (
         <Link
@@ -532,8 +618,11 @@ export function RunAssistantWorkspace({
       router.push(`/reports/${result.reportId}`);
     }
   };
-  const startCamera =
-    canOperate && view.active ? session.startSession : undefined;
+  const usingPhone = session.cameraSource === "phone";
+  const startVideo = usingPhone
+    ? session.startPhoneSession
+    : session.startSession;
+  const startCamera = canOperate && view.active ? startVideo : undefined;
   return (
     <main
       className="tara-assistant tara-workspace tara-live-workspace"
@@ -544,7 +633,7 @@ export function RunAssistantWorkspace({
         Skip to current instruction
       </a>
       <header className="tara-workspace-header">
-        <Link aria-label="TARA work queue" className="tara-brand" href="/">
+        <Link aria-label="tara work queue" className="tara-brand" href="/">
           <AssistantMark />
           <span>
             tara<span className="tara-brand-period">.</span>
@@ -610,7 +699,13 @@ export function RunAssistantWorkspace({
             onStart={startCamera}
             paused={paused}
             running={run.status === "active"}
+            startDescription={
+              usingPhone
+                ? "Open the paired phone page and tap Start phone camera. Keep the microphone and tara on this laptop."
+                : undefined
+            }
             startDisabled={!(canOperate && view.active) || Boolean(busy)}
+            startLabel={usingPhone ? "Reconnect phone session" : undefined}
             status={status}
             stepLabel={
               view.allStepsComplete
@@ -648,9 +743,30 @@ export function RunAssistantWorkspace({
               session={session}
               view={view}
             />
+            {canOperate && view.active ? (
+              <details className="tara-live-session-tools">
+                <summary>Camera &amp; model tools</summary>
+                <div>
+                  <RunAssetLabel
+                    canOperate={canOperate}
+                    run={run}
+                    session={session}
+                  />
+                  <PairPhoneCamera
+                    disabled={Boolean(busy) || session.cameraBusy}
+                    onConnect={session.startPhoneSession}
+                    onPairingChange={session.refreshPhonePairing}
+                    onUseLaptop={session.useLaptopCamera}
+                    pairing={session.phonePairing}
+                    phoneConnected={session.phoneConnected}
+                    runId={run.id}
+                  />
+                </div>
+              </details>
+            ) : null}
           </div>
         </section>
-        <aside aria-label="TARA assistant" className="tara-workspace-assistant">
+        <aside aria-label="tara assistant" className="tara-workspace-assistant">
           <AssistantStatus status={status} />
           <RunConsultation
             canOperate={canOperate}

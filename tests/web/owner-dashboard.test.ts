@@ -49,18 +49,76 @@ test("SOP and UTC range filters use the evaluation API contract", () => {
   expect(parsed.searchParams.get("to")).toBe("2026-11-07");
 });
 
-test("step detail keeps recorded counts and skips malformed open-schema rows", () => {
+test("step detail keeps version identities and skips malformed records", () => {
   const data = {
     ...ownerEvaluationFixture,
     stepMetrics: [
       ...ownerEvaluationFixture.stepMetrics,
-      { attempts: 1, firstPass: "yes", held: 1, runs: 1, stepId: "invalid" },
-      { attempts: 1, firstPass: 1, runs: 1, stepId: "missing-held" },
+      { ...ownerEvaluationFixture.stepMetrics[0], firstPass: "yes" },
+      { ...ownerEvaluationFixture.stepMetrics[0], held: undefined },
+      {
+        attempts: 1,
+        firstPass: 1,
+        held: 0,
+        runs: 1,
+        stepId: "missing-identity",
+      },
+      null,
     ],
   };
   expect(recordedSteps(data)).toEqual([
-    { attempts: 8, firstPass: 5, held: 2, runs: 7, stepId: "inspect-switch" },
-    { attempts: 7, firstPass: 7, held: 0, runs: 7, stepId: "disconnect-power" },
+    {
+      attempts: 8,
+      firstPass: 5,
+      held: 2,
+      id: "keyboard-v1:inspect-switch",
+      runs: 7,
+      sopVersionId: "keyboard-v1",
+      stepId: "inspect-switch",
+      stepTitle: "Inspect the faulty switch",
+      version: "1.0",
+    },
+    {
+      attempts: 7,
+      firstPass: 7,
+      held: 0,
+      id: "keyboard-v1:disconnect-power",
+      runs: 7,
+      sopVersionId: "keyboard-v1",
+      stepId: "disconnect-power",
+      stepTitle: "Disconnect power",
+      version: "1.0",
+    },
+  ]);
+});
+
+test("matching step IDs in different SOP versions retain separate counts and row identities", () => {
+  const [firstVersion] = ownerEvaluationFixture.stepMetrics;
+  const steps = recordedSteps({
+    stepMetrics: [
+      firstVersion,
+      {
+        ...firstVersion,
+        attempts: 3,
+        firstPass: 1,
+        held: 1,
+        id: "keyboard-v2:inspect-switch",
+        runs: 2,
+        sopVersionId: "keyboard-v2",
+        stepTitle: "Inspect the exposed switch",
+        version: "2.0",
+      },
+    ],
+  });
+  expect(steps.map(({ id }) => id)).toEqual([
+    "keyboard-v1:inspect-switch",
+    "keyboard-v2:inspect-switch",
+  ]);
+  expect(steps.map(({ attempts }) => attempts)).toEqual([8, 3]);
+  expect(steps.map(({ version }) => version)).toEqual(["1.0", "2.0"]);
+  expect(steps.map(({ stepTitle }) => stepTitle)).toEqual([
+    "Inspect the faulty switch",
+    "Inspect the exposed switch",
   ]);
 });
 

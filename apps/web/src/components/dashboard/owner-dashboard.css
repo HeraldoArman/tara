@@ -291,6 +291,12 @@
   min-width: 120px;
   font-weight: 500;
 }
+.ops-step-context {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--tara-muted);
+}
 .ops-table-scroll tbody tr:last-child > * {
   border-bottom: 0;
 }

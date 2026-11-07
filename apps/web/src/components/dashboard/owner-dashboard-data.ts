@@ -55,29 +55,73 @@ export interface RecordedStepMetric {
   attempts: number;
   firstPass: number;
   held: number;
+  id: string;
   runs: number;
+  sopVersionId: string;
   stepId: string;
+  stepTitle: string;
+  version: string;
 }
 
-export function recordedSteps(data: Evaluation): RecordedStepMetric[] {
+type StepIdentity = Pick<
+  RecordedStepMetric,
+  "id" | "sopVersionId" | "stepId" | "stepTitle" | "version"
+>;
+
+function hasStepIdentity(
+  item: unknown
+): item is StepIdentity & Record<string, unknown> {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    "id" in item &&
+    typeof item.id === "string" &&
+    "sopVersionId" in item &&
+    typeof item.sopVersionId === "string" &&
+    "stepId" in item &&
+    typeof item.stepId === "string" &&
+    "stepTitle" in item &&
+    typeof item.stepTitle === "string" &&
+    "version" in item &&
+    typeof item.version === "string"
+  );
+}
+
+export function recordedSteps(data: {
+  stepMetrics: readonly unknown[];
+}): RecordedStepMetric[] {
   const steps: RecordedStepMetric[] = [];
   for (const item of data.stepMetrics) {
+    if (!hasStepIdentity(item)) {
+      continue;
+    }
     const attempts = recordedCount(item.attempts);
     const firstPass = recordedCount(item.firstPass);
     const held = recordedCount(item.held);
     const runs = recordedCount(item.runs);
     if (
-      typeof item.stepId === "string" &&
       attempts !== null &&
       firstPass !== null &&
       held !== null &&
       runs !== null
     ) {
-      steps.push({ attempts, firstPass, held, runs, stepId: item.stepId });
+      steps.push({
+        attempts,
+        firstPass,
+        held,
+        id: item.id,
+        runs,
+        sopVersionId: item.sopVersionId,
+        stepId: item.stepId,
+        stepTitle: item.stepTitle,
+        version: item.version,
+      });
     }
   }
   return steps.sort(
     (left, right) =>
-      right.held - left.held || left.stepId.localeCompare(right.stepId)
+      right.held - left.held ||
+      left.stepId.localeCompare(right.stepId) ||
+      left.id.localeCompare(right.id)
   );
 }

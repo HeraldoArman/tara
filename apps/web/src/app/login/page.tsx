@@ -4,8 +4,8 @@ import { LoginForm } from "@/components/tara/login-form";
 
 export const metadata: Metadata = {
   description:
-    "Sign in to TARA for SOP-grounded guidance and a clearer view of your operations.",
-  title: { absolute: "Sign in · TARA" },
+    "Sign in to tara for SOP-grounded guidance and a clearer view of your operations.",
+  title: { absolute: "Sign in · tara" },
 };
 
 export default function LoginPage() {

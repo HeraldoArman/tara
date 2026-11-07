@@ -72,7 +72,7 @@ def definitions():
                 step(
                     "identify",
                     "Confirm device identity",
-                    "Match the model and serial to the work order. Disconnect power and confirm the ESD-safe bench is ready.",
+                    "Match the keyboard model to the work order. Disconnect power and confirm the ESD-safe bench is ready.",
                     rationale="Prevent work on the wrong asset and accidental powered service.",
                 ),
                 step(
@@ -239,10 +239,12 @@ def definitions():
 
 async def seed(session, password: str):
     if await session.scalar(
-        select(Organization).where(Organization.name == "TARa demonstration workshop")
+        select(Organization).where(
+            Organization.name.in_(["tara demonstration workshop", "TARa demonstration workshop"])
+        )
     ):
         return
-    org = Organization(id=uid(), name="TARa demonstration workshop")
+    org = Organization(id=uid(), name="tara demonstration workshop")
     session.add(org)
     await session.flush()
     users = {}
@@ -348,7 +350,7 @@ async def seed(session, password: str):
 async def bootstrap_owner(session):
     username = os.environ.get("BOOTSTRAP_OWNER_USERNAME", "").strip()
     password = os.environ.get("BOOTSTRAP_OWNER_PASSWORD", "")
-    organization = os.environ.get("BOOTSTRAP_ORGANIZATION", "TARa workshop").strip()
+    organization = os.environ.get("BOOTSTRAP_ORGANIZATION", "tara workshop").strip()
     if not username or len(password) < 16 or not organization:
         raise SystemExit(
             "Owner bootstrap requires BOOTSTRAP_OWNER_USERNAME, BOOTSTRAP_OWNER_PASSWORD (16+ characters), and organization name."

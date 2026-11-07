@@ -39,11 +39,29 @@
 }
 
 .tara-live-workspace .tara-live-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 12px 0;
 }
 
 .tara-live-step-controls {
   padding: 0 17px 8px;
+}
+
+.tara-live-session-tools {
+  padding: 0 17px 16px;
+  font-size: 12px;
+}
+
+.tara-live-session-tools summary {
+  cursor: pointer;
+}
+
+.tara-live-session-tools > div {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .tara-chat-media-status {

@@ -221,7 +221,7 @@ export function StepActivity({
         <h2>A closer look at each step.</h2>
         <CardDescription>
           {sopTitle
-            ? `${sopTitle} · Held steps first. Counts include all versions in scope.`
+            ? `${sopTitle} · Held steps first. Versions are shown separately.`
             : "Select a procedure above to inspect its recorded checkpoints."}
         </CardDescription>
       </CardHeader>
@@ -234,7 +234,7 @@ export function StepActivity({
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">Step ID</th>
+                  <th scope="col">Step and version</th>
                   <th scope="col">Held</th>
                   <th scope="col">Runs with step</th>
                   <th scope="col">Attempts</th>
@@ -243,8 +243,13 @@ export function StepActivity({
               </thead>
               <tbody>
                 {steps.map((step) => (
-                  <tr key={step.stepId}>
-                    <th scope="row">{step.stepId}</th>
+                  <tr key={step.id}>
+                    <th scope="row">
+                      {step.stepTitle}
+                      <span className="ops-step-context">
+                        {step.stepId} · v{step.version}
+                      </span>
+                    </th>
                     <td>
                       <div className="ops-held-cell">
                         <div aria-hidden="true" className="ops-held-track">

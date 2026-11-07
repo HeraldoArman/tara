@@ -1,0 +1,74 @@
+.tara-phone-pairing {
+  position: relative;
+  z-index: 2;
+  padding: 16px;
+  margin: 12px 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--tara-ink);
+  background: var(--tara-surface);
+  border: 1px solid var(--tara-border);
+  border-radius: 15px;
+}
+.tara-phone-pairing-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.tara-phone-pairing-heading > div {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.tara-phone-pairing-heading svg {
+  width: 16px;
+  height: 16px;
+}
+.tara-phone-pairing > p {
+  color: var(--tara-muted);
+}
+.tara-phone-pairing-body {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+.tara-phone-pairing-code {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.tara-phone-pairing-code > svg {
+  max-width: 100%;
+  height: auto;
+  background: white;
+  border-radius: 10px;
+}
+.tara-phone-pairing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tara-phone-pairing-connected {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  color: var(--tara-success);
+}
+.tara-phone-pairing-connected svg {
+  width: 16px;
+  height: 16px;
+}
+.tara-phone-pairing-error {
+  padding: 10px 12px;
+  margin-top: 12px;
+  color: var(--tara-warning);
+  border: 1px solid var(--tara-warning);
+  border-radius: 9px;
+}
+.tara-live-workspace[data-mode="product"] .tara-phone-pairing {
+  background: #102039d9;
+  backdrop-filter: blur(12px);
+}

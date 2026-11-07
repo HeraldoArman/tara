@@ -119,7 +119,7 @@ test("workspace stays silent when the realtime provider is unavailable", async (
     page.getByRole("heading", { exact: true, name: "Sleep" })
   ).toBeVisible();
   await expect(
-    page.getByLabel("Reply to TARA", { exact: true })
+    page.getByLabel("Reply to tara", { exact: true })
   ).toBeDisabled();
   await expect(
     page.getByRole("button", { exact: true, name: "Resume listening" })
@@ -139,7 +139,7 @@ test("workspace stays silent when the realtime provider is unavailable", async (
     "not configured"
   );
   await expect(
-    page.getByLabel("Reply to TARA", { exact: true })
+    page.getByLabel("Reply to tara", { exact: true })
   ).toBeDisabled();
   expect(mediaRequests).toBe(0);
 });

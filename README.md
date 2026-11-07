@@ -1,11 +1,11 @@
-# TARa
+# tara
 
-TARa guides technicians through reviewed SOPs and preserves the evidence, attempts,
+tara guides technicians through reviewed SOPs and preserves the evidence, attempts,
 deviations and reviews behind every completed work order. The workspace uses
 Next.js, a server-authoritative FastAPI execution service, PostgreSQL 18, private
 S3-compatible evidence storage and one Python LiveKit/OpenAI realtime worker.
 
-Correct work stays silent. **Ask TARa** explicitly activates consultation;
+Correct work stays silent. **Ask tara** explicitly activates consultation;
 proactive corrections are tied to eligible recorded failures. Missing provider
 credentials or failed visual assessment never produce simulated verification.
 
@@ -72,7 +72,7 @@ response time. Voice consultation uses `gpt-realtime-2.1` and the `marin` voice.
 Model changes require a credentialed provider check and evaluation on reviewed
 bench images; passing application tests does not establish visual accuracy.
 
-During Ask TARa, camera questions inspect one fresh frame with the vision model
+During Ask tara, camera questions inspect one fresh frame with the vision model
 without creating an attempt or verifying a step. Public web references use
 `WEB_SEARCH_PROVIDER=openai` and `WEB_SEARCH_MODEL=gpt-6-luna`, reusing the worker's
 OpenAI key with a ten-second deadline and linked source citations. Set the provider
@@ -137,7 +137,7 @@ and an active technician (or yourself); the assigned account then sees
 and publishes the camera to LiveKit in one action, then enables voice listening.
 Use **Pause listening** or **Resume listening** to control the microphone, and
 **Enable speaker** to restore audio replies. Text consultation remains available
-if microphone access is denied. TARa speaks only in response to a request;
+if microphone access is denied. tara speaks only in response to a request;
 recorded mistakes appear visually without spoken interruptions.
 
 Technicians and owners can also choose **Select SOP & start session** from the
@@ -147,6 +147,64 @@ pinned to the selected version, and records it in the normal queue/report flow.
 An open session started from the same version is resumed on repeat requests.
 Asset details are explicitly marked as not provided for these sessions.
 Technicians cannot assign or reassign other users' work.
+
+**Reports** includes read-only session records while work is ongoing. Each record
+shows progress, attempts, issues and saved camera images. Completing a session or
+closing it with unresolved work creates its immutable final report. **Evaluation**
+uses real authorized sessions, including unfinished work, and links procedure
+steps and recent images back to their session records. Unclear checks are counted
+separately from confirmed failures. Visual evidence coverage measures distinct
+required camera checkpoints with accepted frames; saved-image counts include
+frames that were not accepted. Evidence images load through authenticated
+same-origin endpoints backed by private S3 storage, with per-image retry controls.
+
+Inside a connected session, **Pair phone camera** optionally replaces the laptop
+camera. Scan the QR code with a phone and choose **Start phone camera** in its
+camera-only Product view. The laptop stays in Demo view and keeps the microphone,
+assistant speaker and procedure controls. The rear phone camera is used for the
+laptop preview and tara's visual checks; the phone receives no session audio or
+procedure controls. **Use laptop camera** disconnects the phone and restores the
+normal camera flow. The phone camera starts horizontally, requesting landscape
+fullscreen where supported; otherwise turn the phone sideways before starting.
+Keep the phone page open and its screen awake while sharing.
+
+Pairing links expire after ten minutes if unused and permit only camera
+publication into that specific session, without a phone sign-in. Claimed
+pairings last up to eight hours and can be revoked or replaced from the laptop.
+The QR secret stays in the URL fragment and only its hash is stored. Ending the
+session revokes the pairing. No pairing is needed to use the laptop camera.
+
+**Read model label** reads visible model/serial text from a fresh camera frame and
+shows the transcription and any unreadable fields. Hold the underside label close
+and steady, with enough light. You can also ask tara to read the label. Camera
+capture requests 1080p and preserves detail for text reading. For a session started
+directly from an SOP, review and save its missing model before comparing identity
+against the procedure. Serial registration is optional; a serial check is required
+only when the published procedure explicitly calls for it. Existing assigned-job
+identifiers remain fixed.
+Label reading does not complete a step. Use **Check current frame**, or **Retest
+current frame** for a held visual step, to perform a fresh verification. Warnings
+remain until the required criteria are satisfied; unreadable text is reported as
+unclear rather than a confirmed model mismatch.
+
+The keyboard switch-replacement demo PDF in `output/pdf/` is version 1.1 and
+checks the keyboard model and target key without requiring a serial number.
+Import, review and publish that revision to use it in new sessions; existing
+published procedures and their sessions keep their original requirements.
+
+The live assistant receives the selected published SOP's ordered steps and the
+session's known device details. It can explain the procedure without a separate
+work order or registered identifiers. Large procedures include a step outline
+and retrieve further details from that same saved SOP. Identity matching remains
+required only when the current published check calls for it.
+
+Choose **Review my progress**, or ask which step you are on and whether anything
+was skipped. The assistant compares one fresh camera frame with the selected
+SOP's steps, then checks the candidate against recorded progress. It separates
+explicit recorded skips from earlier required steps without verification. An
+unclear view stays uncertain, and invisible actions cannot be reconstructed from
+a still image. This review does not advance or verify any step. Without an
+available camera, it reports saved progress and explains the limitation.
 
 SOP intelligence loads saved source passages and configured checks from the API.
 Its visual checkpoint labels describe the procedure's verification method, not
@@ -176,7 +234,7 @@ records.
 Assigned jobs open the connected workspace at `/runs/[id]`, using the same
 assistant components and Demo/Product layouts. The current instruction, citations,
 corrections, verification labels and completed count come from the pinned run
-snapshot. Camera, pause/resume, visual checks, recorded confirmations, Ask TARA,
+snapshot. Camera, pause/resume, visual checks, recorded confirmations, Ask tara,
 evidence, session records and report creation use the existing authenticated
 backend and LiveKit worker. Appearance controls and simulated completion remain
 exclusive to the preview. Correct work stays silent; an attestation is labeled

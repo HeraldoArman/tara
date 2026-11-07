@@ -175,6 +175,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs/{run_id}/asset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Register Run Asset */
+        patch: operations["register_run_asset_api_v1_runs__run_id__asset_patch"];
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/camera-pairing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Run Camera Pairing */
+        get: operations["run_camera_pairing_api_v1_runs__run_id__camera_pairing_get"];
+        put?: never;
+        /** Create Run Camera Pairing */
+        post: operations["create_run_camera_pairing_api_v1_runs__run_id__camera_pairing_post"];
+        /** Delete Run Camera Pairing */
+        delete: operations["delete_run_camera_pairing_api_v1_runs__run_id__camera_pairing_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/camera-pairings/{pairing_id}/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Paired Phone Connection */
+        post: operations["paired_phone_connection_api_v1_camera_pairings__pairing_id__connection_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/camera-pairings/{pairing_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Paired Phone Status */
+        post: operations["paired_phone_status_api_v1_camera_pairings__pairing_id__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs/{run_id}/connection": {
         parameters: {
             query?: never;
@@ -405,6 +475,23 @@ export interface paths {
         };
         /** Sop Search */
         get: operations["sop_search_api_v1_sop_versions__version_id__search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/run-records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Run Records */
+        get: operations["run_records_api_v1_run_records_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -664,6 +751,74 @@ export interface components {
             /** Page */
             page?: number | null;
         };
+        /** CameraPairingClaim */
+        CameraPairingClaim: {
+            /** Token */
+            token: string;
+        };
+        /** CameraPairingConnectionResponse */
+        CameraPairingConnectionResponse: {
+            /** Url */
+            url: string;
+            /** Token */
+            token: string;
+            /** Roomname */
+            roomName: string;
+            /** Participantidentity */
+            participantIdentity: string;
+            /** Expiresat */
+            expiresAt: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingCreatedResponse */
+        CameraPairingCreatedResponse: {
+            /** Id */
+            id: string;
+            /** Token */
+            token: string;
+            /** Expiresat */
+            expiresAt: string;
+            /** Participantidentity */
+            participantIdentity: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingResponse */
+        CameraPairingResponse: {
+            /** Id */
+            id: string;
+            /** Expiresat */
+            expiresAt: string;
+            /** Participantidentity */
+            participantIdentity: string;
+            /** Claimed */
+            claimed: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingRevokedResponse */
+        CameraPairingRevokedResponse: {
+            /** Revoked */
+            revoked: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingStateResponse */
+        CameraPairingStateResponse: {
+            pairing: components["schemas"]["CameraPairingResponse"] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CameraPairingStatusResponse */
+        CameraPairingStatusResponse: {
+            /** Active */
+            active: boolean;
+            /** Expiresat */
+            expiresAt?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** Criterion */
         Criterion: {
             /** Id */
@@ -677,6 +832,48 @@ export interface components {
             definition: {
                 [key: string]: unknown;
             };
+        };
+        /** EvaluationCriterionMetric */
+        EvaluationCriterionMetric: {
+            /** Id */
+            id: string;
+            /** Sopversionid */
+            sopVersionId: string;
+            /** Stepid */
+            stepId: string;
+            /** Steptitle */
+            stepTitle: string;
+            /** Sopkey */
+            sopKey: string;
+            /** Soptitle */
+            sopTitle: string;
+            /** Version */
+            version: string;
+            /** Runid */
+            runId: string;
+            /** Criterionid */
+            criterionId: string;
+            /** Criteriondescription */
+            criterionDescription: string;
+            /** Count */
+            count: number;
+            /** Unclearcount */
+            unclearCount: number;
+        } & {
+            [key: string]: unknown;
+        };
+        /** EvaluationLatency */
+        EvaluationLatency: {
+            /** Id */
+            id: string;
+            /** Tool */
+            tool: string;
+            /** Durationms */
+            durationMs: number;
+            /** Status */
+            status: string;
+        } & {
+            [key: string]: unknown;
         };
         /** EvaluationResponse */
         EvaluationResponse: {
@@ -693,21 +890,203 @@ export interface components {
             /** Evidencecoverage */
             evidenceCoverage: number | null;
             /** Stepmetrics */
-            stepMetrics: {
-                [key: string]: unknown;
-            }[];
+            stepMetrics: components["schemas"]["EvaluationStepMetric"][];
             /** Criterionfailures */
-            criterionFailures: {
-                [key: string]: unknown;
-            }[];
+            criterionFailures: components["schemas"]["EvaluationCriterionMetric"][];
             /** Latency */
-            latency: {
-                [key: string]: unknown;
-            }[];
+            latency: components["schemas"]["EvaluationLatency"][];
             /** Technicianmetrics */
-            technicianMetrics?: {
-                [key: string]: unknown;
-            }[];
+            technicianMetrics?: components["schemas"]["EvaluationTechnicianMetric"][];
+            /**
+             * Returned
+             * @default 0
+             */
+            returned: number;
+            /**
+             * Aiverified
+             * @default 0
+             */
+            aiVerified: number;
+            /**
+             * Attested
+             * @default 0
+             */
+            attested: number;
+            /**
+             * Held
+             * @default 0
+             */
+            held: number;
+            /**
+             * Unreached
+             * @default 0
+             */
+            unreached: number;
+            /**
+             * Retakes
+             * @default 0
+             */
+            retakes: number;
+            /**
+             * Deviations
+             * @default 0
+             */
+            deviations: number;
+            /**
+             * Openescalations
+             * @default 0
+             */
+            openEscalations: number;
+            /**
+             * Activeseconds
+             * @default 0
+             */
+            activeSeconds: number;
+            /** Toolfailurerate */
+            toolFailureRate?: number | null;
+            /**
+             * Alerts
+             * @default 0
+             */
+            alerts: number;
+            /**
+             * Suppressedalerts
+             * @default 0
+             */
+            suppressedAlerts: number;
+            /**
+             * Evidenceframes
+             * @default 0
+             */
+            evidenceFrames: number;
+            /**
+             * Acceptedevidenceframes
+             * @default 0
+             */
+            acceptedEvidenceFrames: number;
+            /**
+             * Unacceptedevidenceframes
+             * @default 0
+             */
+            unacceptedEvidenceFrames: number;
+            /**
+             * Visualsteps
+             * @default 0
+             */
+            visualSteps: number;
+            /**
+             * Verifiedvisualsteps
+             * @default 0
+             */
+            verifiedVisualSteps: number;
+            /**
+             * Attemptedsteps
+             * @default 0
+             */
+            attemptedSteps: number;
+            /**
+             * Firstpasscount
+             * @default 0
+             */
+            firstPassCount: number;
+            /**
+             * Firstattemptcount
+             * @default 0
+             */
+            firstAttemptCount: number;
+            /**
+             * Visualchecks
+             * @default 0
+             */
+            visualChecks: number;
+            /**
+             * Errorchecks
+             * @default 0
+             */
+            errorChecks: number;
+            /**
+             * Unclearchecks
+             * @default 0
+             */
+            unclearChecks: number;
+            /** Recentevidence */
+            recentEvidence?: components["schemas"]["RecentEvidenceResponse"][];
+            /**
+             * Scope
+             * @default
+             */
+            scope: string;
+            /**
+             * Evidencecoveragescope
+             * @default
+             */
+            evidenceCoverageScope: string;
+            /**
+             * Technicianmetricsscope
+             * @default
+             */
+            technicianMetricsScope: string;
+            /**
+             * Firstpassratescope
+             * @default
+             */
+            firstPassRateScope: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** EvaluationStepMetric */
+        EvaluationStepMetric: {
+            /** Id */
+            id: string;
+            /** Sopversionid */
+            sopVersionId: string;
+            /** Stepid */
+            stepId: string;
+            /** Steptitle */
+            stepTitle: string;
+            /** Sopkey */
+            sopKey: string;
+            /** Soptitle */
+            sopTitle: string;
+            /** Version */
+            version: string;
+            /** Runid */
+            runId: string;
+            /** Runs */
+            runs: number;
+            /** Attempts */
+            attempts: number;
+            /** Firstpass */
+            firstPass: number;
+            /** Held */
+            held: number;
+        } & {
+            [key: string]: unknown;
+        };
+        /** EvaluationTechnicianMetric */
+        EvaluationTechnicianMetric: {
+            /** Technicianid */
+            technicianId: string;
+            /** Technicianname */
+            technicianName: string;
+            /** Runs */
+            runs: number;
+            /** Completed */
+            completed: number;
+            /** Partial */
+            partial: number;
+            /** Active */
+            active: number;
+            /** Attempts */
+            attempts: number;
+            /** Attemptedsteps */
+            attemptedSteps: number;
+            /** Firstpassrate */
+            firstPassRate: number | null;
+            /** Retakes */
+            retakes: number;
+            /** Activeseconds */
+            activeSeconds: number;
         } & {
             [key: string]: unknown;
         };
@@ -755,6 +1134,45 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /** RecentEvidenceResponse */
+        RecentEvidenceResponse: {
+            /** Id */
+            id: string;
+            /** Stepid */
+            stepId: string;
+            /** Attemptid */
+            attemptId: string;
+            /** Accepted */
+            accepted: boolean;
+            /** Sha256 */
+            sha256: string;
+            /** Mediatype */
+            mediaType: string;
+            /** Source */
+            source: string;
+            /** Model */
+            model: string;
+            /** Capturedat */
+            capturedAt: string;
+            /** Width */
+            width?: number | null;
+            /** Height */
+            height?: number | null;
+            /** Assessmentid */
+            assessmentId?: string | null;
+            /** Correlationid */
+            correlationId?: string | null;
+            /** Urlendpoint */
+            urlEndpoint: string;
+            /** Runid */
+            runId: string;
+            /** Steptitle */
+            stepTitle: string;
+            /** Sopkey */
+            sopKey: string;
+        } & {
+            [key: string]: unknown;
         };
         /** ReportListResponse */
         ReportListResponse: {
@@ -825,10 +1243,71 @@ export interface components {
              */
             note: string;
         };
+        /** RunAssetRegistration */
+        RunAssetRegistration: {
+            /** Model */
+            model: string;
+            /** Serial */
+            serial?: string | null;
+        };
+        /** RunProgressResponse */
+        RunProgressResponse: {
+            /** Completed */
+            completed: number;
+            /** Total */
+            total: number;
+            /** Held */
+            held: number;
+        } & {
+            [key: string]: unknown;
+        };
+        /** RunRecordListResponse */
+        RunRecordListResponse: {
+            /** Items */
+            items: components["schemas"]["RunRecordResponse"][];
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
+            /** Hasmore */
+            hasMore: boolean;
+            /** Nextoffset */
+            nextOffset: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** RunRecordResponse */
+        RunRecordResponse: {
+            /** Id */
+            id: string;
+            /** Status */
+            status: string;
+            /** Startedat */
+            startedAt: string;
+            /** Elapsedseconds */
+            elapsedSeconds: number;
+            workOrder: components["schemas"]["WorkOrderResponse"];
+            sop: components["schemas"]["SOPSummaryResponse"];
+            /** Sopversionid */
+            sopVersionId: string;
+            progress: components["schemas"]["RunProgressResponse"];
+            /** Attemptcount */
+            attemptCount: number;
+            /** Evidencecount */
+            evidenceCount: number;
+            /** Acceptedevidencecount */
+            acceptedEvidenceCount: number;
+            /** Reportid */
+            reportId: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** RunResponse */
         RunResponse: {
             /** Id */
             id: string;
+            /** Reportid */
+            reportId?: string | null;
             /** Workorderid */
             workOrderId: string;
             /** Version */
@@ -1522,6 +2001,212 @@ export interface operations {
             };
         };
     };
+    register_run_asset_api_v1_runs__run_id__asset_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunAssetRegistration"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_camera_pairing_api_v1_runs__run_id__camera_pairing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingStateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_run_camera_pairing_api_v1_runs__run_id__camera_pairing_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingCreatedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_run_camera_pairing_api_v1_runs__run_id__camera_pairing_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingRevokedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    paired_phone_connection_api_v1_camera_pairings__pairing_id__connection_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pairing_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CameraPairingClaim"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingConnectionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    paired_phone_status_api_v1_camera_pairings__pairing_id__status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pairing_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CameraPairingClaim"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraPairingStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     connection_api_v1_runs__run_id__connection_post: {
         parameters: {
             query?: never;
@@ -1626,8 +2311,8 @@ export interface operations {
     };
     evidence_content_api_v1_evidence__evidence_id__content_get: {
         parameters: {
-            query: {
-                token: string;
+            query?: {
+                token?: string | null;
             };
             header?: never;
             path: {
@@ -1983,6 +2668,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_records_api_v1_run_records_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: {
+                tara_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunRecordListResponse"];
                 };
             };
             /** @description Validation Error */

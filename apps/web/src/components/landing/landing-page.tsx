@@ -63,17 +63,17 @@ const workflow = [
 const questions = [
   {
     answer:
-      "TARA connects company heads and operational teams. Management prepares and reviews workflows, while frontline workers follow assigned procedures with contextual assistance. Both work from the same SOP and execution records.",
-    question: "Who is TARA built for?",
+      "tara connects company heads and operational teams. Management prepares and reviews workflows, while frontline workers follow assigned procedures with contextual assistance. Both work from the same SOP and execution records.",
+    question: "Who is tara built for?",
   },
   {
     answer:
-      "Yes. The workflow starts with your existing PDF or DOCX document. TARA extracts steps, prerequisites, risks, and verification criteria for a human to review before the procedure is published for the team.",
+      "Yes. The workflow starts with your existing PDF or DOCX document. tara extracts steps, prerequisites, risks, and verification criteria for a human to review before the procedure is published for the team.",
     question: "Can we use our existing SOPs?",
   },
   {
     answer:
-      "TARA brings the issue into focus with contextual guidance. The worker can correct the issue and have the checkpoint checked again. When evidence is insufficient, the workflow should request further verification or human review rather than assume a violation.",
+      "tara brings the issue into focus with contextual guidance. The worker can correct the issue and have the checkpoint checked again. When evidence is insufficient, the workflow should request further verification or human review rather than assume a violation.",
     question: "What happens when a step needs attention?",
   },
   {
@@ -85,7 +85,7 @@ const questions = [
 
 function LandingBrand() {
   return (
-    <Link aria-label="TARA home" className="tara-landing-brand" href="/">
+    <Link aria-label="tara home" className="tara-landing-brand" href="/">
       <AssistantMark />
       <span>
         tara<span className="tara-landing-period">.</span>
@@ -113,7 +113,7 @@ function LandingWorkflow() {
           </h2>
         </div>
         <p>
-          Your procedures already hold the knowledge. TARA helps turn it into a
+          Your procedures already hold the knowledge. tara helps turn it into a
           way of working your whole team can follow.
         </p>
       </div>
@@ -168,7 +168,7 @@ function LandingTeams() {
             actually happens.
           </h3>
           <p>
-            Bring your procedures into TARA, review the workflow, and stay close
+            Bring your procedures into tara, review the workflow, and stay close
             to what needs your attention.
           </p>
           <ul>
@@ -210,7 +210,7 @@ function LandingTeams() {
             </div>
           </figure>
           <Link className="tara-landing-text-link" href="/register">
-            Bring your team to TARA <ArrowUpRight aria-hidden="true" />
+            Bring your team to tara <ArrowUpRight aria-hidden="true" />
           </Link>
         </article>
         <article className="tara-landing-team tara-landing-team-worker">
@@ -224,7 +224,7 @@ function LandingTeams() {
             Right when it matters.
           </h3>
           <p>
-            Keep your attention on the task. TARA brings the current
+            Keep your attention on the task. tara brings the current
             instruction, relevant checks, and next action into focus.
           </p>
           <ul>
@@ -343,7 +343,7 @@ export function LandingPage() {
             render={<Link href="/register" />}
             role="link"
           >
-            Start TARA <ArrowUpRight data-icon="inline-end" />
+            Start tara <ArrowUpRight data-icon="inline-end" />
           </Button>
         </div>
       </header>
@@ -363,7 +363,7 @@ export function LandingPage() {
               <span>operation.</span>
             </h1>
             <p className="tara-landing-lede">
-              From the SOP on your desk to the work in your hands. TARA connects
+              From the SOP on your desk to the work in your hands. tara connects
               your procedures, your people, and what happens on the floor.
             </p>
             <div className="tara-landing-hero-actions">
@@ -374,7 +374,7 @@ export function LandingPage() {
                 role="link"
                 size="lg"
               >
-                Start TARA <ArrowRight data-icon="inline-end" />
+                Start tara <ArrowRight data-icon="inline-end" />
               </Button>
               <a className="tara-landing-text-link" href="#how-it-works">
                 See how it works <ArrowDown aria-hidden="true" />
@@ -466,7 +466,7 @@ export function LandingPage() {
               role="link"
               size="lg"
             >
-              Start TARA <ArrowRight data-icon="inline-end" />
+              Start tara <ArrowRight data-icon="inline-end" />
             </Button>
             <span>
               Already on a team? <Link href="/login">Sign in</Link>

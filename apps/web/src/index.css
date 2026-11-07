@@ -1491,6 +1491,7 @@ tr:last-child td {
 }
 .evaluation-filters > div {
   flex: 1;
+  min-width: 0;
 }
 .evaluation-filters label {
   display: block;
@@ -1498,10 +1499,22 @@ tr:last-child td {
   font-size: 10px;
   color: #8493ab;
 }
-.evaluation-filters input {
+.evaluation-filters input,
+.evaluation-filters select {
+  width: 100%;
   min-height: 40px;
   padding: 11px;
   font-size: 11px;
+}
+.evaluation-filters select {
+  color: var(--tara-text);
+  background: #fff;
+  border: 1px solid var(--tara-line);
+  border-radius: 10px;
+}
+.evaluation-filters select:focus-visible {
+  outline: 2px solid #7398ff;
+  outline-offset: 1px;
 }
 .evaluation-metrics {
   grid-template-columns: repeat(5, minmax(0, 1fr));

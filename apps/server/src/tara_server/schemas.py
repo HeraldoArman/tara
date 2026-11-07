@@ -18,6 +18,11 @@ class AssetInput(Schema):
     serial: str = Field(min_length=1, max_length=200)
 
 
+class RunAssetRegistration(Schema):
+    model: str = Field(min_length=1, max_length=200)
+    serial: str | None = Field(default=None, min_length=1, max_length=200)
+
+
 class WorkOrderInput(Schema):
     reference: str = Field(min_length=1, max_length=100)
     title: str = Field(min_length=1, max_length=300)
@@ -27,6 +32,10 @@ class WorkOrderInput(Schema):
     assigned_username: str
     sop_version_id: str
     estimated_minutes: int = Field(default=20, ge=1, le=10080)
+
+
+class CameraPairingClaim(Schema):
+    token: str = Field(min_length=32, max_length=200)
 
 
 class Source(Schema):
@@ -166,6 +175,41 @@ class AssigneeListResponse(PublicModel):
     items: list[UserResponse]
 
 
+class CameraPairingResponse(PublicModel):
+    id: str
+    expiresAt: str
+    participantIdentity: str
+    claimed: bool
+
+
+class CameraPairingCreatedResponse(PublicModel):
+    id: str
+    token: str
+    expiresAt: str
+    participantIdentity: str
+
+
+class CameraPairingStateResponse(PublicModel):
+    pairing: CameraPairingResponse | None
+
+
+class CameraPairingConnectionResponse(PublicModel):
+    url: str
+    token: str
+    roomName: str
+    participantIdentity: str
+    expiresAt: str
+
+
+class CameraPairingStatusResponse(PublicModel):
+    active: bool
+    expiresAt: str | None = None
+
+
+class CameraPairingRevokedResponse(PublicModel):
+    revoked: bool
+
+
 class AssetResponse(PublicModel):
     model: str
     serial: str
@@ -258,6 +302,7 @@ class SOPSummaryResponse(PublicModel):
 
 class RunResponse(PublicModel):
     id: str
+    reportId: str | None = None
     workOrderId: str
     version: int
     status: str
@@ -369,6 +414,92 @@ class ReportListResponse(PublicModel):
     items: list[ReportResponse]
 
 
+class RunProgressResponse(PublicModel):
+    completed: int
+    total: int
+    held: int
+
+
+class RunRecordResponse(PublicModel):
+    id: str
+    status: str
+    startedAt: str
+    elapsedSeconds: int
+    workOrder: WorkOrderResponse
+    sop: SOPSummaryResponse
+    sopVersionId: str
+    progress: RunProgressResponse
+    attemptCount: int
+    evidenceCount: int
+    acceptedEvidenceCount: int
+    reportId: str | None
+
+
+class RunRecordListResponse(PublicModel):
+    items: list[RunRecordResponse]
+    offset: int
+    limit: int
+    hasMore: bool
+    nextOffset: int | None
+
+
+class RecentEvidenceResponse(EvidenceResponse):
+    runId: str
+    stepTitle: str
+    sopKey: str
+
+
+class EvaluationStepMetric(PublicModel):
+    id: str
+    sopVersionId: str
+    stepId: str
+    stepTitle: str
+    sopKey: str
+    sopTitle: str
+    version: str
+    runId: str
+    runs: int
+    attempts: int
+    firstPass: int
+    held: int
+
+
+class EvaluationCriterionMetric(PublicModel):
+    id: str
+    sopVersionId: str
+    stepId: str
+    stepTitle: str
+    sopKey: str
+    sopTitle: str
+    version: str
+    runId: str
+    criterionId: str
+    criterionDescription: str
+    count: int
+    unclearCount: int
+
+
+class EvaluationTechnicianMetric(PublicModel):
+    technicianId: str
+    technicianName: str
+    runs: int
+    completed: int
+    partial: int
+    active: int
+    attempts: int
+    attemptedSteps: int
+    firstPassRate: float | None
+    retakes: int
+    activeSeconds: int
+
+
+class EvaluationLatency(PublicModel):
+    id: str
+    tool: str
+    durationMs: int
+    status: str
+
+
 class EvaluationResponse(PublicModel):
     runs: int
     completed: int
@@ -376,7 +507,35 @@ class EvaluationResponse(PublicModel):
     active: int
     firstPassRate: float | None
     evidenceCoverage: float | None
-    stepMetrics: list[dict]
-    criterionFailures: list[dict]
-    latency: list[dict]
-    technicianMetrics: list[dict] = Field(default_factory=list)
+    stepMetrics: list[EvaluationStepMetric]
+    criterionFailures: list[EvaluationCriterionMetric]
+    latency: list[EvaluationLatency]
+    technicianMetrics: list[EvaluationTechnicianMetric] = Field(default_factory=list)
+    returned: int = 0
+    aiVerified: int = 0
+    attested: int = 0
+    held: int = 0
+    unreached: int = 0
+    retakes: int = 0
+    deviations: int = 0
+    openEscalations: int = 0
+    activeSeconds: int = 0
+    toolFailureRate: float | None = None
+    alerts: int = 0
+    suppressedAlerts: int = 0
+    evidenceFrames: int = 0
+    acceptedEvidenceFrames: int = 0
+    unacceptedEvidenceFrames: int = 0
+    visualSteps: int = 0
+    verifiedVisualSteps: int = 0
+    attemptedSteps: int = 0
+    firstPassCount: int = 0
+    firstAttemptCount: int = 0
+    visualChecks: int = 0
+    errorChecks: int = 0
+    unclearChecks: int = 0
+    recentEvidence: list[RecentEvidenceResponse] = Field(default_factory=list)
+    scope: str = ""
+    evidenceCoverageScope: str = ""
+    technicianMetricsScope: str = ""
+    firstPassRateScope: str = ""
