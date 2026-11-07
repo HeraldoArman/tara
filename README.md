@@ -137,8 +137,9 @@ and an active technician (or yourself); the assigned account then sees
 and publishes the camera to LiveKit in one action, then enables voice listening.
 Use **Pause listening** or **Resume listening** to control the microphone, and
 **Enable speaker** to restore audio replies. Text consultation remains available
-if microphone access is denied. Correct work stays quiet; recorded mistakes can
-trigger a spoken correction. Technician accounts cannot create or reassign jobs.
+if microphone access is denied. TARa speaks only in response to a request;
+recorded mistakes appear visually without spoken interruptions. Technician
+accounts cannot create or reassign jobs.
 
 Use the controlled administrative CLI, documented in the parent workspace's
 `docs/admin-operations.md`, to provision organization users or bulk-import work
