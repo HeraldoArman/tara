@@ -94,7 +94,7 @@ test("saved source survives repeated decomposition errors and retry does not upl
     name: "Retry draft generation",
   });
   await retry.click();
-  await expect(page.locator('.notice[role="alert"]')).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "The retry timed out"
   );
   await expect(retry).toBeEnabled();

@@ -1,4 +1,5 @@
 "use client";
+import "./reports-records.css";
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -43,15 +44,20 @@ export function ReportList({ items }: { items: Report[] }) {
         </fieldset>
       </div>
       {reports.length ? (
-        <div className="panel table-panel">
-          <table>
+        <section
+          aria-label="Finalized reports table"
+          className="panel table-panel report-list-table"
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users must be able to scroll the overflowed table.
+          tabIndex={0}
+        >
+          <table aria-label="Finalized reports">
             <thead>
               <tr>
-                <th>Work order</th>
-                <th>Procedure</th>
-                <th>Outcome</th>
-                <th>Created</th>
-                <th>
+                <th scope="col">Work order</th>
+                <th scope="col">Procedure</th>
+                <th scope="col">Outcome</th>
+                <th scope="col">Created</th>
+                <th scope="col">
                   <span className="sr-only">View report</span>
                 </th>
               </tr>
@@ -97,7 +103,7 @@ export function ReportList({ items }: { items: Report[] }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </section>
       ) : (
         <EmptyState
           description="Open sessions and their saved images are available above. Closing a session creates its final report."
@@ -139,7 +145,7 @@ export function ReportDetail({ report, user }: { report: Report; user: User }) {
     };
   }, []);
   return (
-    <>
+    <div className="report-detail">
       <div className="report-actions">
         <Status value={report.outcome ?? "recorded"} />
         <span className="report-created">
@@ -228,7 +234,11 @@ export function ReportDetail({ report, user }: { report: Report; user: User }) {
                       </span>
                     </div>
                     <Status value={step.status} />
-                    <ChevronDown size={15} />
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="record-step-chevron"
+                      size={15}
+                    />
                   </summary>
                   <div className="report-step-body">
                     <p>{step.instruction}</p>
@@ -319,9 +329,7 @@ export function ReportDetail({ report, user }: { report: Report; user: User }) {
                   <p>
                     {item.description ?? item.reason ?? "Recorded exception"}
                   </p>
-                  <span className="mono">
-                    {item.stepId ?? item.id.slice(0, 12)}
-                  </span>
+                  <span className="mono">{item.stepId}</span>
                 </div>
               ))}
               {["supervisor", "owner"].includes(user.role) &&
@@ -371,7 +379,7 @@ export function ReportDetail({ report, user }: { report: Report; user: User }) {
           </div>
         </aside>
       </div>
-    </>
+    </div>
   );
 }
 function ReviewRecord({ review }: { review: Review }) {
@@ -415,10 +423,11 @@ function ReviewForm({
     }
   };
   return (
-    <div className="review-form">
+    <div aria-busy={busy} className="review-form">
       <label htmlFor="review-note">Review note</label>
       <textarea
         id="review-note"
+        name="reviewNote"
         onChange={(event) => setNote(event.target.value)}
         placeholder="Explain your decision. Required when returning for rework."
         rows={4}
@@ -436,7 +445,7 @@ function ReviewForm({
         type="button"
       >
         <CheckCircle2 size={16} />
-        Approve this revision
+        {busy ? "Saving review…" : "Approve this revision"}
       </button>
       <button
         className="button"

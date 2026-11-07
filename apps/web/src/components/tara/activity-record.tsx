@@ -10,14 +10,16 @@ export function AuditTimeline({ events }: { events: AuditEvent[] }) {
     <ol className="audit-timeline">
       {events.map((event) => (
         <li key={event.id}>
-          <span className="timeline-dot" />
+          <span aria-hidden="true" className="timeline-dot" />
           <div>
             <strong>
               {humanize(event.type ?? event.eventType ?? "Event")}
             </strong>
             <p>{auditMessage(event)}</p>
             {event.occurredAt || event.createdAt ? (
-              <time>{dateTime(event.occurredAt ?? event.createdAt ?? "")}</time>
+              <time dateTime={event.occurredAt ?? event.createdAt}>
+                {dateTime(event.occurredAt ?? event.createdAt ?? "")}
+              </time>
             ) : null}
           </div>
         </li>
@@ -50,7 +52,7 @@ export function ToolCallHistory({
             <Status value={call.status} />
           </div>
           <p className="subtle-note">
-            <time>{dateTime(call.createdAt)}</time>
+            <time dateTime={call.createdAt}>{dateTime(call.createdAt)}</time>
             <span>{call.durationMs} ms</span>
           </p>
           <details className="tool-call-details">
@@ -117,7 +119,7 @@ export function ActivityRecord({ runId }: { runId: string }) {
     return () => controller.abort();
   }, [load]);
   return (
-    <div className="activity-record">
+    <div aria-busy={busy} className="activity-record">
       <div className="activity-record-summary">
         <p>
           {events.length} audit events · {calls.length} tool calls loaded

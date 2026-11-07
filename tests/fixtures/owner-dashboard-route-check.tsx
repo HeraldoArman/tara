@@ -27,6 +27,7 @@ mock.module("next/navigation", () => ({
       throw cause;
     }
   },
+  usePathname: () => "/dashboard",
   useRouter: () => ({ push: () => undefined, refresh: () => undefined }),
 }));
 mock.module("../../apps/web/src/lib/server-api", () => ({

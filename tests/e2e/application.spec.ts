@@ -73,7 +73,7 @@ test("technician cannot import SOPs and evaluation stays scoped to own history",
 }) => {
   await login(page, "technician");
   await page.goto("/sops/import");
-  await expect(page.locator('.notice[role="alert"]')).toContainText(
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Only an SOP manager or owner"
   );
   await page.goto("/evaluation");
@@ -159,7 +159,7 @@ test("SOP manager gets the draft import flow and clear invalid-document feedback
   await expect(
     page.getByRole("button", { name: "Generate SOP draft" })
   ).toBeDisabled();
-  await expect(page.locator('.notice[role="alert"]')).toBeVisible();
+  await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
   await expect(page).toHaveURL(importPath);
 });
 

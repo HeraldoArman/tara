@@ -1,3 +1,6 @@
+import "@/components/tara/sops.css";
+
+import { Button } from "@tara/ui/components/button";
 import { ArrowUpRight, BookOpen, FilePlus2 } from "lucide-react";
 import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
@@ -32,10 +35,14 @@ export default async function SopsPage() {
         title="The right way, on record."
       >
         {canEdit ? (
-          <Link className="button primary" href="/sops/import">
-            <FilePlus2 size={16} />
+          <Button
+            nativeButton={false}
+            render={<Link href="/sops/import" />}
+            role="link"
+          >
+            <FilePlus2 aria-hidden="true" data-icon="inline-start" />
             Import a procedure
-          </Link>
+          </Button>
         ) : null}
       </PageHeading>
       {sops.items.length ? (
@@ -43,7 +50,7 @@ export default async function SopsPage() {
           {sops.items.map((sop) => (
             <section className="panel sop-library-card" key={sop.id}>
               <div className="sop-library-icon">
-                <BookOpen size={25} />
+                <BookOpen aria-hidden="true" size={25} />
               </div>
               <div>
                 <p className="eyebrow">{sop.key}</p>
@@ -54,23 +61,29 @@ export default async function SopsPage() {
                       href={sopVersionPath({ ...version, sopId: sop.id })}
                       key={version.id}
                     >
-                      <span>
+                      <span className="sop-version-label">
                         Version {version.version} · revision{" "}
                         {version.versionNumber}
                       </span>
                       <Status value={version.status} />
-                      <ArrowUpRight size={17} />
+                      <ArrowUpRight aria-hidden="true" size={17} />
                     </Link>
                   ))}
                 </div>
                 {sop.versions[0] ? (
-                  <Link
-                    className="button"
-                    href={`/sop-intelligence?sopVersionId=${encodeURIComponent(sop.versions[0].id)}`}
+                  <Button
+                    nativeButton={false}
+                    render={
+                      <Link
+                        href={`/sop-intelligence?sopVersionId=${encodeURIComponent(sop.versions[0].id)}`}
+                      />
+                    }
+                    role="link"
+                    variant="outline"
                   >
                     Explore this SOP
-                    <ArrowUpRight size={17} />
-                  </Link>
+                    <ArrowUpRight aria-hidden="true" data-icon="inline-end" />
+                  </Button>
                 ) : null}
               </div>
             </section>

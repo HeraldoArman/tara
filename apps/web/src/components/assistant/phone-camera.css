@@ -2,12 +2,11 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  min-height: 100svh;
+  min-height: 100dvh;
   padding: max(22px, env(safe-area-inset-top))
     max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
     max(20px, env(safe-area-inset-left));
-  overflow: hidden;
+  overflow: clip;
   color: #f3f7ff;
   background: radial-gradient(ellipse at 10% 0, #293b6b, #0e1725 65%);
   isolation: isolate;
@@ -41,9 +40,17 @@
   justify-content: space-between;
 }
 .tara-phone-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 8px;
+  align-items: center;
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -2px;
+}
+.tara-phone-brand .tara-assistant-mark,
+.tara-phone-brand-period {
+  color: #b9c6ff;
 }
 .tara-phone-status {
   padding: 9px 13px;
@@ -154,6 +161,10 @@
   outline: 3px solid #a1b5ff;
   outline-offset: 4px;
 }
+.tara-phone-controls button:hover:not(:disabled) {
+  background: #f3f7ff;
+  border-color: #ffffffb3;
+}
 .tara-phone-controls button:disabled {
   opacity: 0.5;
 }
@@ -187,6 +198,10 @@
   .tara-phone-brand {
     font-size: 24px;
     letter-spacing: -1px;
+  }
+  .tara-phone-brand .tara-assistant-mark {
+    width: 26px;
+    height: 28px;
   }
   .tara-phone-status {
     padding: 5px 10px;

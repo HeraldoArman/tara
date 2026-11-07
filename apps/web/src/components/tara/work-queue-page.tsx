@@ -73,7 +73,7 @@ export async function WorkQueuePage({ user }: { readonly user: User }) {
           },
         ].map(({ icon: Icon, value, label }) => (
           <div className="metric" key={label}>
-            <Icon size={19} />
+            <Icon aria-hidden="true" size={19} />
             <strong>{value}</strong>
             <span>{label}</span>
           </div>

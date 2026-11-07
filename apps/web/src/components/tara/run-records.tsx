@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowUpRight, Camera, Clock3, RefreshCw } from "lucide-react";
+import {
+  ArrowUpRight,
+  Camera,
+  ChevronDown,
+  Clock3,
+  RefreshCw,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -117,7 +123,11 @@ export function RunRecordList({ initialPage }: { initialPage: RunRecordPage }) {
   );
 
   return (
-    <section aria-label="Session records" className="run-records-section">
+    <section
+      aria-busy={busy}
+      aria-label="Session records"
+      className="run-records-section"
+    >
       <div className="run-records-heading">
         <div>
           <h2>Session records</h2>
@@ -162,8 +172,8 @@ export function RunRecordList({ initialPage }: { initialPage: RunRecordPage }) {
       {page.items.length === 0 ? (
         <EmptyState
           description="Start a session from a published SOP. Its attempts and saved images will appear here as work is recorded."
-          href="/sop-intelligence"
-          label="Select a saved SOP"
+          href="/sops"
+          label="Open SOP library"
           title="No session records yet."
         />
       ) : null}
@@ -258,6 +268,11 @@ function RecordedStep({ step, index }: { step: RunStep; index: number }) {
           </small>
         </div>
         <Status value={step.status} />
+        <ChevronDown
+          aria-hidden="true"
+          className="record-step-chevron"
+          size={16}
+        />
       </summary>
       <div className="run-record-step-body">
         <p>{step.instruction}</p>

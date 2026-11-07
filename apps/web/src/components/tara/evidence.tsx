@@ -1,7 +1,9 @@
 "use client";
 
 import { ArrowUpRight, Camera, RefreshCw } from "lucide-react";
+import type { Route } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { dateTime, humanize } from "@/lib/api";
 import type { Evidence, RunStep } from "@/lib/contracts";
@@ -107,9 +109,9 @@ function SavedEvidenceImage({
           </a>
         )}
         {recordLink ? (
-          <a className="saved-evidence-original" href={recordLink}>
+          <Link className="saved-evidence-original" href={recordLink as Route}>
             View session record <ArrowUpRight size={14} />
-          </a>
+          </Link>
         ) : null}
       </figcaption>
     </figure>

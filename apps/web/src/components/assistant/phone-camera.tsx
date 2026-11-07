@@ -1,7 +1,9 @@
 "use client";
 
+import "@tara/ui/assistant.css";
 import "./phone-camera.css";
 
+import { AssistantMark } from "@tara/ui/components/assistant-status";
 import {
   ConnectionState,
   createLocalVideoTrack,
@@ -349,7 +351,12 @@ export function PhoneCamera() {
         ref={video}
       />
       <header className="tara-phone-header">
-        <span className="tara-phone-brand">tara.</span>
+        <span className="tara-phone-brand">
+          <AssistantMark />
+          <span>
+            tara<span className="tara-phone-brand-period">.</span>
+          </span>
+        </span>
         <span className="tara-phone-status" data-live={live} role="status">
           {camera.status === "live" ? "Camera connected" : camera.status}
         </span>

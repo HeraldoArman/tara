@@ -1,5 +1,11 @@
 "use client";
-import { ArrowUpRight, ImagePlus } from "lucide-react";
+
+import "./sops.css";
+
+import { Alert, AlertDescription } from "@tara/ui/components/alert";
+import { Button } from "@tara/ui/components/button";
+import { Input } from "@tara/ui/components/input";
+import { ArrowUpRight, ImagePlus, LoaderCircle } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
@@ -38,7 +44,7 @@ export function ReferenceMediaCards({ items }: { items: ReferenceMedia[] }) {
               onClick={() => view(item)}
               type="button"
             >
-              <ImagePlus size={25} />
+              <ImagePlus aria-hidden="true" size={25} />
               <span>View reference image</span>
             </button>
           )}
@@ -54,15 +60,15 @@ export function ReferenceMediaCards({ items }: { items: ReferenceMedia[] }) {
               type="button"
             >
               Refresh image link
-              <ArrowUpRight size={11} />
+              <ArrowUpRight aria-hidden="true" size={11} />
             </button>
           ) : null}
         </article>
       ))}
       {error ? (
-        <p className="notice danger" role="alert">
-          {error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
     </div>
   );
@@ -157,7 +163,7 @@ export function SopReferenceUpload({
   return (
     <form aria-busy={busy} className="reference-upload" onSubmit={submit}>
       <h3>
-        <ImagePlus size={17} />
+        <ImagePlus aria-hidden="true" size={17} />
         Add a source reference image
       </h3>
       <p>
@@ -168,6 +174,7 @@ export function SopReferenceUpload({
       <select
         disabled={disabled || busy}
         id="reference-step"
+        name="step"
         onChange={(event) => setStepId(event.target.value)}
         value={selected?.id ?? ""}
       >
@@ -178,7 +185,8 @@ export function SopReferenceUpload({
         ))}
       </select>
       <label htmlFor="reference-title">Image title</label>
-      <input
+      <Input
+        autoComplete="off"
         disabled={disabled || busy}
         id="reference-title"
         maxLength={200}
@@ -187,7 +195,7 @@ export function SopReferenceUpload({
         required
       />
       <label htmlFor="reference-file">PNG, JPEG or WebP image</label>
-      <input
+      <Input
         accept="image/png,image/jpeg,image/webp"
         disabled={disabled || busy}
         id="reference-file"
@@ -205,17 +213,26 @@ export function SopReferenceUpload({
         </p>
       ) : null}
       {error ? (
-        <div className="notice danger" role="alert">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
-      <button
-        className="button"
+      <Button
         disabled={disabled || busy || !source}
         type="submit"
+        variant="outline"
       >
+        {busy ? (
+          <LoaderCircle
+            aria-hidden="true"
+            className="spin"
+            data-icon="inline-start"
+          />
+        ) : (
+          <ImagePlus aria-hidden="true" data-icon="inline-start" />
+        )}
         {busy ? "Attaching reference…" : "Attach image to step"}
-      </button>
+      </Button>
     </form>
   );
 }
