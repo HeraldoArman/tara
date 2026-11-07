@@ -54,7 +54,10 @@ export default async function SopsPage() {
                       href={sopVersionPath({ ...version, sopId: sop.id })}
                       key={version.id}
                     >
-                      <span>Version {version.version}</span>
+                      <span>
+                        Version {version.version} · revision{" "}
+                        {version.versionNumber}
+                      </span>
                       <Status value={version.status} />
                       <ArrowUpRight size={17} />
                     </Link>

@@ -7,6 +7,7 @@ import type { NextConfig } from "next";
 import { withPwa } from "./pwa.config";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   output: "standalone",
   reactCompiler: true,
   typedRoutes: true,

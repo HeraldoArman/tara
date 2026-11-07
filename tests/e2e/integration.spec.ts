@@ -173,6 +173,7 @@ test("activity loads beyond the first page, retains earlier records offline and 
     }
   );
   await page.goto(`/runs/${run.id}`);
+  await page.getByText("Step checks & prerequisites", { exact: true }).click();
   await expect(page.getByText("ESD-safe bench", { exact: true })).toBeVisible();
   await page
     .getByRole("button", { exact: false, name: "Session record" })

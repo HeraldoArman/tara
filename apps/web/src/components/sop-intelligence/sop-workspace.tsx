@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage, humanize } from "@/lib/api";
 import type { Run, User } from "@/lib/contracts";
+import { sopVersionPath } from "@/lib/sop-version-route";
 import { DocumentPanel } from "./document-panel";
 import { OpportunityPanel } from "./opportunity-panel";
 import { findSourceHighlight } from "./source-highlight";
@@ -337,7 +338,13 @@ export function SopWorkspace({
         {ready && analysis?.version.status === "draft" ? (
           <p className="sop-connected-notice">
             This is a saved draft. Review, validate and publish it before
-            starting a session.
+            starting a session.{" "}
+            <Link
+              className="underline underline-offset-4"
+              href={sopVersionPath(analysis.version)}
+            >
+              Review draft
+            </Link>
           </p>
         ) : null}
         {error ? (

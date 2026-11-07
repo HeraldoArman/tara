@@ -39,13 +39,8 @@ export async function WorkQueuePage({ user }: { readonly user: User }) {
         eyebrow="WORKSPACE / TODAY"
         title={`Good to see you, ${firstName}.`}
       >
-        {["technician", "owner"].includes(user.role) ? (
-          <Link className="button primary" href="/sops">
-            Select SOP &amp; start session
-          </Link>
-        ) : null}
         {user.role === "owner" ? (
-          <Link className="button" href="/work-orders/new">
+          <Link className="button primary" href="/work-orders/new">
             Create job
           </Link>
         ) : null}

@@ -42,6 +42,7 @@ lerna-debug.log*
 # Turbo
 .turbo
 .nx
+.next-e2e/
 
 # Better-T-Stack
 .alchemy

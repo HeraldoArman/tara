@@ -4,10 +4,19 @@ import { AppShell, PageHeading, PageUnavailable } from "@/components/tara/ui";
 import { errorMessage } from "@/lib/api";
 import type { User } from "@/lib/contracts";
 import { currentUser } from "@/lib/server-api";
-export default async function ImportPage() {
+import { retainedSopDocumentId } from "@/lib/sop-import-retry";
+
+export default async function ImportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ documentId?: string | string[] }>;
+}) {
   let user: User;
+  let documentId: string | null;
   try {
-    user = await currentUser();
+    const [actor, query] = await Promise.all([currentUser(), searchParams]);
+    user = actor;
+    documentId = retainedSopDocumentId(query.documentId);
   } catch (e) {
     unstable_rethrow(e);
     return <PageUnavailable message={errorMessage(e)} />;
@@ -24,7 +33,7 @@ export default async function ImportPage() {
         eyebrow="PROCEDURES / IMPORT"
         title="A source for every step."
       />
-      <SopImport />
+      <SopImport initialDocumentId={documentId} />
     </AppShell>
   );
 }

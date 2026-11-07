@@ -25,7 +25,7 @@ export default async function VersionPage({
   return (
     <AppShell active="/sops" user={data.user}>
       <PageHeading
-        description={`Controlled version ${data.sop.version}. Every execution remains pinned to its published definition.`}
+        description={`Version ${data.sop.version} · revision ${data.sop.versionNumber}. Every execution remains pinned to its published definition.`}
         eyebrow={`PROCEDURES / ${data.sop.key ?? "VERSION"}`}
         title={data.sop.title}
       >
@@ -33,10 +33,7 @@ export default async function VersionPage({
           className="button primary"
           href={`/sop-intelligence?sopVersionId=${encodeURIComponent(data.sop.id)}`}
         >
-          {data.sop.status === "published" &&
-          ["technician", "owner"].includes(data.user.role)
-            ? "Select SOP & start session"
-            : "Explore this SOP"}
+          Explore this SOP
         </Link>
         {data.user.role === "owner" && data.sop.status === "published" ? (
           <Link
