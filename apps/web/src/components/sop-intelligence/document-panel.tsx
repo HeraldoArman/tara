@@ -1,6 +1,12 @@
 import { Button } from "@tara/ui/components/button";
 import { FileText, Minus, Plus, ScanText } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { findSourceHighlight, highlightDescription } from "./source-highlight";
 import { canAssist, type Opportunity, type SopDocument } from "./types";
@@ -22,6 +28,42 @@ export function DocumentPanel({
   const activeHighlight = useRef<HTMLElement>(null);
   const highlight = findSourceHighlight(document, selected);
   const previousSelection = useRef({ count: selectionCount, id: selected?.id });
+  const pages = [
+    ...new Set(
+      document.sections
+        .map((section) => section.page)
+        .filter((page): page is number => typeof page === "number")
+    ),
+  ].sort((a, b) => a - b);
+  const goToPage = useCallback(
+    (page: number) => {
+      const section = document.sections.find((item) => item.page === page);
+      const container = viewport.current;
+      const target =
+        section &&
+        container?.querySelector(
+          `[data-source-id="${CSS.escape(section.id)}"]`
+        );
+      if (container && target) {
+        container.scrollTo({
+          behavior: "smooth",
+          top:
+            target.getBoundingClientRect().top -
+            container.getBoundingClientRect().top +
+            container.scrollTop -
+            20,
+        });
+      }
+    },
+    [document.sections]
+  );
+  const handlePageChange = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      goToPage(Number(event.target.value));
+      event.target.value = "";
+    },
+    [goToPage]
+  );
   const zoomOut = useCallback(() => setZoom((value) => value - 10), []);
   const zoomIn = useCallback(() => setZoom((value) => value + 10), []);
 
@@ -79,6 +121,25 @@ export function DocumentPanel({
             ? "Procedure definition · original source unavailable"
             : "Extracted text"}
         </span>
+        {pages.length > 1 ? (
+          <label>
+            <span className="sr-only">Go to page</span>
+            <select
+              aria-label="Go to page"
+              defaultValue=""
+              onChange={handlePageChange}
+            >
+              <option disabled value="">
+                Go to page
+              </option>
+              {pages.map((page) => (
+                <option key={page} value={page}>
+                  Page {page}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <fieldset className="sop-zoom">
           <legend className="sr-only">Document text size</legend>
           <Button
@@ -143,6 +204,7 @@ export function DocumentPanel({
                   aria-label={section.heading}
                   className="sop-source-section"
                   data-selected={active}
+                  data-source-id={section.id}
                   data-tone={active ? tone : undefined}
                   id={`passage-${section.id}`}
                   key={section.id}

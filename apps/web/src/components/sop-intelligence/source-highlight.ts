@@ -2,12 +2,19 @@ import type { Opportunity, SopDocument } from "./types";
 
 export interface SourceHighlight {
   end: number;
-  kind: "exact" | "passage" | "instruction";
+  kind: "exact" | "step" | "instruction";
   sectionId: string;
   start: number;
 }
 
-/** Prefer a verified excerpt; otherwise show the complete cited passage in context. */
+const NUMBERED_HEADING = /^(?:step[ \t]+)?\d+(?:\.\d+)*[.) \t:–-]+(.+)$/gim;
+const TITLE_PUNCTUATION = /[^\p{L}\p{N}]+/gu;
+
+function normalizedTitle(value: string): string {
+  return value.toLowerCase().replace(TITLE_PUNCTUATION, " ").trim();
+}
+
+/** Only select a numbered source block when its heading uniquely matches the saved step. */
 export function findSourceHighlight(
   document: SopDocument,
   opportunity: Opportunity | undefined
@@ -38,12 +45,27 @@ export function findSourceHighlight(
       };
     }
   }
-  return {
-    end: section.text.length,
-    kind: savedInstruction ? "instruction" : "passage",
-    sectionId: section.id,
-    start: 0,
-  };
+  if (savedInstruction) {
+    return {
+      end: section.text.length,
+      kind: "instruction",
+      sectionId: section.id,
+      start: 0,
+    };
+  }
+  const headings = [...section.text.matchAll(NUMBERED_HEADING)];
+  const title = normalizedTitle(opportunity.title);
+  const matches = headings.filter(
+    (heading) => normalizedTitle(heading[1] ?? "") === title
+  );
+  if (title && matches.length === 1) {
+    const [heading] = matches;
+    const index = headings.indexOf(heading);
+    const start = heading.index ?? 0;
+    const end = headings[index + 1]?.index ?? section.text.length;
+    return { end, kind: "step", sectionId: section.id, start };
+  }
+  return null;
 }
 
 export function highlightDescription(
@@ -52,11 +74,11 @@ export function highlightDescription(
   switch (highlight?.kind) {
     case "exact":
       return "Exact source excerpt highlighted";
-    case "passage":
-      return "Cited passage highlighted · exact excerpt unavailable";
+    case "step":
+      return "Matching source step highlighted";
     case "instruction":
       return "Saved instruction highlighted · original source unavailable";
     default:
-      return "Source text unavailable";
+      return "Exact source excerpt unavailable";
   }
 }

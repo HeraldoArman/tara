@@ -417,10 +417,9 @@ export function SopWorkspace({
             <li>
               <strong>Follow a step to its source.</strong>
               <p>
-                Select a card to highlight its source. When an exact excerpt is
-                unavailable, the cited passage is highlighted instead. Colors
-                describe how that step is configured, not a completed
-                verification.
+                Select a card to locate its source. Matching excerpts or step
+                headings are highlighted when available. Colors describe how
+                that step is configured, not a completed verification.
               </p>
             </li>
             <li>
