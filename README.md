@@ -1,5 +1,8 @@
 # tara
 
+> 🏆 **Top 5 — [SEA x OpenAI Hackathon ID](https://seaxopenai-hackathon-id.sea.com/)**
+> Granted GPT Pro: US$100 for one year (US$3,600 total value)
+
 tara guides technicians through reviewed SOPs and preserves the evidence, attempts,
 deviations and reviews behind every completed work order. The workspace uses
 Next.js, a server-authoritative FastAPI execution service, PostgreSQL 18, private
@@ -8,11 +11,6 @@ S3-compatible evidence storage and one Python LiveKit/OpenAI realtime worker.
 Correct work stays silent. **Ask tara** explicitly activates consultation;
 proactive corrections are tied to eligible recorded failures. Missing provider
 credentials or failed visual assessment never produce simulated verification.
-
-## Recognition
-
-tara placed in the **top 5** at the [SEA x OpenAI Hackathon ID](https://seaxopenai-hackathon-id.sea.com/)
-and received a GPT Pro grant: US$100 for one year, US$3,600 total value.
 
 ## Development
 
