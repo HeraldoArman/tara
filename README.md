@@ -9,6 +9,11 @@ Correct work stays silent. **Ask tara** explicitly activates consultation;
 proactive corrections are tied to eligible recorded failures. Missing provider
 credentials or failed visual assessment never produce simulated verification.
 
+## Recognition
+
+tara placed in the **top 5** at the [SEA x OpenAI Hackathon ID](https://seaxopenai-hackathon-id.sea.com/)
+and received a GPT Pro grant: US$100 for one year, US$3,600 total value.
+
 ## Development
 
 Requirements: Bun 1.4.4, Python 3.12+, uv and Docker Compose for PostgreSQL/MinIO.
